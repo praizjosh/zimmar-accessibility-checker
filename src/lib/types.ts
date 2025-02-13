@@ -1,0 +1,54 @@
+export interface Issue {
+  type: string;
+  description: string;
+  severity: string; // Options: High, Medium, Low
+  id: string;
+  fontSize: number;
+  nodeType: string | string[];
+  node?: unknown;
+}
+
+export type Severity = "critical" | "major" | "minor";
+
+export type NodeDataType = {
+  id: string;
+  characters: string;
+  contrastScore?: string;
+  fontSize?: number;
+  height?: string;
+  lineHeight?: unknown;
+  name: string;
+  nodeType: string | string[];
+};
+
+export interface IssueX {
+  description?: string;
+  type?: string;
+  severity: Severity;
+  nodeData: NodeDataType;
+}
+
+export interface IssuesStore {
+  issues: IssueX[]; // List of issues
+  // issueGroupList: IssueX[]; // List of related issues by type
+  currentIndex: number; // Index of the currently selected issue
+  startScan: () => void; // Start the scan
+  setIssues: (newIssues: IssueX[]) => void; // Setter for issues
+  // setIssueGroupList: (newIssues: IssueX[]) => void; // Setter for related issues
+  setCurrentIndex: (index: number) => void; // Setter for the current index
+  navigateToIssue: (index: number) => void; // Navigate to a specific issue
+}
+
+export type Routes = "INDEX" | "ISSUE_LIST_VIEW";
+
+export type ROUTES_LIST = Record<Routes, JSX.Element>;
+
+export interface EnhancedIssuesStore extends IssuesStore {
+  selectedType: string; // Selected issue type
+  currentRoute: Routes;
+  navigateTo: (route: Routes) => void;
+  setSelectedType: (type: string) => void;
+  updateIssue: (id: string, updates: Partial<IssueX>) => void;
+  getIssueGroupList: () => IssueX[];
+  rescanIssues: () => void; // Rescan the document for issues
+}
