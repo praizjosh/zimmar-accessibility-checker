@@ -72,9 +72,10 @@ export function getContrastCompliance(
       return "AAA"; // Normal text meeting AAA standards
     } else if (ratio >= 4.5) {
       return "AA"; // Normal text meeting AA standards
-    } else if (ratio >= 3) {
-      return "AA Large"; // Normal text meeting AA Large standards
     }
+    // else if (ratio >= 3) {
+    //   return "AA Large"; // Normal text meeting AA Large standards
+    // }
   }
 
   return "Fail"; // Text does not meet any WCAG standards

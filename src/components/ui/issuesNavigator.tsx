@@ -3,14 +3,20 @@ import React, { useEffect } from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { Button } from "./button";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
+import {
   CaseSensitive,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
-  CircleX,
   X,
   Check,
   OctagonAlert,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   Tooltip,
@@ -19,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Input from "./input";
+import Separator from "./separator";
 
 const IssuesNavigator: React.FC = () => {
   const {
@@ -71,29 +78,40 @@ const IssuesNavigator: React.FC = () => {
   const currentIssue = issueGroupList[currentIndex];
   const { id, fontSize, characters, contrastScore } =
     currentIssue?.nodeData ?? {};
-  const fontSizeIsValid = (fontSize ?? 0) >= 12;
+  const fontSizeIsValid = (fontSize ?? 0) >= 11;
 
   // console.log("issueGroupList is what? ", issueGroupList);
-  console.log("issueGroupList is what? ", getIssueGroupList());
+  // console.log("issueGroupList is what? ", getIssueGroupList());
 
   return (
     <>
-      <button
-        onClick={() => {
-          navigateTo("INDEX");
-          rescanIssues();
-        }}
-        className="mb-4 text-blue-500 underline"
-      >
-        Back to Issues Overview
-      </button>
+      <div className="flex w-full items-center justify-start gap-x-0.5">
+        <Button
+          title="Back to Issues Overview"
+          variant="nude"
+          size={"icon"}
+          onClick={() => {
+            navigateTo("INDEX");
+            rescanIssues();
+          }}
+          className="p-2 transition-transform delay-100 ease-in-out hover:!-translate-x-0.5"
+        >
+          <ChevronLeft className="!size-6" />
+        </Button>
+
+        <p className="text-lg capitalize tracking-wide text-white">
+          {currentIssue.type}
+        </p>
+      </div>
+
+      <Separator className="my-2 h-px !bg-rose-50/10" />
 
       {issueGroupList.length > 0 ? (
         <>
-          <p className="mb-2 text-pretty text-lg font-semibold text-plum-light">
+          <p className="mb-2.5 text-pretty text-lg font-semibold text-plum-light">
             {currentIssue.description}
           </p>
-          <p className="mb-2.5 text-xs uppercase tracking-wide text-[#C9C9E0]">
+          <p className="mb-1 text-xs uppercase tracking-wide text-[#C9C9E0]">
             {currentIssue.type} issues
           </p>
 
@@ -103,7 +121,9 @@ const IssuesNavigator: React.FC = () => {
                 <CaseSensitive className="mr-3 size-7 rounded-md bg-stone-900 p-1.5" />
                 <span className="text-sm">Text: </span>
               </div>
-              <pre className="whitespace-normal text-sm">{characters}</pre>
+              <span className="whitespace-normal font-mono text-sm">
+                {characters}
+              </span>
             </div>
 
             <div className="flex items-center justify-between p-3">
@@ -151,10 +171,38 @@ const IssuesNavigator: React.FC = () => {
 
             <div className="flex items-center justify-between p-3">
               <div className="flex items-center text-sm">
-                <CircleX className="mr-3 size-7 rounded-md bg-stone-900 p-1.5" />
+                {contrastScore !== "Fail" ? (
+                  <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
+                ) : (
+                  <X className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
+                )}
                 <span className="text-sm">WCAG score: </span>
               </div>
-              <span className="text-sm">{contrastScore}</span>
+
+              <div className="flex items-center text-sm">
+                {contrastScore === "Fail" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CircleAlert className="ml-2 size-4" />
+                      </TooltipTrigger>
+                      <TooltipContent
+                        sideOffset={5}
+                        className="w-full max-w-52 text-pretty"
+                      >
+                        <p className="text-xs font-light">
+                          The color contrast between the text and the background
+                          on this screen is insufficient to meet the enhanced
+                          contrast requirements. In some edge cases, the test
+                          may fail when the background element is a “GROUP,”
+                          “COMPONENT,” or “INSTANCE.”
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <span className="ml-2.5 text-sm">{contrastScore}</span>
+              </div>
             </div>
             <div className="flex items-center justify-between p-3">
               <div className="flex items-center text-sm">
@@ -174,6 +222,38 @@ const IssuesNavigator: React.FC = () => {
               </span>
             </div>
           </div>
+
+          <Collapsible className="mb-6">
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4">
+                <h4 className="text-sm font-semibold">Recommendations</h4>
+                <Button title="View recommendations" variant="ghost" size="sm">
+                  <ChevronsUpDown className="size-4" />
+                  <span className="sr-only">Toggle</span>
+                </Button>
+              </div>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className="my-2">
+              <div>
+                {currentIssue.type === "Contrast" &&
+                contrastScore === "Fail" ? (
+                  <p>
+                    Increasing the font size to at least 11px should help
+                    improve readability for all users. Also Consider using a
+                    darker text color or a lighter background color to improve
+                    the contrast ratio.
+                  </p>
+                ) : (
+                  <p>
+                    Increasing the font size to at least 11px should help
+                    improve readability for all users and ensure better
+                    legibility to meet WCAG "AA" standards.
+                  </p>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <div className="my-4 flex w-full items-center justify-between space-x-2">
             <Button

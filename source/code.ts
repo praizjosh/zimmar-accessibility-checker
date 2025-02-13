@@ -7,9 +7,11 @@ import {
 } from "@/lib/utils";
 import { RGBColor } from "wcag-contrast";
 
-figma.showUI(__html__, { width: 400, height: 550 });
+// figma.showUI(__html__, { width: 450, height: 500 });
+figma.showUI(__html__);
+figma.ui.resize(450, 500);
 
-// const issues: IssueX[] = [];
+const issues: IssueX[] = [];
 
 // Handle navigation
 figma.ui.onmessage = async (message) => {
@@ -17,7 +19,7 @@ figma.ui.onmessage = async (message) => {
 
   if (message.type === "scan") {
     console.log("Starting scan...");
-    const issues: IssueX[] = [];
+    // const issues: IssueX[] = [];
     // Collect issues (example logic) FIGMA API
     const nodes = figma.currentPage.findAll((node) => node.type === "TEXT");
 
@@ -127,109 +129,109 @@ figma.ui.onmessage = async (message) => {
     }
   }
 
-  // figma.on("selectionchange", () => {
-  //   const selectedNode = figma.currentPage.selection[0];
-  //   console.log("selectedNode", selectedNode);
+  figma.on("selectionchange", () => {
+    const selectedNode = figma.currentPage.selection[0];
+    console.log("selectedNode", selectedNode);
 
-  //   if (
-  //     selectedNode &&
-  //     selectedNode.type === "TEXT" &&
-  //     "fills" in selectedNode
-  //   ) {
-  //     const nodeFills = selectedNode.fills as Paint[];
+    if (
+      selectedNode &&
+      selectedNode.type === "TEXT" &&
+      "fills" in selectedNode
+    ) {
+      const nodeFills = selectedNode.fills as Paint[];
 
-  //     let foregroundColor: RGBColor = [0, 0, 0];
+      let foregroundColor: RGBColor = [0, 0, 0];
 
-  //     if (nodeFills.length > 0 && nodeFills[0].type === "SOLID") {
-  //       const { r, g, b } = nodeFills[0].color;
-  //       foregroundColor = [
-  //         Math.round(r * 255),
-  //         Math.round(g * 255),
-  //         Math.round(b * 255),
-  //       ];
-  //     }
+      if (nodeFills.length > 0 && nodeFills[0].type === "SOLID") {
+        const { r, g, b } = nodeFills[0].color;
+        foregroundColor = [
+          Math.round(r * 255),
+          Math.round(g * 255),
+          Math.round(b * 255),
+        ];
+      }
 
-  //     // const backgroundColor = getBackgroundColorOfNode(selectedNode);
-  //     const backgroundColor = getNearestBackgroundColor(selectedNode);
+      // const backgroundColor = getBackgroundColorOfNode(selectedNode);
+      const backgroundColor = getNearestBackgroundColor(selectedNode);
 
-  //     if (backgroundColor) {
-  //       console.log(`Background color: ${backgroundColor}`);
-  //     } else {
-  //       console.log("No background color found!");
-  //     }
+      if (backgroundColor) {
+        console.log(`Background color: ${backgroundColor}`);
+      } else {
+        console.log("No background color found!");
+      }
 
-  //     const contrastScore = getContrastScore(
-  //       foregroundColor,
-  //       backgroundColor ? backgroundColor : [255, 255, 255],
-  //     );
+      // const contrastScore = getContrastScore(
+      //   foregroundColor,
+      //   backgroundColor ? backgroundColor : [255, 255, 255],
+      // );
 
-  //     console.log(`Contrast score result: ${contrastScore}.`);
+      // console.log(`Contrast score result: ${contrastScore}.`);
 
-  //     const compliance = getContrastCompliance(
-  //       foregroundColor,
-  //       backgroundColor ? backgroundColor : [255, 255, 255],
-  //       selectedNode.fontSize as number,
-  //       isBoldFont(selectedNode.fontWeight as number),
-  //     );
+      const compliance = getContrastCompliance(
+        foregroundColor,
+        backgroundColor ? backgroundColor : [255, 255, 255],
+        selectedNode.fontSize as number,
+        isBoldFont(selectedNode.fontWeight as number),
+      );
 
-  //     console.log(`Node compliance score result: ${compliance}.`);
+      console.log(`Node compliance score result: ${compliance}.`);
 
-  //     issues.push({
-  //       description: "Text contrast is below WCAG AA standard.",
-  //       severity: "critical",
-  //       type: "Contrast",
-  //       nodeData: {
-  //         id: selectedNode.id,
-  //         contrastScore,
-  //         characters: (selectedNode as TextNode).characters,
-  //         height: selectedNode.height.toString(),
-  //         lineHeight: (selectedNode as TextNode).lineHeight,
-  //         name: selectedNode.name,
-  //         nodeType: selectedNode.type,
-  //       },
-  //     });
+      issues.push({
+        description: "Text contrast is below WCAG AA standard.",
+        severity: "critical",
+        type: "Contrast",
+        nodeData: {
+          id: selectedNode.id,
+          contrastScore: compliance,
+          characters: (selectedNode as TextNode).characters,
+          height: selectedNode.height.toString(),
+          lineHeight: (selectedNode as TextNode).lineHeight,
+          name: selectedNode.name,
+          nodeType: selectedNode.type,
+        },
+      });
 
-  //     // // NEW 12 FEB
-  //     // if ("fills" in selectedNode && Array.isArray(selectedNode.fills)) {
-  //     //   const fills = selectedNode.fills as Paint[]; // Ensure fills is of type Paint[]
+      // // NEW 12 FEB
+      // if ("fills" in selectedNode && Array.isArray(selectedNode.fills)) {
+      //   const fills = selectedNode.fills as Paint[]; // Ensure fills is of type Paint[]
 
-  //     //   // Find the first solid paint
-  //     //   const solidPaint = fills.find(
-  //     //     (paint) => paint.type === "SOLID" && !paint.visible === false,
-  //     //   ) as SolidPaint | undefined;
+      //   // Find the first solid paint
+      //   const solidPaint = fills.find(
+      //     (paint) => paint.type === "SOLID" && !paint.visible === false,
+      //   ) as SolidPaint | undefined;
 
-  //     //   if (solidPaint) {
-  //     //     const { r, g, b } = solidPaint.color;
-  //     //     // Convert RGB values (0-1) to hexadecimal
+      //   if (solidPaint) {
+      //     const { r, g, b } = solidPaint.color;
+      //     // Convert RGB values (0-1) to hexadecimal
 
-  //     //     console.log("solidPaint", [
-  //     //       Math.round(r * 255),
-  //     //       Math.round(g * 255),
-  //     //       Math.round(b * 255),
-  //     //     ]);
+      //     console.log("solidPaint", [
+      //       Math.round(r * 255),
+      //       Math.round(g * 255),
+      //       Math.round(b * 255),
+      //     ]);
 
-  //     //     const toHex = (value: number) =>
-  //     //       Math.round(value * 255)
-  //     //         .toString(16)
-  //     //         .padStart(2, "0");
+      //     const toHex = (value: number) =>
+      //       Math.round(value * 255)
+      //         .toString(16)
+      //         .padStart(2, "0");
 
-  //     //     console.log(`solidPaint hex : #${toHex(r)}${toHex(g)}${toHex(b)}`);
-  //     //     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-  //     //   }
-  //     // }
+      //     console.log(`solidPaint hex : #${toHex(r)}${toHex(g)}${toHex(b)}`);
+      //     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      //   }
+      // }
 
-  //     // const parentBackgroundColor = getNearestBackgroundColor(selectedNode);
+      // const parentBackgroundColor = getNearestBackgroundColor(selectedNode);
 
-  //     // if (parentBackgroundColor) {
-  //     //   console.log(
-  //     //     `Nearest parentBackgroundColor Color: ${parentBackgroundColor}`,
-  //     //   );
-  //     //   figma.notify(
-  //     //     `Nearest parentBackgroundColor Color: ${parentBackgroundColor}`,
-  //     //   );
-  //     // } else {
-  //     //   console.log("No background color found in ancestor.");
-  //     // }
-  //   }
-  // });
+      // if (parentBackgroundColor) {
+      //   console.log(
+      //     `Nearest parentBackgroundColor Color: ${parentBackgroundColor}`,
+      //   );
+      //   figma.notify(
+      //     `Nearest parentBackgroundColor Color: ${parentBackgroundColor}`,
+      //   );
+      // } else {
+      //   console.log("No background color found in ancestor.");
+      // }
+    }
+  });
 };

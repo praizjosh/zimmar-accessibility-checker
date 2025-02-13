@@ -44,9 +44,11 @@ export type Routes = "INDEX" | "ISSUE_LIST_VIEW";
 export type ROUTES_LIST = Record<Routes, JSX.Element>;
 
 export interface EnhancedIssuesStore extends IssuesStore {
+  scanning: boolean;
   selectedType: string; // Selected issue type
   currentRoute: Routes;
   navigateTo: (route: Routes) => void;
+  setScanning: (isScanning: boolean) => void;
   setSelectedType: (type: string) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];

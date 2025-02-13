@@ -7,8 +7,18 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   currentIndex: 0,
   currentRoute: "INDEX", // Default route
   selectedType: "",
+  scanning: false,
 
-  startScan: () => parent.postMessage({ pluginMessage: { type: "scan" } }, "*"),
+  setScanning: (isScanning) =>
+    set({
+      scanning: isScanning,
+    }),
+
+  startScan: () => {
+    const { setScanning } = get();
+    setScanning(true);
+    parent.postMessage({ pluginMessage: { type: "scan" } }, "*");
+  },
 
   setIssues: (newIssues: IssueX[]) => {
     set({ issues: newIssues });

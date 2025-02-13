@@ -1,79 +1,33 @@
 /* eslint-disable no-console */
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Progress from "@/components/ui/progress";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  // AlertCircle,
-  // CheckCircle,
-  // CaseSensitive,
   Eye,
   Keyboard,
   TextCursorInput,
   Radar,
-  // ALargeSmall,
-  // CircleX,
   ChevronRight,
-  TypeOutline,
-  Contrast,
-  Pointer,
 } from "lucide-react";
 import { IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-
-const issuesData = [
-  {
-    type: "Contrast",
-    description: "Text contrast is below WCAG AA standard.",
-    severity: "critical",
-    id: "1",
-    fontSize: 14,
-    nodeType: "TEXT",
-    icon: <Contrast className="size-5 text-plum-light" />,
-  },
-  {
-    type: "Typography",
-    description: "Text size is too small for readability.",
-    severity: "major",
-    id: "2",
-    fontSize: 10,
-    nodeType: "TEXT",
-    icon: <TypeOutline className="size-5 text-plum-light" />,
-  },
-  {
-    type: "Touch Target",
-    description: "Button touch target is smaller than 44px.",
-    severity: "minor",
-    id: "3",
-    fontSize: 12,
-    nodeType: [
-      "COMPONENT",
-      "COMPONENT_SET",
-      "ELLIPSE",
-      "FRAME",
-      "GROUP",
-      "INSTANCE",
-      "POLYGON",
-      "RECTANGLE",
-      "VECTOR",
-      "WIDGET",
-    ],
-    icon: <Pointer className="size-5 text-plum-light" />,
-  },
-];
+import ISSUES_DATA_SCHEMA from "@/lib/isssuesDataSchema";
 
 const AccessibilityValidator: React.FC = () => {
-  const [isScanning, setIsScanning] = useState<boolean>(false);
   const {
     issues,
+    scanning,
     startScan,
-    navigateTo,
     setIssues,
+    setScanning,
     setSelectedType,
-    getIssueGroupList,
+    navigateTo,
   } = useIssuesStore();
+
+  console.log("scanning status", scanning);
 
   // Listen for messages from the backend
   onmessage = (event) => {
@@ -83,25 +37,24 @@ const AccessibilityValidator: React.FC = () => {
     const { type, issues } = event.data.pluginMessage;
     if (type === "loadIssues") {
       setIssues(issues);
-      setIsScanning(false);
+      setScanning(false);
     }
   };
 
-  const handleIdentifiedIssuesListClick = (type: string) => {
+  const handleIssuesListClick = (type: string) => {
     // type: typography, contrast, touch target
     console.log("issue list clicked: ", type);
 
     setSelectedType(type);
 
     // Log the filtered issues for debugging
-    const relatedIssues = getIssueGroupList();
+    // const relatedIssues = getIssueGroupList();
 
-    console.log("relatedIssues length in backend: ", relatedIssues.length);
-    // setIssueGroupList(relatedIssues);
+    // console.log("relatedIssues length in backend: ", relatedIssues.length);
     navigateTo("ISSUE_LIST_VIEW");
   };
 
-  const filteredIssues = issuesData.filter((issue) =>
+  const filteredIssues = ISSUES_DATA_SCHEMA.filter((issue) =>
     issues?.some((i: IssueX) => i.type === issue.type),
   );
 
@@ -115,7 +68,7 @@ const AccessibilityValidator: React.FC = () => {
 
           <Button className="bg-accent" title="Start scan" onClick={startScan}>
             <Radar className="mr-2" />
-            <span>{isScanning ? "Scanning..." : "Start Scan"}</span>
+            <span>{scanning ? "Scanning..." : "Start Scan"}</span>
           </Button>
         </CardContent>
       </Card>
@@ -153,10 +106,8 @@ const AccessibilityValidator: React.FC = () => {
                     <button
                       className="flex w-full flex-col gap-y-2 text-left"
                       aria-label={issue.type}
-                      onClick={() =>
-                        handleIdentifiedIssuesListClick(issue.type)
-                      }
-                      // onClick={handleIdentifiedIssuesListClick}
+                      onClick={() => handleIssuesListClick(issue.type)}
+                      // onClick={handleIssuesListClick}
                       // onClick={() => handleNavigate(issue.type)}
                     >
                       <div className="flex w-full items-center justify-between gap-2">

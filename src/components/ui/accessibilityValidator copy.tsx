@@ -118,7 +118,7 @@ const AccessibilityValidator: React.FC = () => {
   console.log("main issues: ", issues);
   console.log("selectedIssue: ", selectedIssue);
 
-  const handleIdentifiedIssuesListClick = () => {
+  const handleIssuesListClick = () => {
     console.log("issue list clicked: ");
     parent.postMessage(
       { pluginMessage: { type: "identifiedIssuesListClick" } },
@@ -189,7 +189,7 @@ const AccessibilityValidator: React.FC = () => {
                       <button
                         className="w-full cursor-pointer text-left"
                         aria-label={issue.type}
-                        onClick={handleIdentifiedIssuesListClick}
+                        onClick={handleIssuesListClick}
                       >
                         <div className="flex items-start justify-between">
                           <span>

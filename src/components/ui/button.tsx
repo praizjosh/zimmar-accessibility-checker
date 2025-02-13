@@ -22,6 +22,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-stone-100 hover:text-accent dark:hover:bg-stone-800 dark:hover:text-stone-50",
         link: "text-accent underline-offset-4 hover:underline dark:text-stone-50",
+        nude: "",
       },
       size: {
         default: "h-10 px-4 py-2",
