@@ -29,8 +29,28 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
   },
   {
     id: 3,
-    type: "Touch Target",
+    type: "Touch Target Size",
     description: "Button touch target is smaller than 44px.",
+    severity: "minor",
+    nodeType: [
+      "COMPONENT",
+      "COMPONENT_SET",
+      "ELLIPSE",
+      "FRAME",
+      "GROUP",
+      "INSTANCE",
+      "POLYGON",
+      "RECTANGLE",
+      "VECTOR",
+      "WIDGET",
+    ],
+    icon: <Pointer className="size-5 text-plum-light" />,
+  },
+
+  {
+    id: 4,
+    type: "Touch Target Spacing",
+    description: "Touch targets are too close. Minimum spacing is 8px.",
     severity: "minor",
     nodeType: [
       "COMPONENT",

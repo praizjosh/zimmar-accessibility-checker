@@ -66,8 +66,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   },
 
   rescanIssues: () => {
-    const { startScan } = get();
-    startScan();
+    const { startScan, setIssues } = get();
+    setIssues([]); // Clear old issues
+    startScan(); // Start a fresh scan
   },
 }));
 

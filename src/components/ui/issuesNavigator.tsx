@@ -34,7 +34,6 @@ const IssuesNavigator: React.FC = () => {
     navigateTo,
     navigateToIssue,
     getIssueGroupList,
-    rescanIssues,
   } = useIssuesStore();
 
   useEffect(() => {
@@ -92,7 +91,6 @@ const IssuesNavigator: React.FC = () => {
           size={"icon"}
           onClick={() => {
             navigateTo("INDEX");
-            rescanIssues();
           }}
           className="p-2 transition-transform delay-100 ease-in-out hover:!-translate-x-0.5"
         >
@@ -115,8 +113,8 @@ const IssuesNavigator: React.FC = () => {
             {currentIssue.type} issues
           </p>
 
-          <div className="mb-2 flex w-full flex-col justify-center space-y-2 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
-            <div className="flex items-center justify-between p-3">
+          <div className="mb-2 flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
+            <div className="flex items-center justify-between px-3 py-1.5">
               <div className="flex items-center text-sm">
                 <CaseSensitive className="mr-3 size-7 rounded-md bg-stone-900 p-1.5" />
                 <span className="text-sm">Text: </span>
@@ -126,7 +124,7 @@ const IssuesNavigator: React.FC = () => {
               </span>
             </div>
 
-            <div className="flex items-center justify-between p-3">
+            <div className="flex items-center justify-between px-3 py-1.5">
               <div className="flex items-center text-sm">
                 {fontSizeIsValid ? (
                   <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
@@ -169,42 +167,48 @@ const IssuesNavigator: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-3">
-              <div className="flex items-center text-sm">
-                {contrastScore !== "Fail" ? (
-                  <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
-                ) : (
-                  <X className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
-                )}
-                <span className="text-sm">WCAG score: </span>
-              </div>
+            {currentIssue.type === "Contrast" && (
+              <div className="flex items-center justify-between px-3 py-1.5">
+                <div className="flex items-center text-sm">
+                  {contrastScore !== "Fail" ? (
+                    <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
+                  ) : (
+                    <X className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
+                  )}
+                  <span className="text-sm">WCAG score: </span>
+                </div>
 
-              <div className="flex items-center text-sm">
-                {contrastScore === "Fail" && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <CircleAlert className="ml-2 size-4" />
-                      </TooltipTrigger>
-                      <TooltipContent
-                        sideOffset={5}
-                        className="w-full max-w-52 text-pretty"
-                      >
-                        <p className="text-xs font-light">
-                          The color contrast between the text and the background
-                          on this screen is insufficient to meet the enhanced
-                          contrast requirements. In some edge cases, the test
-                          may fail when the background element is a “GROUP,”
-                          “COMPONENT,” or “INSTANCE.”
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <span className="ml-2.5 text-sm">{contrastScore}</span>
+                <div className="flex items-center text-sm">
+                  {contrastScore === "Fail" && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <CircleAlert className="ml-2 size-4" />
+                        </TooltipTrigger>
+                        <TooltipContent
+                          sideOffset={5}
+                          className="w-full max-w-52 text-pretty"
+                        >
+                          <p className="text-xs font-light">
+                            The color contrast between the text and the
+                            background on this screen is insufficient to meet
+                            the enhanced contrast requirements. In some edge
+                            cases, the test may fail when the background element
+                            is a “GROUP,” “COMPONENT,” or “INSTANCE.”
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  <span
+                    className={`${contrastScore === "Fail" ? "text-rose-600" : ""} ml-2.5 text-sm`}
+                  >
+                    {contrastScore}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center justify-between p-3">
+            )}
+            <div className="flex items-center justify-between px-3 py-1.5">
               <div className="flex items-center text-sm">
                 <OctagonAlert className="mr-3 size-7 rounded-md bg-stone-900 p-1.5" />
                 <span className="text-sm">Severity: </span>
@@ -225,9 +229,9 @@ const IssuesNavigator: React.FC = () => {
 
           <Collapsible className="mb-6">
             <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4">
+              <div className="flex cursor-pointer items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4">
                 <h4 className="text-sm font-semibold">Recommendations</h4>
-                <Button title="View recommendations" variant="ghost" size="sm">
+                <Button title="View recommendations" variant="nude" size="sm">
                   <ChevronsUpDown className="size-4" />
                   <span className="sr-only">Toggle</span>
                 </Button>
@@ -235,20 +239,18 @@ const IssuesNavigator: React.FC = () => {
             </CollapsibleTrigger>
 
             <CollapsibleContent className="my-2">
-              <div>
+              <div className="text-sm">
                 {currentIssue.type === "Contrast" &&
                 contrastScore === "Fail" ? (
                   <p>
-                    Increasing the font size to at least 11px should help
-                    improve readability for all users. Also Consider using a
-                    darker text color or a lighter background color to improve
-                    the contrast ratio.
+                    Increase the font size to at least 11px for better
+                    readability. To improve contrast, use a darker text color or
+                    a lighter background color.
                   </p>
                 ) : (
                   <p>
-                    Increasing the font size to at least 11px should help
-                    improve readability for all users and ensure better
-                    legibility to meet WCAG "AA" standards.
+                    Ensure font size is at least 11px to enhance readability and
+                    comply with WCAG "AA" standards.
                   </p>
                 )}
               </div>
