@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { create } from "zustand";
-import { EnhancedIssuesStore, IssueX, Routes } from "./types";
+import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "./types";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   issues: [],
@@ -24,7 +24,7 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     set({ issues: newIssues });
   },
 
-  setSelectedType: (type: string) => set({ selectedType: type }),
+  setSelectedType: (type: IssueType) => set({ selectedType: type }),
 
   getIssueGroupList: () => {
     const { issues, selectedType } = get();

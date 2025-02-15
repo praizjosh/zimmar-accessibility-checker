@@ -45,7 +45,7 @@ export const isBoldFont = (
     for (let i = start; i < end; i++) {
       const rangeFontWeight = node.getRangeFontWeight(i, i + 1);
       if (typeof rangeFontWeight === "number" && rangeFontWeight >= 700) {
-        console.log("Bold font detected in range:", rangeFontWeight);
+        // console.log("Bold font detected in range:", rangeFontWeight);
         return true; // Found bold within the range
       }
     }
@@ -165,7 +165,7 @@ export function getNearestBackgroundColor(node: SceneNode): RGBColor | null {
     }
   }
 
-  console.log("No valid background color found in ancestor nodes.");
+  // console.log("No valid background color found in ancestor nodes.");
   return null;
 }
 
@@ -179,7 +179,7 @@ export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
   // Case 1: Parent FRAME's background
   if (node.parent && node.parent.type === "FRAME") {
     const frame = node.parent as FrameNode;
-    console.log("isFrame: ", frame);
+    // console.log("isFrame: ", frame);
 
     if (frame.backgrounds.length > 0) {
       const background = frame.backgrounds[0];
@@ -192,7 +192,7 @@ export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
           Math.round(b * 255),
         ];
 
-        console.log(`Parent frame background: ${frameColor}`);
+        // console.log(`Parent frame background: ${frameColor}`);
         figma.notify(`Parent frame background: ${frameColor}`);
         return frameColor;
       }
@@ -203,11 +203,11 @@ export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
   const allNodes = figma.currentPage.children;
   const nodeIndex = allNodes.indexOf(node);
   // console.log("allNodes: ", allNodes);
-  console.log("nodeIndex: ", nodeIndex);
+  // console.log("nodeIndex: ", nodeIndex);
 
   if (nodeIndex > 0) {
     const possibleBackgroundNode = allNodes[nodeIndex - 1];
-    console.log("first possibleBackgroundNode:", possibleBackgroundNode);
+    // console.log("first possibleBackgroundNode:", possibleBackgroundNode);
 
     if (possibleBackgroundNode.type === "RECTANGLE") {
       const rect = possibleBackgroundNode as RectangleNode;
@@ -220,14 +220,14 @@ export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
           Math.round(b * 255),
         ];
 
-        console.log(`Background rectangle color: ${rectColor}`);
+        // console.log(`Background rectangle color: ${rectColor}`);
         figma.notify(`Background rectangle color: ${rectColor}`);
         return rectColor;
       }
     }
   }
 
-  console.log("No background color found for selection!");
+  // console.log("No background color found for selection!");
   figma.notify("No background color found for selection!");
   return null;
 }

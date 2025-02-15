@@ -24,11 +24,19 @@ export type NodeDataType = {
   foregroundColor?: RGBColor;
   backgroundColor?: RGBColor;
   nodeType: string | string[];
+  requiredSize?: string;
 };
+
+export type IssueType =
+  | "Typography"
+  | "Contrast"
+  | "Touch Target Size"
+  | "Touch Target Spacing";
 
 export interface IssueX {
   description?: string;
-  type?: string;
+  type?: IssueType;
+  // type?: string;
   severity: Severity;
   nodeData: NodeDataType;
 }
@@ -44,7 +52,10 @@ export interface IssuesStore {
   navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }
 
-export type Routes = "INDEX" | "ISSUE_LIST_VIEW";
+export type Routes =
+  | "INDEX"
+  | "ISSUE_LIST_VIEW"
+  | "TOUCH_TARGET_ISSUE_LIST_VIEW";
 
 export type ROUTES_LIST = Record<Routes, JSX.Element>;
 
@@ -54,7 +65,7 @@ export interface EnhancedIssuesStore extends IssuesStore {
   currentRoute: Routes;
   navigateTo: (route: Routes) => void;
   setScanning: (isScanning: boolean) => void;
-  setSelectedType: (type: string) => void;
+  setSelectedType: (type: IssueType) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];
   rescanIssues: () => void; // Rescan the document for issues

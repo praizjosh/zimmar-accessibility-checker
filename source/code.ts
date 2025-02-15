@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { MIN_FONT_SIZE } from "@/lib/constants";
 import {
   createContrastIssue,
   createTouchTargetIssue,
@@ -37,7 +38,10 @@ figma.ui.onmessage = async (message) => {
       const issues: IssueX[] = [];
 
       for (const node of allTextNodes) {
-        if (typeof node.fontSize === "number" && node.fontSize < 11) {
+        if (
+          typeof node.fontSize === "number" &&
+          node.fontSize < MIN_FONT_SIZE
+        ) {
           // Check typography issues
           issues.push(createTypographyIssue(node));
         }
@@ -72,8 +76,8 @@ figma.ui.onmessage = async (message) => {
       }
 
       for (const node of allPageNodes) {
-        const isTarget = await isTouchTarget(node);
-        console.log(`Node "${node.name}" for touch isTarget status:`, isTarget);
+        // const isTarget = await isTouchTarget(node);
+        // console.log(`Node "${node.name}" for touch isTarget status:`, isTarget);
 
         if ("absoluteBoundingBox" in node) {
           const isTarget = await isTouchTarget(node);
@@ -84,20 +88,21 @@ figma.ui.onmessage = async (message) => {
             if (isTouchTargetTooSmall(node)) {
               // Check touch target size
               const issue = createTouchTargetIssue(node, "Size");
-              console.log("Issue identified:", issue);
+              // console.log("Issue identified:", issue);
               issues.push(issue);
             }
             if (isTouchTargetTooClose(node, [...allPageNodes])) {
               // Check touch target spacing
               const issue = createTouchTargetIssue(node, "Spacing");
-              console.log("Touch Target Spacing Issue Created:", issue);
+              // console.log("Touch Target Spacing Issue Created:", issue);
               issues.push(issue);
             }
-          } else {
-            console.log(
-              `Node "${node.name}" is NOT identified as a touch target.`,
-            );
           }
+          // else {
+          //   console.log(
+          //     `Node "${node.name}" is NOT identified as a touch target.`,
+          //   );
+          // }
         } else {
           console.log(
             `Node "${(node as SceneNode).name}" does not have absoluteBoundingBox.`,
@@ -143,39 +148,23 @@ figma.on("selectionchange", async () => {
   const selectedNode = figma.currentPage.selection[0];
   console.log("Selected node:", selectedNode);
 
-  const allPageNodes = figma.currentPage.selection;
-  // console.log("Selected nodes:", allPageNodes);
+  const selectedNodes = figma.currentPage.selection;
+  console.log("Selected nodes ==>: ", selectedNodes);
 
-  for (const node of allPageNodes) {
-    if ("absoluteBoundingBox" in node) {
-      // console.log(`Node "${node.name}" has absoluteBoundingBox.`);
-      const isTarget = await isTouchTarget(node);
-      // console.log(`Node "${node.name}" touch target status:`, isTarget);
-
-      if (isTarget) {
-        console.log(`Node "${node.name}" is identified as a touch target.`);
-
-        // Check size
-        if (isTouchTargetTooSmall(node)) {
-          const issue = createTouchTargetIssue(node, "Size");
-          figma.notify(`Issue identified: ${issue.description}`);
-        }
-        // Check spacing
-        if (isTouchTargetTooClose(node, [...allPageNodes])) {
-          const issue = createTouchTargetIssue(node, "Spacing");
-          figma.notify(`Issue identified: ${issue.description}`);
-        }
-      } else {
-        figma.notify(
-          `Node "${node.name}" is NOT identified as a touch target.`,
-        );
-      }
-    } else {
-      figma.notify(
-        `Node "${(node as SceneNode).name}" does not have absoluteBoundingBox.`,
-      );
+  selectedNodes.forEach((node) => {
+    if (isTouchTargetTooSmall(node)) {
+      // Check size
+      const issue = createTouchTargetIssue(node, "Size");
+      console.log(`Issue identified: ${issue.description}`);
+      figma.notify(`Issue identified: ${issue.description}`);
     }
-  }
+    if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
+      // Check spacing
+      const issue = createTouchTargetIssue(node, "Spacing");
+      console.log(`Issue identified: ${issue.description}`);
+      figma.notify(`Issue identified: ${issue.description}`);
+    }
+  });
 
   if (selectedNode && selectedNode.type === "TEXT" && "fills" in selectedNode) {
     const foregroundColor = extractForegroundColor(

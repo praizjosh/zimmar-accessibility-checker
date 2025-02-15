@@ -1,10 +1,7 @@
 /* eslint-disable no-console */
 import { IssueX } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
-
-// Constants
-const MIN_TOUCH_TARGET_SIZE = 48; // Minimum touch target size (48x48)
-const MIN_TOUCH_TARGET_SPACING = 8; // Minimum spacing between touch targets
+import { MIN_TOUCH_TARGET_SIZE, MIN_TOUCH_TARGET_SPACING } from "./constants";
 
 /**
  * Extracts the foreground color from the given Paint array.
@@ -118,6 +115,13 @@ export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
  * @returns {boolean} True if the node is too small, otherwise false.
  */
 export const isTouchTargetTooSmall = (node: SceneNode): boolean => {
+  //   console.log(
+  //     `Is Too Small:`,
+  //     "width" in node &&
+  //       "height" in node &&
+  //       (node.width < MIN_TOUCH_TARGET_SIZE ||
+  //         node.height < MIN_TOUCH_TARGET_SIZE),
+  //   );
   return (
     "width" in node &&
     "height" in node &&
@@ -156,17 +160,17 @@ export const isTouchTargetTooClose = (
       Math.abs(nodeBounds.y + nodeBounds.height - otherBounds.y) <
         MIN_TOUCH_TARGET_SPACING;
 
-    console.log(`Node 1 Bounds:`, nodeBounds);
-    console.log(`Node 2 Bounds:`, otherBounds);
-    console.log(
-      `Horizontal Proximity:`,
-      Math.abs(nodeBounds.x - otherBounds.x),
-    );
-    console.log(`Vertical Proximity:`, Math.abs(nodeBounds.y - otherBounds.y));
-    console.log(
-      `Is Too Close:`,
-      isTooCloseHorizontally && isTooCloseVertically,
-    );
+    // console.log(`Node 1 Bounds:`, nodeBounds);
+    // console.log(`Node 2 Bounds:`, otherBounds);
+    // console.log(
+    //   `Horizontal Proximity:`,
+    //   Math.abs(nodeBounds.x - otherBounds.x),
+    // );
+    // console.log(`Vertical Proximity:`, Math.abs(nodeBounds.y - otherBounds.y));
+    // console.log(
+    //   `Is Too Close:`,
+    //   isTooCloseHorizontally && isTooCloseVertically,
+    // );
 
     return isTooCloseHorizontally && isTooCloseVertically;
   });
@@ -195,5 +199,6 @@ export const createTouchTargetIssue = (
     width: "width" in node ? node.width : undefined,
     height: "height" in node ? node.height : undefined,
     nodeType: node.type,
+    requiredSize: `${MIN_TOUCH_TARGET_SIZE} x ${MIN_TOUCH_TARGET_SIZE}px`,
   },
 });
