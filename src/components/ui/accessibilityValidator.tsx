@@ -107,18 +107,16 @@ const AccessibilityValidator: React.FC = () => {
                       className="flex w-full flex-col gap-y-2 text-left"
                       aria-label={issue.type}
                       onClick={() => handleIssuesListClick(issue.type)}
-                      // onClick={handleIssuesListClick}
-                      // onClick={() => handleNavigate(issue.type)}
                     >
-                      <div className="flex w-full items-center justify-between gap-2">
+                      <div className="flex w-full items-center justify-between gap-x-2">
                         <div className="flex w-full items-center justify-start space-x-1.5">
                           {issue.icon}
                           <span>{issue.type}</span>
                         </div>
 
-                        <div className="flex w-full items-center justify-end space-x-1.5">
+                        <div className="flex w-auto items-center justify-end space-x-1.5">
                           <span
-                            className={`rounded px-1 py-0.5 text-xs font-medium tracking-wide text-dark-shade
+                            className={`rounded px-1.5 py-0.5 text-xs font-medium tracking-wide text-dark-shade
                            ${
                              issue.severity === "critical"
                                ? "bg-red-500"

@@ -18,6 +18,51 @@ export const collectNodes = (node: SceneNode, collectedNodes: SceneNode[]) => {
 };
 
 /**
+ * Determines if the specified font weight or range of font weights is bold.
+ *
+ * @param {number | symbol} fontWeight - The font weight to evaluate.
+ * @param {TextNode} [node] - The Figma TextNode, required for mixed font weight ranges.
+ * @param {number} [start] - The start of the range to check (inclusive).
+ * @param {number} [end] - The end of the range to check (exclusive).
+ * @returns {boolean} True if the font or range contains bold font weight, otherwise false.
+ */
+export const isBoldFont = (
+  fontWeight: number | symbol,
+  node?: TextNode,
+  start?: number,
+  end?: number,
+): boolean => {
+  // Default to false if fontWeight is falsy
+  if (!fontWeight) return false;
+
+  // Handle mixed font weight
+  if (
+    fontWeight === figma.mixed &&
+    node &&
+    start !== undefined &&
+    end !== undefined
+  ) {
+    for (let i = start; i < end; i++) {
+      const rangeFontWeight = node.getRangeFontWeight(i, i + 1);
+      if (typeof rangeFontWeight === "number" && rangeFontWeight >= 700) {
+        console.log("Bold font detected in range:", rangeFontWeight);
+        return true; // Found bold within the range
+      }
+    }
+    return false; // No bold font found in the range
+  }
+
+  // Validate and evaluate single font weight
+  if (typeof fontWeight !== "number") {
+    console.warn("Invalid fontWeight value:", fontWeight);
+    return false;
+  }
+
+  // Return true if fontWeight is bold
+  return fontWeight >= 700;
+};
+
+/**
  * Evaluate the WCAG contrast score between two colors.
  * @param foreground - The foreground color in hex (e.g., "#FFFFFF").
  * @param background - The background color in hex (e.g., "#000000").
@@ -26,14 +71,13 @@ export const collectNodes = (node: SceneNode, collectedNodes: SceneNode[]) => {
 export function getContrastScore(
   foreground: RGBColor,
   background: RGBColor,
-
   // foreground: string,
   // background: string,
 ): string {
   // const pairContrastScore = hex(foreground, background); // for hex
   const pairContrastRatio = rgb(foreground, background); // returns a number
 
-  console.log("pairContrastRatio res: ", pairContrastRatio);
+  // console.log("pairContrastRatio res: ", pairContrastRatio);
   return score(pairContrastRatio);
 }
 
@@ -81,36 +125,57 @@ export function getContrastCompliance(
   return "Fail"; // Text does not meet any WCAG standards
 }
 
-// Example usage:
-// const compliance = getContrastCompliance("#ffffff", "#333333", 16);
-// console.log(`Compliance: ${compliance}`); // Outputs: "AA", "AA Large", etc.
+/**
+ * Recursively gets the background color of the nearest ancestor node with a valid background color.
+ *
+ * @param node The starting node (child node).
+ * @returns {RGBColor | null} The background color in rgb format, or null if not found.
+ */
+export function getNearestBackgroundColor(node: SceneNode): RGBColor | null {
+  let currentNode: BaseNode | null = node;
 
-export function getComputedBackground(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  element: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): { backgroundColor: any; backgroundImage: string } | null {
-  if (!element) return null;
+  while (currentNode && currentNode.parent) {
+    currentNode = currentNode.parent;
 
-  // Get the computed style of the element
-  const computedStyle = window.getComputedStyle(element);
+    // Skip nodes that cannot have background colors
+    if (
+      currentNode.type === "GROUP" ||
+      currentNode.type === "COMPONENT" ||
+      currentNode.type === "INSTANCE"
+    ) {
+      continue;
+    }
 
-  // Retrieve the background-related properties
-  const backgroundColor = computedStyle.backgroundColor;
+    if ("fills" in currentNode && Array.isArray(currentNode.fills)) {
+      const fills = currentNode.fills as Paint[];
+      const solidPaint = fills.find(
+        (paint) => paint.type === "SOLID" && paint.visible !== false,
+      ) as SolidPaint | undefined;
 
-  console.log("what's bgcolor in fn:", backgroundColor);
-  const backgroundImage = computedStyle.backgroundImage;
+      if (solidPaint) {
+        const { r, g, b } = solidPaint.color;
+        const nearestBackgroundColor: RGBColor = [
+          Math.round(r * 255),
+          Math.round(g * 255),
+          Math.round(b * 255),
+        ];
 
-  return { backgroundColor, backgroundImage };
+        return nearestBackgroundColor;
+      }
+    }
+  }
+
+  console.log("No valid background color found in ancestor nodes.");
+  return null;
 }
 
-export /**
+/**
  * Utility function to get the background color of the selected node in Figma.
  * It checks the parent FRAME's background or the sibling RECTANGLE directly below the node.
  * @param {SceneNode} node - The node to check the background for.
  * @returns {RGBColor | null} The background color in rgb format, or null if not found.
  */
-function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
+export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
   // Case 1: Parent FRAME's background
   if (node.parent && node.parent.type === "FRAME") {
     const frame = node.parent as FrameNode;
@@ -167,56 +232,20 @@ function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
   return null;
 }
 
-/**
- * Recursively gets the background color of the nearest ancestor node with a valid background color.
- *
- * @param node The starting node (child node).
- * @returns The background color in hexadecimal format (e.g., "#RRGGBB"), or `null` if not found.
- */
-export function getNearestBackgroundColor(node: SceneNode): RGBColor | null {
-  let currentNode: BaseNode | null = node;
+export function getComputedBackground(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  element: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): { backgroundColor: any; backgroundImage: string } | null {
+  if (!element) return null;
 
-  while (currentNode && currentNode.parent) {
-    currentNode = currentNode.parent;
+  // Get the computed style of the element
+  const computedStyle = window.getComputedStyle(element);
 
-    // Skip nodes that cannot have background colors
-    if (
-      currentNode.type === "GROUP" ||
-      currentNode.type === "COMPONENT" ||
-      currentNode.type === "INSTANCE"
-    ) {
-      continue;
-    }
+  // Retrieve the background-related properties
+  const backgroundColor = computedStyle.backgroundColor;
 
-    if ("fills" in currentNode && Array.isArray(currentNode.fills)) {
-      const fills = currentNode.fills as Paint[];
-      const solidPaint = fills.find(
-        (paint) => paint.type === "SOLID" && paint.visible !== false,
-      ) as SolidPaint | undefined;
+  const backgroundImage = computedStyle.backgroundImage;
 
-      if (solidPaint) {
-        const { r, g, b } = solidPaint.color;
-        const nearestBackgroundColor: RGBColor = [
-          Math.round(r * 255),
-          Math.round(g * 255),
-          Math.round(b * 255),
-        ];
-
-        return nearestBackgroundColor;
-        // const toHex = (value: number) =>
-        //   Math.round(value * 255)
-        //     .toString(16)
-        //     .padStart(2, "0");
-        // return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-      }
-    }
-  }
-
-  console.log("No valid background color found in ancestor nodes.");
-  return null;
+  return { backgroundColor, backgroundImage };
 }
-
-export const isBoldFont = (fontWeight: number | undefined): boolean => {
-  if (!fontWeight) return false; // Default to false if undefined
-  return fontWeight >= 700; // Bold is typically 700 or above
-};

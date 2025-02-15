@@ -34,6 +34,7 @@ const IssuesNavigator: React.FC = () => {
     navigateTo,
     navigateToIssue,
     getIssueGroupList,
+    rescanIssues,
   } = useIssuesStore();
 
   useEffect(() => {
@@ -79,9 +80,6 @@ const IssuesNavigator: React.FC = () => {
     currentIssue?.nodeData ?? {};
   const fontSizeIsValid = (fontSize ?? 0) >= 11;
 
-  // console.log("issueGroupList is what? ", issueGroupList);
-  // console.log("issueGroupList is what? ", getIssueGroupList());
-
   return (
     <>
       <div className="flex w-full items-center justify-start gap-x-0.5">
@@ -91,8 +89,9 @@ const IssuesNavigator: React.FC = () => {
           size={"icon"}
           onClick={() => {
             navigateTo("INDEX");
+            rescanIssues();
           }}
-          className="p-2 transition-transform delay-100 ease-in-out hover:!-translate-x-0.5"
+          className="p-2 transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-plum-light"
         >
           <ChevronLeft className="!size-6" />
         </Button>
@@ -239,7 +238,7 @@ const IssuesNavigator: React.FC = () => {
             </CollapsibleTrigger>
 
             <CollapsibleContent className="my-2">
-              <div className="text-sm">
+              <div className="p-2.5 text-sm">
                 {currentIssue.type === "Contrast" &&
                 contrastScore === "Fail" ? (
                   <p>

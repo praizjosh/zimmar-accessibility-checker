@@ -1,93 +1,23 @@
 /* eslint-disable no-console */
+import {
+  createContrastIssue,
+  createTouchTargetIssue,
+  createTypographyIssue,
+  extractForegroundColor,
+  isTouchTarget,
+  isTouchTargetTooClose,
+  isTouchTargetTooSmall,
+} from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
 import {
+  collectNodes,
   getContrastCompliance,
   getNearestBackgroundColor,
   isBoldFont,
 } from "@/lib/utils";
-import { RGBColor } from "wcag-contrast";
 
 figma.showUI(__html__);
 figma.ui.resize(450, 500);
-
-// Helper: Extract foreground color
-const extractForegroundColor = (nodeFills: Paint[]): RGBColor => {
-  if (
-    nodeFills.length > 0 &&
-    nodeFills[0].type === "SOLID" &&
-    nodeFills[0].visible !== false
-  ) {
-    const { r, g, b } = nodeFills[0].color;
-    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-  }
-  return [0, 0, 0]; // Default black
-};
-
-// Helper: Create a typography issue
-const createTypographyIssue = (node: TextNode): IssueX => ({
-  description: "Text size is too small for readability.",
-  severity: "major",
-  type: "Typography",
-  nodeData: {
-    id: node.id,
-    characters: node.characters,
-    fontSize: node.fontSize as number,
-    height: node.height,
-    lineHeight: node.lineHeight,
-    name: node.name,
-    nodeType: node.type,
-  },
-});
-
-// Helper: Create a contrast issue
-const createContrastIssue = (
-  node: TextNode,
-  contrastScore: string,
-  foregroundColor: RGBColor,
-  backgroundColor: RGBColor | null,
-): IssueX => ({
-  description: "Text contrast is below WCAG AA standard.",
-  severity: "critical",
-  type: "Contrast",
-  nodeData: {
-    id: node.id,
-    contrastScore,
-    characters: node.characters,
-    fontSize: node.fontSize as number,
-    height: node.height,
-    lineHeight: node.lineHeight,
-    name: node.name,
-    nodeType: node.type,
-    foregroundColor,
-    backgroundColor: backgroundColor || [255, 255, 255],
-  },
-});
-
-// Constants
-const MIN_TOUCH_TARGET_SIZE = 44;
-
-// Helper: Check touch target size
-const isTouchTargetTooSmall = (node: SceneNode): boolean => {
-  return (
-    "width" in node &&
-    "height" in node &&
-    (node.width < MIN_TOUCH_TARGET_SIZE || node.height < MIN_TOUCH_TARGET_SIZE)
-  );
-};
-
-// Helper: Create a touch target issue
-const createTouchTargetIssue = (node: SceneNode): IssueX => ({
-  description: "Touch target size is too small for accessibility.",
-  severity: "minor",
-  type: "Touch Target Size",
-  nodeData: {
-    id: node.id,
-    name: node.name,
-    width: "width" in node ? node.width : undefined,
-    height: "height" in node ? node.height : undefined,
-    nodeType: node.type,
-  },
-});
 
 // Handle messages from the UI
 figma.ui.onmessage = async (message) => {
@@ -95,37 +25,37 @@ figma.ui.onmessage = async (message) => {
     if (message.type === "scan") {
       console.log("Starting scan...");
 
-      const allNodes = figma.currentPage.findAll();
-      const textNodes = figma.currentPage.findAll(
+      const allTextNodes = figma.currentPage.findAll(
         (node) => node.type === "TEXT",
       ) as TextNode[];
 
-      const issues: IssueX[] = [];
-
-      for (const node of allNodes) {
-        // Check touch target issues
-        if (isTouchTargetTooSmall(node)) {
-          issues.push(createTouchTargetIssue(node));
-        }
+      const allPageNodes: SceneNode[] = [];
+      for (const node of figma.currentPage.children) {
+        collectNodes(node, allPageNodes);
       }
 
-      for (const node of textNodes) {
-        // Check typography issues
+      const issues: IssueX[] = [];
+
+      for (const node of allTextNodes) {
         if (typeof node.fontSize === "number" && node.fontSize < 11) {
+          // Check typography issues
           issues.push(createTypographyIssue(node));
         }
 
-        // Check contrast issues
         if ("fills" in node) {
+          // Check contrast issues
           const foregroundColor = extractForegroundColor(node.fills as Paint[]);
           const backgroundColor = getNearestBackgroundColor(node) || [
             255, 255, 255,
           ];
+
+          const fontWeight: number | typeof figma.mixed = node.fontWeight;
+
           const contrastScore = getContrastCompliance(
             foregroundColor,
             backgroundColor,
             node.fontSize as number,
-            isBoldFont(node.fontWeight as number),
+            isBoldFont(fontWeight, node, 0, node.characters.length),
           );
 
           if (contrastScore === "Fail") {
@@ -141,18 +71,42 @@ figma.ui.onmessage = async (message) => {
         }
       }
 
+      for (const node of allPageNodes) {
+        const isTarget = await isTouchTarget(node);
+        console.log(`Node "${node.name}" for touch isTarget status:`, isTarget);
+
+        if ("absoluteBoundingBox" in node) {
+          const isTarget = await isTouchTarget(node);
+
+          if (isTarget) {
+            // console.log(`Node "${node.name}" is identified as a touch target.`);
+
+            if (isTouchTargetTooSmall(node)) {
+              // Check touch target size
+              const issue = createTouchTargetIssue(node, "Size");
+              console.log("Issue identified:", issue);
+              issues.push(issue);
+            }
+            if (isTouchTargetTooClose(node, [...allPageNodes])) {
+              // Check touch target spacing
+              const issue = createTouchTargetIssue(node, "Spacing");
+              console.log("Touch Target Spacing Issue Created:", issue);
+              issues.push(issue);
+            }
+          } else {
+            console.log(
+              `Node "${node.name}" is NOT identified as a touch target.`,
+            );
+          }
+        } else {
+          console.log(
+            `Node "${(node as SceneNode).name}" does not have absoluteBoundingBox.`,
+          );
+        }
+      }
+
       console.log(`Scan completed. Total issues identified: ${issues.length}`);
       figma.ui.postMessage({ type: "loadIssues", issues });
-    }
-
-    if (message.type === "navigate") {
-      const node = (await figma.getNodeByIdAsync(message.id)) as SceneNode;
-      if (node) {
-        figma.currentPage.selection = [node];
-        figma.viewport.scrollAndZoomIntoView([node]);
-      } else {
-        console.warn(`Node with ID ${message.id} not found.`);
-      }
     }
 
     if (message.type === "updateFontSize") {
@@ -169,15 +123,59 @@ figma.ui.onmessage = async (message) => {
         console.warn(`Failed to update font size for node ${message.id}`);
       }
     }
+
+    if (message.type === "navigate") {
+      const node = (await figma.getNodeByIdAsync(message.id)) as SceneNode;
+      if (node) {
+        figma.currentPage.selection = [node];
+        figma.viewport.scrollAndZoomIntoView([node]);
+      } else {
+        console.warn(`Node with ID ${message.id} not found.`);
+      }
+    }
   } catch (error) {
     console.error("An error occurred while processing the message:", error);
   }
 };
 
 // Handle selection change to provide dynamic feedback
-figma.on("selectionchange", () => {
+figma.on("selectionchange", async () => {
   const selectedNode = figma.currentPage.selection[0];
   console.log("Selected node:", selectedNode);
+
+  const allPageNodes = figma.currentPage.selection;
+  // console.log("Selected nodes:", allPageNodes);
+
+  for (const node of allPageNodes) {
+    if ("absoluteBoundingBox" in node) {
+      // console.log(`Node "${node.name}" has absoluteBoundingBox.`);
+      const isTarget = await isTouchTarget(node);
+      // console.log(`Node "${node.name}" touch target status:`, isTarget);
+
+      if (isTarget) {
+        console.log(`Node "${node.name}" is identified as a touch target.`);
+
+        // Check size
+        if (isTouchTargetTooSmall(node)) {
+          const issue = createTouchTargetIssue(node, "Size");
+          figma.notify(`Issue identified: ${issue.description}`);
+        }
+        // Check spacing
+        if (isTouchTargetTooClose(node, [...allPageNodes])) {
+          const issue = createTouchTargetIssue(node, "Spacing");
+          figma.notify(`Issue identified: ${issue.description}`);
+        }
+      } else {
+        figma.notify(
+          `Node "${node.name}" is NOT identified as a touch target.`,
+        );
+      }
+    } else {
+      figma.notify(
+        `Node "${(node as SceneNode).name}" does not have absoluteBoundingBox.`,
+      );
+    }
+  }
 
   if (selectedNode && selectedNode.type === "TEXT" && "fills" in selectedNode) {
     const foregroundColor = extractForegroundColor(
@@ -192,14 +190,8 @@ figma.on("selectionchange", () => {
       isBoldFont(selectedNode.fontWeight as number),
     );
 
-    console.log(
+    figma.notify(
       `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${compliance}`,
     );
-
-    if (selectedNode && isTouchTargetTooSmall(selectedNode)) {
-      console.log(
-        `Selected node "${selectedNode.name}" has a touch target issue.`,
-      );
-    }
   }
 });
