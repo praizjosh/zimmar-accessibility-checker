@@ -36,8 +36,8 @@ export type IssueType =
 export interface IssueX {
   description?: string;
   type?: IssueType;
-  // type?: string;
   severity: Severity;
+  status?: string;
   nodeData: NodeDataType;
 }
 

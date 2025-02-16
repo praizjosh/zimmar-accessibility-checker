@@ -1,4 +1,4 @@
-import { TypeOutline, Contrast, Pointer } from "lucide-react";
+import { TypeOutline, Contrast, Pointer, MoveHorizontal } from "lucide-react";
 import { ReactNode } from "react";
 
 type Issue = {
@@ -64,7 +64,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
       "VECTOR",
       "WIDGET",
     ],
-    icon: <Pointer className="size-5 text-plum-light" />,
+    icon: <MoveHorizontal className="size-5 text-plum-light" />,
   },
 ];
 

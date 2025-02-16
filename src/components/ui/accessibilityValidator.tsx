@@ -3,13 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Eye,
-  Keyboard,
-  TextCursorInput,
-  Radar,
-  ChevronRight,
-} from "lucide-react";
+import { Radar, ChevronRight } from "lucide-react";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import ISSUES_DATA_SCHEMA from "@/lib/isssuesDataSchema";
@@ -40,7 +34,7 @@ const AccessibilityValidator: React.FC = () => {
   };
 
   const handleIssuesListClick = (type: IssueType) => {
-    // console.log("issue list clicked: ", type);
+    console.log("issue list clicked: ", type);
 
     setSelectedType(type);
     navigateTo(
@@ -73,14 +67,40 @@ const AccessibilityValidator: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="issues">
-        <TabsList className="mb-2 flex space-x-4 bg-dark-shade !py-6">
-          <TabsTrigger value="issues">Issues</TabsTrigger>
-          <TabsTrigger value="simulate">Simulate</TabsTrigger>
-          <TabsTrigger value="report">Report</TabsTrigger>
-        </TabsList>
+      {filteredIssues.length === 0 ? (
+        <ul className="space-y-2">
+          {ISSUES_DATA_SCHEMA.map((issue) => {
+            return (
+              <li
+                key={issue.id}
+                title={`Find ${issue.type} issues`}
+                className="group flex items-center justify-between rounded-xl bg-dark-shade transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-plum-light"
+              >
+                <button
+                  className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
+                  aria-label={issue.type}
+                  onClick={() => handleIssuesListClick(issue.type as IssueType)}
+                >
+                  <div className="flex w-full items-center justify-between gap-3">
+                    <div className="flex w-full items-center justify-start space-x-2.5">
+                      {issue.icon}
+                      <span>{issue.type}</span>
+                    </div>
+                    <ChevronRight className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-plum-light" />
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <Tabs defaultValue="issues">
+          <TabsList className="mb-2 flex space-x-4 bg-dark-shade !py-6">
+            <TabsTrigger value="issues">Issues</TabsTrigger>
+            <TabsTrigger value="simulate">Simulate</TabsTrigger>
+            <TabsTrigger value="report">Report</TabsTrigger>
+          </TabsList>
 
-        {filteredIssues.length > 0 && (
           <TabsContent value="issues">
             <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
               Identified Issues
@@ -93,7 +113,7 @@ const AccessibilityValidator: React.FC = () => {
             )}
 
             {filteredIssues.length > 0 ? (
-              <ul className="space-y-4">
+              <ul className="space-y-2">
                 {filteredIssues.map((issue) => {
                   const issueCount = issues.filter(
                     (i: IssueX) => i.type === issue.type,
@@ -162,9 +182,8 @@ const AccessibilityValidator: React.FC = () => {
               <p className="w-full text-left text-slate-400">No issues found</p>
             )}
           </TabsContent>
-        )}
 
-        <TabsContent value="simulate">
+          {/* <TabsContent value="simulate">
           <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
             Simulations
           </h3>
@@ -182,20 +201,22 @@ const AccessibilityValidator: React.FC = () => {
               Screen Reader
             </Button>
           </div>
-        </TabsContent>
+        </TabsContent> */}
 
-        <TabsContent value="report">
-          <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
-            Export Report
-          </h3>
-          <p className="mb-4 text-sm">
-            Generate a detailed report of all identified issues and suggestions.
-          </p>
-          <Button title="Download Report" variant="default">
-            Download Report
-          </Button>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="report">
+            <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
+              Export Report
+            </h3>
+            <p className="mb-4 text-sm">
+              Generate a detailed report of all identified issues and
+              suggestions.
+            </p>
+            <Button title="Download Report" variant="default">
+              Download Report
+            </Button>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 };

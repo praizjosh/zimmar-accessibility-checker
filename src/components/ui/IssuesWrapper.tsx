@@ -1,3 +1,5 @@
+console.log("Navigate to IssuesWrapper.tsx");
+
 import { useEffect } from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { Button } from "./button";
@@ -78,7 +80,7 @@ export default function IssuesWrapper({
 
   const issueGroupList = getIssueGroupList();
   const currentIssue = issueGroupList[currentIndex];
-
+  const { type, description } = currentIssue ?? {};
   function getIssueRecommendations(issueType: IssueType | string) {
     const issue = ISSUE_RECOMMENDATIONS.find(
       (entry) => entry[issueType.toLowerCase()] !== undefined,
@@ -104,7 +106,7 @@ export default function IssuesWrapper({
           <ChevronLeft className="!size-6" />
         </Button>
         <p className="text-lg capitalize tracking-wide text-white">
-          {currentIssue.type}
+          {type !== undefined && type}
         </p>
 
         {(selectedType === "Touch Target Size" ||
@@ -160,7 +162,7 @@ export default function IssuesWrapper({
       {issueGroupList.length > 0 ? (
         <>
           <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
-            {currentIssue.description}
+            {description}
           </p>
 
           {children}
@@ -223,7 +225,7 @@ export default function IssuesWrapper({
           </div>
         </>
       ) : (
-        <p>No {currentIssue.type} touch target issues found!</p>
+        <>{children}</>
       )}
     </div>
   );

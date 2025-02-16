@@ -18,7 +18,7 @@ import {
 } from "@/lib/utils";
 
 figma.showUI(__html__);
-figma.ui.resize(450, 500);
+figma.ui.resize(425, 500);
 
 // Handle messages from the UI
 figma.ui.onmessage = async (message) => {
@@ -152,17 +152,39 @@ figma.on("selectionchange", async () => {
   console.log("Selected nodes ==>: ", selectedNodes);
 
   selectedNodes.forEach((node) => {
+    // if (isTouchTargetTooSmall(node)) {
+    //   // Check size
+    //   const issue = createTouchTargetIssue(node, "Size");
+    //   console.log(`Issue identified: ${issue.description}`);
+    //   figma.ui.postMessage({ type: "issue", data: issue });
+    //   figma.notify(`Issue identified: ${issue.description}`);
+    // }
+
     if (isTouchTargetTooSmall(node)) {
-      // Check size
+      // Issue found: touch target size is too small
       const issue = createTouchTargetIssue(node, "Size");
-      console.log(`Issue identified: ${issue.description}`);
-      figma.notify(`Issue identified: ${issue.description}`);
+      figma.ui.postMessage({ type: "issue", data: issue }); // Send issue data to UI
+    } else {
+      // Passed the touch target size check
+      const issue = createTouchTargetIssue(node, "Size");
+      figma.ui.postMessage({
+        type: "passed",
+        data: Object.assign({ status: "passed" }, issue),
+      });
     }
+
     if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
       // Check spacing
       const issue = createTouchTargetIssue(node, "Spacing");
-      console.log(`Issue identified: ${issue.description}`);
-      figma.notify(`Issue identified: ${issue.description}`);
+      console.log(`Spacing Issue identified: ${issue.description}`);
+      figma.ui.postMessage({ type: "issue", data: issue });
+    } else {
+      // Passed the touch target spacing check
+      const issue = createTouchTargetIssue(node, "Spacing");
+      figma.ui.postMessage({
+        type: "passed",
+        data: Object.assign({ status: "passed" }, issue),
+      });
     }
   });
 
@@ -170,17 +192,36 @@ figma.on("selectionchange", async () => {
     const foregroundColor = extractForegroundColor(
       selectedNode.fills as Paint[],
     );
-    const backgroundColor = getNearestBackgroundColor(selectedNode);
+    const backgroundColor = getNearestBackgroundColor(selectedNode) || [
+      255, 255, 255,
+    ];
+    const fontWeight: number | typeof figma.mixed = selectedNode.fontWeight;
 
-    const compliance = getContrastCompliance(
+    const contrastScore = getContrastCompliance(
       foregroundColor,
-      backgroundColor || [255, 255, 255],
+      backgroundColor,
       selectedNode.fontSize as number,
-      isBoldFont(selectedNode.fontWeight as number),
+      isBoldFont(fontWeight, selectedNode, 0, selectedNode.characters.length),
     );
 
+    const issue = createContrastIssue(
+      selectedNode,
+      contrastScore,
+      foregroundColor,
+      backgroundColor,
+    );
+
+    if (contrastScore === "Fail") {
+      figma.ui.postMessage({ type: "issue", data: issue });
+    } else {
+      figma.ui.postMessage({
+        type: "passed",
+        data: Object.assign({ status: "passed", test: "Joshua" }, issue),
+      });
+    }
+
     figma.notify(
-      `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${compliance}`,
+      `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${contrastScore}`,
     );
   }
 });
