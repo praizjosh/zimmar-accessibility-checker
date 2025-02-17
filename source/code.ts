@@ -20,12 +20,18 @@ import {
 figma.showUI(__html__);
 figma.ui.resize(425, 500);
 
+// Global state to track quickcheck mode
+let isQuickCheckActive = false;
+
 // Handle messages from the UI
 figma.ui.onmessage = async (message) => {
   try {
-    if (message.type === "scan") {
-      console.log("Starting scan...");
+    if (message.type === "start-quickcheck") {
+      isQuickCheckActive = true;
+      // console.log("Quickcheck mode activated", isQuickCheckActive);
+    }
 
+    if (message.type === "scan") {
       const allTextNodes = figma.currentPage.findAll(
         (node) => node.type === "TEXT",
       ) as TextNode[];
@@ -76,9 +82,6 @@ figma.ui.onmessage = async (message) => {
       }
 
       for (const node of allPageNodes) {
-        // const isTarget = await isTouchTarget(node);
-        // console.log(`Node "${node.name}" for touch isTarget status:`, isTarget);
-
         if ("absoluteBoundingBox" in node) {
           const isTarget = await isTouchTarget(node);
 
@@ -104,13 +107,13 @@ figma.ui.onmessage = async (message) => {
           //   );
           // }
         } else {
-          console.log(
+          console.warn(
             `Node "${(node as SceneNode).name}" does not have absoluteBoundingBox.`,
           );
         }
       }
 
-      console.log(`Scan completed. Total issues identified: ${issues.length}`);
+      // console.log(`Scan completed. Total issues identified: ${issues.length}`);
       figma.ui.postMessage({ type: "loadIssues", issues });
     }
 
@@ -121,9 +124,9 @@ figma.ui.onmessage = async (message) => {
       if (node && node.type === "TEXT") {
         await figma.loadFontAsync(node.fontName as FontName);
         node.fontSize = message.fontSize;
-        console.log(
-          `Updated font size for node ${node.id} to ${message.fontSize}`,
-        );
+        // console.log(
+        //   `Updated font size for node ${node.id} to ${message.fontSize}`,
+        // );
       } else {
         console.warn(`Failed to update font size for node ${message.id}`);
       }
@@ -138,90 +141,89 @@ figma.ui.onmessage = async (message) => {
         console.warn(`Node with ID ${message.id} not found.`);
       }
     }
+
+    if (message.type === "cancel-quickcheck") {
+      isQuickCheckActive = false;
+      // console.log("Quickcheck mode deactivated");
+    }
   } catch (error) {
     console.error("An error occurred while processing the message:", error);
   }
 };
 
-// Handle selection change to provide dynamic feedback
 figma.on("selectionchange", async () => {
-  const selectedNode = figma.currentPage.selection[0];
-  console.log("Selected node:", selectedNode);
+  if (!isQuickCheckActive) {
+    // console.log(
+    //   "Quickcheck is not active. Skipping selection change logic.",
+    //   isQuickCheckActive,
+    // );
+    return;
+  }
 
-  const selectedNodes = figma.currentPage.selection;
-  console.log("Selected nodes ==>: ", selectedNodes);
+  try {
+    // console.log("quickcheck started...");
+    const selectedNodes = figma.currentPage.selection;
+    const detectedIssues: IssueX[] = []; // Collect all issues
 
-  selectedNodes.forEach((node) => {
-    // if (isTouchTargetTooSmall(node)) {
-    //   // Check size
-    //   const issue = createTouchTargetIssue(node, "Size");
-    //   console.log(`Issue identified: ${issue.description}`);
-    //   figma.ui.postMessage({ type: "issue", data: issue });
-    //   figma.notify(`Issue identified: ${issue.description}`);
-    // }
-
-    if (isTouchTargetTooSmall(node)) {
-      // Issue found: touch target size is too small
-      const issue = createTouchTargetIssue(node, "Size");
-      figma.ui.postMessage({ type: "issue", data: issue }); // Send issue data to UI
-    } else {
-      // Passed the touch target size check
-      const issue = createTouchTargetIssue(node, "Size");
-      figma.ui.postMessage({
-        type: "passed",
-        data: Object.assign({ status: "passed" }, issue),
-      });
+    if (!selectedNodes.length) {
+      detectedIssues.length = 0; // Clear detectedIssues if no nodes are selected
+      return;
     }
 
-    if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
-      // Check spacing
-      const issue = createTouchTargetIssue(node, "Spacing");
-      console.log(`Spacing Issue identified: ${issue.description}`);
-      figma.ui.postMessage({ type: "issue", data: issue });
-    } else {
-      // Passed the touch target spacing check
-      const issue = createTouchTargetIssue(node, "Spacing");
-      figma.ui.postMessage({
-        type: "passed",
-        data: Object.assign({ status: "passed" }, issue),
-      });
+    selectedNodes.forEach((node) => {
+      // Size Check
+      if (isTouchTargetTooSmall(node)) {
+        const issue = createTouchTargetIssue(node, "Size");
+        detectedIssues.push(issue);
+      }
+
+      // Spacing Check
+      if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
+        const issue = createTouchTargetIssue(node, "Spacing");
+        detectedIssues.push(issue);
+      }
+
+      // Typography Check
+      if (node.type === "TEXT" && typeof node.fontSize === "number") {
+        if (node.fontSize < MIN_FONT_SIZE) {
+          const issue = createTypographyIssue(node);
+          detectedIssues.push(issue);
+        }
+      }
+
+      // Contrast Check
+      if (node.type === "TEXT" && "fills" in node) {
+        const foregroundColor = extractForegroundColor(node.fills as Paint[]);
+        const backgroundColor = getNearestBackgroundColor(node) || [
+          255, 255, 255,
+        ];
+        const fontWeight = node.fontWeight;
+
+        const contrastScore = getContrastCompliance(
+          foregroundColor,
+          backgroundColor,
+          node.fontSize as number,
+          isBoldFont(fontWeight, node, 0, node.characters.length),
+        );
+
+        const issue = createContrastIssue(
+          node,
+          contrastScore,
+          foregroundColor,
+          backgroundColor,
+        );
+
+        if (contrastScore === "Fail") {
+          detectedIssues.push(issue);
+        }
+      }
+    });
+
+    // Set a single issue for immediate feedback (e.g., the first one)
+    if (detectedIssues.length > 0) {
+      figma.ui.postMessage({ type: "single-issue", data: detectedIssues });
     }
-  });
-
-  if (selectedNode && selectedNode.type === "TEXT" && "fills" in selectedNode) {
-    const foregroundColor = extractForegroundColor(
-      selectedNode.fills as Paint[],
-    );
-    const backgroundColor = getNearestBackgroundColor(selectedNode) || [
-      255, 255, 255,
-    ];
-    const fontWeight: number | typeof figma.mixed = selectedNode.fontWeight;
-
-    const contrastScore = getContrastCompliance(
-      foregroundColor,
-      backgroundColor,
-      selectedNode.fontSize as number,
-      isBoldFont(fontWeight, selectedNode, 0, selectedNode.characters.length),
-    );
-
-    const issue = createContrastIssue(
-      selectedNode,
-      contrastScore,
-      foregroundColor,
-      backgroundColor,
-    );
-
-    if (contrastScore === "Fail") {
-      figma.ui.postMessage({ type: "issue", data: issue });
-    } else {
-      figma.ui.postMessage({
-        type: "passed",
-        data: Object.assign({ status: "passed", test: "Joshua" }, issue),
-      });
-    }
-
-    figma.notify(
-      `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${contrastScore}`,
-    );
+  } catch (error) {
+    console.error("Error in quickcheck selection change handler:", error);
   }
 });

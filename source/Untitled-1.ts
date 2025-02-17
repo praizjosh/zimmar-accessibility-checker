@@ -187,3 +187,112 @@ figma.ui.onmessage = async (message) => {
     // }
   }
 };
+
+// Handle selection change to provide dynamic feedback
+// figma.on("selectionchange", async () => {
+//   // if (!isQuickCheckActive) return; // Exit if quickcheck is not active
+//   if (!isQuickCheckActive) {
+//     console.log(
+//       "Quickcheck is not active. Skipping selection change logic.",
+//       isQuickCheckActive,
+//     );
+//     return;
+//   }
+
+//   try {
+//     console.log("quickcheck started...");
+//     const selectedNode = figma.currentPage.selection[0];
+//     console.log("Selected node:", selectedNode);
+
+//     const selectedNodes = figma.currentPage.selection;
+//     console.log("Selected nodes ==>: ", selectedNodes);
+
+//     selectedNodes.forEach((node) => {
+//       if (isTouchTargetTooSmall(node)) {
+//         // Issue found: touch target size is too small
+//         const issue = createTouchTargetIssue(node, "Size");
+//         figma.ui.postMessage({ type: "single-issue", data: issue }); // Send issue data to UI
+//       } else {
+//         // Passed the touch target size check
+//         const issue = createTouchTargetIssue(node, "Size");
+//         figma.ui.postMessage({
+//           type: "passed",
+//           data: Object.assign({ status: "passed" }, issue),
+//         });
+//       }
+
+//       if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
+//         // Check spacing
+//         const issue = createTouchTargetIssue(node, "Spacing");
+//         console.log(`Spacing Issue identified: ${issue.description}`);
+//         figma.ui.postMessage({ type: "single-issue", data: issue });
+//       } else {
+//         // Passed the touch target spacing check
+//         const issue = createTouchTargetIssue(node, "Spacing");
+//         figma.ui.postMessage({
+//           type: "passed",
+//           data: Object.assign({ status: "passed" }, issue),
+//         });
+//       }
+
+//       // if (node.type === "TEXT") {
+//       //   if (
+//       //     typeof node.fontSize === "number" &&
+//       //     node.fontSize < MIN_FONT_SIZE
+//       //   ) {
+//       //     // Check typography issue
+//       //     const issue = createTypographyIssue(node);
+//       //     console.log("created single typographyIssue: ", issue);
+//       //     figma.ui.postMessage({ type: "single-issue", data: issue }); // Send issue data to UI
+//       //   } else {
+//       //     console.warn(
+//       //       "Font size check skipped: Font size is undefined or valid.",
+//       //     );
+//       //   }
+//       // }
+//     });
+
+//     if (
+//       selectedNode &&
+//       selectedNode.type === "TEXT" &&
+//       "fills" in selectedNode
+//     ) {
+//       const foregroundColor = extractForegroundColor(
+//         selectedNode.fills as Paint[],
+//       );
+//       const backgroundColor = getNearestBackgroundColor(selectedNode) || [
+//         255, 255, 255,
+//       ];
+//       const fontWeight: number | typeof figma.mixed = selectedNode.fontWeight;
+
+//       const contrastScore = getContrastCompliance(
+//         foregroundColor,
+//         backgroundColor,
+//         selectedNode.fontSize as number,
+//         isBoldFont(fontWeight, selectedNode, 0, selectedNode.characters.length),
+//       );
+
+//       const issue = createContrastIssue(
+//         selectedNode,
+//         contrastScore,
+//         foregroundColor,
+//         backgroundColor,
+//       );
+
+//       if (contrastScore === "Fail") {
+//         figma.ui.postMessage({ type: "single-issue", data: issue });
+//       } else {
+//         figma.ui.postMessage({
+//           type: "passed",
+//           data: Object.assign({ status: "passed" }, issue),
+//         });
+//       }
+
+//       figma.notify(
+//         `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${contrastScore}`,
+//       );
+//     }
+//   } catch (error) {
+//     console.error("Error in quickcheck selection change handler:", error);
+//   }
+// });

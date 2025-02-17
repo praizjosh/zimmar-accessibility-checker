@@ -1,5 +1,3 @@
-console.log("Navigate to IssuesWrapper.tsx");
-
 import { useEffect } from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { Button } from "./button";
@@ -55,8 +53,10 @@ export default function IssuesWrapper({
 }>) {
   const {
     currentIndex,
+    singleIssue,
     selectedType,
     navigateTo,
+    setSingleIssue,
     navigateToIssue,
     getIssueGroupList,
     // rescanIssues,
@@ -90,6 +90,11 @@ export default function IssuesWrapper({
 
   const recommendations = getIssueRecommendations(selectedType);
 
+  //   console.log("selectedType str: ", selectedType);
+  //   console.log("singleIssue obj in wrapper: ", singleIssue);
+  //   console.log("type string: ", type);
+  //   console.log("issueGroupList: ", issueGroupList);
+
   return (
     <div className="w-full px-3">
       <div className="flex w-full items-center justify-start gap-x-0.5">
@@ -99,14 +104,21 @@ export default function IssuesWrapper({
           size={"icon"}
           className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-plum-light"
           onClick={() => {
-            navigateTo("INDEX");
+            navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
             // rescanIssues();
+            if (issueGroupList.length === 0) {
+              setSingleIssue(null);
+              parent.postMessage(
+                { pluginMessage: { type: "cancel-quickcheck" } },
+                "*",
+              );
+            }
           }}
         >
           <ChevronLeft className="!size-6" />
         </Button>
         <p className="text-lg capitalize tracking-wide text-white">
-          {type !== undefined && type}
+          {type ?? selectedType}
         </p>
 
         {(selectedType === "Touch Target Size" ||
@@ -161,9 +173,11 @@ export default function IssuesWrapper({
 
       {issueGroupList.length > 0 ? (
         <>
-          <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
-            {description}
-          </p>
+          {description && (
+            <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
+              {description}
+            </p>
+          )}
 
           {children}
 
@@ -225,7 +239,46 @@ export default function IssuesWrapper({
           </div>
         </>
       ) : (
-        <>{children}</>
+        <>
+          {singleIssue?.description && (
+            <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
+              {singleIssue?.description}
+            </p>
+          )}
+
+          {children}
+
+          {/* {singleIssue && recommendations && recommendations.length > 0 && (
+            <Collapsible className="mb-6">
+              <CollapsibleTrigger asChild>
+                <div className="flex cursor-pointer items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4 py-2">
+                  <h4 className="text-sm font-semibold">Recommendations</h4>
+                  <Button title="View recommendations" variant="nude" size="sm">
+                    <ChevronsUpDown className="size-4" />
+                    <span className="sr-only">Toggle</span>
+                  </Button>
+                </div>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent className="my-2">
+                <div className="p-2.5 text-sm">
+                  {Array.isArray(recommendations) &&
+                  recommendations.length === 1 ? (
+                    <p>{recommendations[0]}</p>
+                  ) : Array.isArray(recommendations) ? (
+                    <ul className="ml-4 list-disc space-y-4">
+                      {recommendations.map(
+                        (recommendation: string, index: number) => (
+                          <li key={index}>{recommendation}</li>
+                        ),
+                      )}
+                    </ul>
+                  ) : null}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )} */}
+        </>
       )}
     </div>
   );

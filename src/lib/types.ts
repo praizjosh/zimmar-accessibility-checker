@@ -54,15 +54,18 @@ export interface IssuesStore {
 
 export type Routes =
   | "INDEX"
+  | "ISSUE_OVERVIEW_LIST_VIEW"
   | "ISSUE_LIST_VIEW"
   | "TOUCH_TARGET_ISSUE_LIST_VIEW";
 
 export type ROUTES_LIST = Record<Routes, JSX.Element>;
 
 export interface EnhancedIssuesStore extends IssuesStore {
+  singleIssue: IssueX | null; // An issue instance
   scanning: boolean;
   selectedType: string; // Selected issue type
   currentRoute: Routes;
+  setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
   navigateTo: (route: Routes) => void;
   setScanning: (isScanning: boolean) => void;
   setSelectedType: (type: IssueType) => void;

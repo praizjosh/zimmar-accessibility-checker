@@ -4,6 +4,7 @@ import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "./types";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   issues: [],
+  singleIssue: null,
   currentIndex: 0,
   currentRoute: "INDEX", // Default route
   selectedType: "",
@@ -20,6 +21,8 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     parent.postMessage({ pluginMessage: { type: "scan" } }, "*");
   },
 
+  setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
+
   setIssues: (newIssues: IssueX[]) => {
     set({ issues: newIssues });
   },
@@ -28,9 +31,12 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 
   getIssueGroupList: () => {
     const { issues, selectedType } = get();
-    return issues.filter(
-      (issue) => issue.type?.toLowerCase() === selectedType.toLowerCase(),
-    );
+
+    return issues.filter((issue) => {
+      return (
+        issue.type && issue.type.toLowerCase() === selectedType.toLowerCase()
+      );
+    });
   },
 
   updateIssue: (id: string, updates: Partial<IssueX>) => {
