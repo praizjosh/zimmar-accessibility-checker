@@ -192,6 +192,8 @@ figma.on("selectionchange", () => {
       isBoldFont(selectedNode.fontWeight as number),
     );
 
+    figma.ui.postMessage({ type: "single-issue", compliance });
+
     console.log(
       `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${compliance}`,
     );
