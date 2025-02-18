@@ -17,7 +17,9 @@
   "networkAccess": {
     "allowedDomains": [
       "https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css",
-      "https://rsms.me"
+      "https://rsms.me",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com"
     ]
   }
 }

@@ -26,39 +26,101 @@ export const collectNodes = (node: SceneNode, collectedNodes: SceneNode[]) => {
  * @param {number} [end] - The end of the range to check (exclusive).
  * @returns {boolean} True if the font or range contains bold font weight, otherwise false.
  */
-export const isBoldFont = (
-  fontWeight: number | symbol,
-  node?: TextNode,
-  start?: number,
-  end?: number,
-): boolean => {
-  // Default to false if fontWeight is falsy
-  if (!fontWeight) return false;
+// export const isBoldFont = (
+//   fontWeight: number | symbol,
+//   node?: TextNode,
+//   start?: number,
+//   end?: number,
+// ): boolean => {
+//   // Validate fontWeight
+//   if (!fontWeight) {
+//     console.warn("Font weight is falsy, returning false.");
+//     return false;
+//   }
 
-  // Handle mixed font weight
-  if (
-    fontWeight === figma.mixed &&
-    node &&
-    start !== undefined &&
-    end !== undefined
-  ) {
-    for (let i = start; i < end; i++) {
-      const rangeFontWeight = node.getRangeFontWeight(i, i + 1);
-      if (typeof rangeFontWeight === "number" && rangeFontWeight >= 700) {
-        // console.log("Bold font detected in range:", rangeFontWeight);
-        return true; // Found bold within the range
-      }
-    }
-    return false; // No bold font found in the range
-  }
+//   // Handle figma.mixed font weight
+//   if (fontWeight === figma.mixed) {
+//     if (!node || start === undefined || end === undefined) {
+//       console.warn(
+//         "Node, start, or end is missing for mixed font weight. Returning false.",
+//       );
+//       return false;
+//     }
 
-  // Validate and evaluate single font weight
-  if (typeof fontWeight !== "number") {
-    console.warn("Invalid fontWeight value:", fontWeight);
+//     try {
+//       for (let i = start; i < end; i++) {
+//         const rangeFontWeight = node.getRangeFontWeight(i, i + 1);
+//         if (typeof rangeFontWeight === "number" && rangeFontWeight >= 700) {
+//           return true; // Found bold weight
+//         }
+//       }
+//     } catch (error) {
+//       console.error("Error checking range font weight:", error);
+//     }
+
+//     return false; // No bold font detected in the range
+//   }
+
+//   // Validate fontWeight type
+//   if (typeof fontWeight !== "number") {
+//     console.warn("Invalid fontWeight type:", fontWeight);
+//     return false;
+//   }
+
+//   // Check if fontWeight is bold
+//   return fontWeight >= 700;
+// };
+
+// export const isBoldFont = (
+//   fontWeight: number | symbol,
+//   node?: TextNode,
+//   start?: number,
+//   end?: number,
+// ): boolean => {
+//   // Default to false if fontWeight is falsy
+//   if (!fontWeight) return false;
+
+//   // Handle mixed font weight
+//   if (
+//     fontWeight === figma.mixed &&
+//     node &&
+//     start !== undefined &&
+//     end !== undefined
+//   ) {
+//     for (let i = start; i < end; i++) {
+//       const rangeFontWeight = node.getRangeFontWeight(i, i + 1);
+//       if (typeof rangeFontWeight === "number" && rangeFontWeight >= 700) {
+//         // console.log("Bold font detected in range:", rangeFontWeight);
+//         return true; // Found bold within the range
+//       }
+//     }
+//     return false; // No bold font found in the range
+//   }
+
+//   // Validate and evaluate single font weight
+//   if (typeof fontWeight !== "number") {
+//     console.warn("Invalid fontWeight value:", fontWeight);
+//     return false;
+//   }
+
+//   // Return true if fontWeight is bold
+//   return fontWeight >= 700;
+// };
+
+export const isBoldFont = (fontWeight: number | symbol): boolean => {
+  // Skip processing if fontWeight is figma.mixed
+  if (fontWeight === figma.mixed) {
+    console.warn("Skipping node with figma.mixed fontWeight.");
     return false;
   }
 
-  // Return true if fontWeight is bold
+  // Validate fontWeight type
+  if (typeof fontWeight !== "number") {
+    console.warn("Invalid fontWeight type:", fontWeight);
+    return false;
+  }
+
+  // Check if fontWeight is bold
   return fontWeight >= 700;
 };
 
@@ -96,10 +158,12 @@ export function getContrastCompliance(
   fontSize: number,
   isBold: boolean = false,
 ): "AAA" | "AA" | "AAA Large" | "AA Large" | "Fail" {
-  const ratio: number = rgb(foregroundColor, backgroundColor); // returns a number
+  if (typeof fontSize !== "number" || isNaN(fontSize)) {
+    console.error("Invalid fontSize:", fontSize);
+    return "Fail"; // Fallback for invalid inputs
+  }
 
-  // console.log("isBold?: ", isBold);
-  // console.log("ratio res: ", ratio);
+  const ratio: number = rgb(foregroundColor, backgroundColor); // Ensure `rgb` handles errors gracefully
 
   // Check if the font qualifies as "large text" under WCAG standards
   const isLargeText: boolean = fontSize >= 18 || (isBold && fontSize >= 14);
@@ -117,9 +181,6 @@ export function getContrastCompliance(
     } else if (ratio >= 4.5) {
       return "AA"; // Normal text meeting AA standards
     }
-    // else if (ratio >= 3) {
-    //   return "AA Large"; // Normal text meeting AA Large standards
-    // }
   }
 
   return "Fail"; // Text does not meet any WCAG standards

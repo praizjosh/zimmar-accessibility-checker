@@ -72,22 +72,30 @@ figma.ui.onmessage = async (message) => {
 
           const fontWeight: number | typeof figma.mixed = node.fontWeight;
 
-          const contrastScore = getContrastCompliance(
-            foregroundColor,
-            backgroundColor,
-            node.fontSize as number,
-            isBoldFont(fontWeight, node, 0, node.characters.length),
-          );
-
-          if (contrastScore === "Fail") {
-            issues.push(
-              createContrastIssue(
-                node,
-                contrastScore,
+          try {
+            if (isBoldFont(fontWeight)) {
+              // Process bold font node
+              const contrastScore = getContrastCompliance(
                 foregroundColor,
                 backgroundColor,
-              ),
-            );
+                node.fontSize as number,
+                // isBoldFont(fontWeight, node, 0, node.characters.length),
+                isBoldFont(fontWeight),
+              );
+
+              if (contrastScore === "Fail") {
+                issues.push(
+                  createContrastIssue(
+                    node,
+                    contrastScore,
+                    foregroundColor,
+                    backgroundColor,
+                  ),
+                );
+              }
+            }
+          } catch (error) {
+            console.error("Error processing contrast compliance:", error);
           }
         }
       }
@@ -148,6 +156,7 @@ figma.ui.onmessage = async (message) => {
       }
     }
   } catch (error) {
+    // Log the error to the console, but don't stop execution
     console.error("An error occurred while processing the message:", error);
   }
 };
@@ -214,22 +223,28 @@ figma.on("selectionchange", async () => {
         ];
         const fontWeight = node.fontWeight;
 
-        const contrastScore = getContrastCompliance(
-          foregroundColor,
-          backgroundColor,
-          node.fontSize as number,
-          isBoldFont(fontWeight, node, 0, node.characters.length),
-        );
+        try {
+          if (isBoldFont(fontWeight)) {
+            const contrastScore = getContrastCompliance(
+              foregroundColor,
+              backgroundColor,
+              node.fontSize as number,
+              isBoldFont(fontWeight),
+            );
 
-        const issue = createContrastIssue(
-          node,
-          contrastScore,
-          foregroundColor,
-          backgroundColor,
-        );
-
-        if (contrastScore === "Fail") {
-          detectedIssues.push(issue);
+            if (contrastScore === "Fail") {
+              detectedIssues.push(
+                createContrastIssue(
+                  node,
+                  contrastScore,
+                  foregroundColor,
+                  backgroundColor,
+                ),
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error processing contrast compliance:", error);
         }
       }
     });
