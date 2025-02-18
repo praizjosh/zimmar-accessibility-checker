@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Target,
   CircleAlert,
@@ -19,7 +19,6 @@ import IssuesWrapper from "./IssuesWrapper";
 import { IssueX } from "@/lib/types";
 
 const TouchTargetNavigator: React.FC = () => {
-  const [passed, setPassed] = useState<boolean | null>(false);
   const {
     currentIndex,
     singleIssue,
@@ -37,8 +36,6 @@ const TouchTargetNavigator: React.FC = () => {
           issue.type?.toLowerCase() === selectedType.toLowerCase(),
       );
 
-      setPassed(true);
-
       setSingleIssue(singleIssue[0]);
     }
   };
@@ -49,20 +46,17 @@ const TouchTargetNavigator: React.FC = () => {
   const { characters, width, height, name, requiredSize } =
     currentIssue?.nodeData ?? {};
 
-  // eslint-disable-next-line no-console
-  console.log("passed", passed);
-
   return (
     <IssuesWrapper>
       {issueGroupList.length === 0 ? (
         <>
-          {singleIssue === undefined && (
-            <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
-              No issue detected
+          {singleIssue === null && (
+            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
+              No {selectedType} issue detected
             </p>
           )}
 
-          <div className="mb-2 flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade py-4 font-medium">
+          <div className="my-2 flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
             <div className="flex items-center justify-between gap-x-6 py-1.5">
               <div className="flex items-center text-sm">
                 <Target className="mr-3 size-5" />
@@ -107,7 +101,7 @@ const TouchTargetNavigator: React.FC = () => {
                 <span className="ml-2.5">
                   {(singleIssue?.nodeData.width ?? 0) &&
                   (singleIssue?.nodeData.height ?? 0)
-                    ? `${singleIssue?.nodeData.width ?? 0} x ${singleIssue?.nodeData.height ?? 0}px`
+                    ? `${(singleIssue?.nodeData.width ?? 0).toFixed(1)} x ${(singleIssue?.nodeData.height ?? 0).toFixed(1)}px`
                     : null}
                 </span>
               </div>
@@ -129,25 +123,23 @@ const TouchTargetNavigator: React.FC = () => {
               </span>
             </div>
 
-            {singleIssue?.status !== "passed" && (
-              <div className="flex items-center justify-between py-1.5">
-                <div className="flex items-center text-sm">
-                  <OctagonAlert className="mr-3 size-5" />
-                  <span className="text-sm">Severity: </span>
-                </div>
-                <span
-                  className={`font-medium capitalize ${
-                    singleIssue?.severity === "critical"
-                      ? "text-red-500"
-                      : singleIssue?.severity === "major"
-                        ? "text-amber-500"
-                        : "text-orange-500"
-                  }`}
-                >
-                  {singleIssue?.severity}
-                </span>
+            <div className="flex items-center justify-between py-1.5">
+              <div className="flex items-center text-sm">
+                <OctagonAlert className="mr-3 size-5" />
+                <span className="text-sm">Severity: </span>
               </div>
-            )}
+              <span
+                className={`font-medium capitalize ${
+                  singleIssue?.severity === "critical"
+                    ? "text-red-500"
+                    : singleIssue?.severity === "major"
+                      ? "text-amber-500"
+                      : "text-orange-500"
+                }`}
+              >
+                {singleIssue?.severity}
+              </span>
+            </div>
           </div>
         </>
       ) : (
@@ -189,7 +181,7 @@ const TouchTargetNavigator: React.FC = () => {
                 </TooltipProvider>
               )}
               <span className="ml-2.5">
-                {width ?? 0} x {height ?? 0}px
+                {(width ?? 0).toFixed(1)} x {(height ?? 0).toFixed(1)}px
               </span>
             </div>
           </div>

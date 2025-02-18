@@ -8,6 +8,7 @@ import {
   isTouchTarget,
   isTouchTargetTooClose,
   isTouchTargetTooSmall,
+  postMessageToUI,
 } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
 import {
@@ -28,7 +29,18 @@ figma.ui.onmessage = async (message) => {
   try {
     if (message.type === "start-quickcheck") {
       isQuickCheckActive = true;
-      // console.log("Quickcheck mode activated", isQuickCheckActive);
+      // console.log("Is Quickcheck mode activated in init? ", isQuickCheckActive);
+
+      postMessageToUI("quickcheck-active", isQuickCheckActive);
+
+      // console.log("quickcheck-active Message sent:", {
+      //   type: "quickcheck-active",
+      //   data: isQuickCheckActive,
+      // });
+    }
+
+    if (message.type === "cancel-quickcheck") {
+      isQuickCheckActive = false;
     }
 
     if (message.type === "scan") {
@@ -92,20 +104,19 @@ figma.ui.onmessage = async (message) => {
               // Check touch target size
               const issue = createTouchTargetIssue(node, "Size");
               // console.log("Issue identified:", issue);
-              issues.push(issue);
+              if (issue) {
+                issues.push(issue);
+              }
             }
             if (isTouchTargetTooClose(node, [...allPageNodes])) {
               // Check touch target spacing
               const issue = createTouchTargetIssue(node, "Spacing");
               // console.log("Touch Target Spacing Issue Created:", issue);
-              issues.push(issue);
+              if (issue) {
+                issues.push(issue);
+              }
             }
           }
-          // else {
-          //   console.log(
-          //     `Node "${node.name}" is NOT identified as a touch target.`,
-          //   );
-          // }
         } else {
           console.warn(
             `Node "${(node as SceneNode).name}" does not have absoluteBoundingBox.`,
@@ -113,8 +124,7 @@ figma.ui.onmessage = async (message) => {
         }
       }
 
-      // console.log(`Scan completed. Total issues identified: ${issues.length}`);
-      figma.ui.postMessage({ type: "loadIssues", issues });
+      postMessageToUI("loadIssues", issues);
     }
 
     if (message.type === "updateFontSize") {
@@ -124,9 +134,6 @@ figma.ui.onmessage = async (message) => {
       if (node && node.type === "TEXT") {
         await figma.loadFontAsync(node.fontName as FontName);
         node.fontSize = message.fontSize;
-        // console.log(
-        //   `Updated font size for node ${node.id} to ${message.fontSize}`,
-        // );
       } else {
         console.warn(`Failed to update font size for node ${message.id}`);
       }
@@ -141,27 +148,29 @@ figma.ui.onmessage = async (message) => {
         console.warn(`Node with ID ${message.id} not found.`);
       }
     }
-
-    if (message.type === "cancel-quickcheck") {
-      isQuickCheckActive = false;
-      // console.log("Quickcheck mode deactivated");
-    }
   } catch (error) {
     console.error("An error occurred while processing the message:", error);
   }
 };
 
 figma.on("selectionchange", async () => {
+  // console.log("Selection change detected.");
+
   if (!isQuickCheckActive) {
-    // console.log(
-    //   "Quickcheck is not active. Skipping selection change logic.",
-    //   isQuickCheckActive,
-    // );
+    console.log(
+      "Quickcheck is not active. Skipping single selection change logic.",
+      isQuickCheckActive,
+    );
     return;
   }
 
+  console.log(
+    "Is Quickcheck mode activated in selectionchange fn? ",
+    isQuickCheckActive,
+  );
+
   try {
-    // console.log("quickcheck started...");
+    console.log("quickcheck started and waiting for user selection...");
     const selectedNodes = figma.currentPage.selection;
     const detectedIssues: IssueX[] = []; // Collect all issues
 
@@ -171,16 +180,23 @@ figma.on("selectionchange", async () => {
     }
 
     selectedNodes.forEach((node) => {
+      console.log("Processing node:", node.name);
+
       // Size Check
       if (isTouchTargetTooSmall(node)) {
         const issue = createTouchTargetIssue(node, "Size");
-        detectedIssues.push(issue);
+        if (issue) {
+          detectedIssues.push(issue);
+        }
       }
 
       // Spacing Check
       if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
         const issue = createTouchTargetIssue(node, "Spacing");
-        detectedIssues.push(issue);
+        // detectedIssues.push(issue);
+        if (issue) {
+          detectedIssues.push(issue);
+        }
       }
 
       // Typography Check
@@ -219,9 +235,9 @@ figma.on("selectionchange", async () => {
       }
     });
 
-    // Set a single issue for immediate feedback (e.g., the first one)
-    if (detectedIssues.length > 0) {
-      figma.ui.postMessage({ type: "single-issue", data: detectedIssues });
+    if (detectedIssues.length) {
+      // console.log("Detected issues being sent to UI:", detectedIssues);
+      postMessageToUI("detected-issue", detectedIssues);
     }
   } catch (error) {
     console.error("Error in quickcheck selection change handler:", error);

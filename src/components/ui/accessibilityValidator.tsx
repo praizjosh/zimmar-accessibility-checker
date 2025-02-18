@@ -1,11 +1,12 @@
-/* eslint-disable no-console */
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Radar, ChevronRight } from "lucide-react";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import ISSUES_DATA_SCHEMA from "@/lib/isssuesDataSchema";
+import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
+import { postMessageToBackend } from "@/lib/figmaUtils";
+import LoadingSpinner from "./loadingSpinner";
 
 const AccessibilityValidator: React.FC = () => {
   const {
@@ -19,26 +20,24 @@ const AccessibilityValidator: React.FC = () => {
 
   // Listen for messages from the backend
   onmessage = (event) => {
-    const { type, issues } = event.data.pluginMessage;
+    if (!event.data || !event.data.pluginMessage) {
+      console.error("Invalid message format:", event.data);
+      return;
+    }
+
+    const { type, data } = event.data.pluginMessage;
+
     if (type === "loadIssues") {
-      setIssues(issues);
+      setIssues(data);
       setScanning(false);
       navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
     }
   };
 
-  const handleIssuesListClick = (
-    type: IssueType,
-    quickCheck: boolean = false,
-  ) => {
+  const handleIssuesListClick = (type: IssueType) => {
+    postMessageToBackend("start-quickcheck");
+
     setSelectedType(type);
-
-    console.log("quickCheck status: ", quickCheck);
-
-    if (quickCheck) {
-      // Quick check for touch target issues
-      parent.postMessage({ pluginMessage: { type: "start-quickcheck" } }, "*");
-    }
 
     navigateTo(
       type === "Touch Target Size" || type === "Touch Target Spacing"
@@ -48,7 +47,7 @@ const AccessibilityValidator: React.FC = () => {
   };
 
   return (
-    <div className="flex w-full flex-col space-y-5">
+    <div className="flex size-full flex-col space-y-5">
       <Card className="border border-rose-50/10 bg-dark-shade text-white">
         <CardContent className="flex flex-col items-center p-6">
           {/* <h2 className="text-lg font-semibold">Accessibility Score</h2>
@@ -59,14 +58,19 @@ const AccessibilityValidator: React.FC = () => {
             className="w-full bg-accent"
             title="Start scan"
             onClick={startScan}
+            disabled={scanning}
           >
-            <Radar className="mr-2" />
+            {scanning ? (
+              <LoadingSpinner className="mr-2 fill-accent" />
+            ) : (
+              <Radar className="mr-2" />
+            )}
+
             <span>{scanning ? "Scanning..." : "Start Scan"}</span>
           </Button>
         </CardContent>
       </Card>
 
-      {/* {filteredIssues.length === 0 ? ( */}
       <ul className="space-y-2">
         {ISSUES_DATA_SCHEMA.map((issue) => {
           return (
@@ -78,9 +82,7 @@ const AccessibilityValidator: React.FC = () => {
               <button
                 className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
                 aria-label={issue.type}
-                onClick={() =>
-                  handleIssuesListClick(issue.type as IssueType, true)
-                }
+                onClick={() => handleIssuesListClick(issue.type as IssueType)}
               >
                 <div className="flex w-full items-center justify-between gap-3">
                   <div className="flex w-full items-center justify-start space-x-2.5">
@@ -95,8 +97,11 @@ const AccessibilityValidator: React.FC = () => {
         })}
       </ul>
 
-      <div className="w-full max-w-lg text-center text-xs text-rose-50/40">
-        <p>&copy; {new Date().getFullYear()} Zimmar Technologies</p>
+      <div className="flex size-full max-w-lg flex-col items-center text-xs text-rose-50/40">
+        <p className="mt-auto">
+          &copy; {new Date().getFullYear()} Zimmar Technologies. All rights
+          reserved.
+        </p>
       </div>
     </div>
   );

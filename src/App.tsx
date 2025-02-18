@@ -16,11 +16,7 @@ export default function App() {
   };
 
   return (
-    <div className="container mx-auto flex min-h-screen w-full flex-col p-5 lg:max-w-xl">
-      {/* Main Accessibility Validator Page */}
-      {/* <AccessibilityValidator /> */}
-      {/* <NavigationButtons /> <br /> */}
-      {/* <TouchTargetNavigator /> */}
+    <div className="container mx-auto flex size-full flex-col p-5 lg:max-w-xl">
       {RoutesMap[currentRoute]}
     </div>
   );

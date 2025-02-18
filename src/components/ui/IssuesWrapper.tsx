@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { Button } from "./button";
 import Separator from "./separator";
@@ -14,43 +14,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MIN_FONT_SIZE } from "@/lib/constants";
-import { IssueType } from "@/lib/types";
-
-type IssueRecommendations = {
-  [key: string]: string[];
-};
-
-const ISSUE_RECOMMENDATIONS: IssueRecommendations[] = [
-  {
-    contrast: [
-      "Increase the contrast ratio to at least 4.5:1 for normal text and 3:1 for large text.",
-      "To improve contrast, use a darker text color or a lighter background color",
-    ],
-  },
-  {
-    typography: [
-      `Ensure font size is at least ${MIN_FONT_SIZE}px to enhance readability and comply with WCAG "AA" standards.`,
-      "Use a minimum font size of 16px for body text and 14px for buttons and other interactive elements.",
-    ],
-  },
-  {
-    "touch target size": [
-      "Increase the touch target size to at least 44x44 pixels to ensure better accessibility on mobile devices. Maintain adequate spacing between interactive elements.",
-    ],
-  },
-  {
-    "touch target spacing": [
-      "The touch target spacing should be at least 8px to the nearest element in all directions.",
-    ],
-  },
-];
+import { IssueType, IssueX } from "@/lib/types";
+import { postMessageToBackend } from "@/lib/figmaUtils";
+import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
 
 export default function IssuesWrapper({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isQuickCheckActive, setIsQuickCheckActive] = useState<boolean>(false);
   const {
     currentIndex,
     singleIssue,
@@ -61,6 +34,32 @@ export default function IssuesWrapper({
     getIssueGroupList,
     // rescanIssues,
   } = useIssuesStore();
+
+  onmessage = (event) => {
+    const { type, data } = event.data.pluginMessage;
+
+    if (type === "detected-issue") {
+      // console.log("detectedIssues onmessage: ", data);
+      const singleIssue = data.filter(
+        (issue: IssueX) =>
+          issue.type?.toLowerCase() === selectedType.toLowerCase(),
+      );
+
+      if (singleIssue.length === 0) {
+        // console.log("No issues found for selected type:", selectedType);
+        setSingleIssue(null);
+        return;
+      }
+
+      // console.log("singleIssue filtered: ", singleIssue);
+      setSingleIssue(singleIssue[0] || data[0]); // Fallback to the first issue
+    }
+
+    if (type === "quickcheck-active") {
+      // console.log("quickcheck-active onmessage frm backend: ", data);
+      setIsQuickCheckActive(data);
+    }
+  };
 
   useEffect(() => {
     navigateToIssue(0); // Navigate to the first issue when Issue view has been navigated to
@@ -90,13 +89,8 @@ export default function IssuesWrapper({
 
   const recommendations = getIssueRecommendations(selectedType);
 
-  //   console.log("selectedType str: ", selectedType);
-  //   console.log("singleIssue obj in wrapper: ", singleIssue);
-  //   console.log("type string: ", type);
-  //   console.log("issueGroupList: ", issueGroupList);
-
   return (
-    <div className="w-full px-3">
+    <div className="size-full">
       <div className="flex w-full items-center justify-start gap-x-0.5">
         <Button
           title="Back to Issues Overview"
@@ -104,14 +98,13 @@ export default function IssuesWrapper({
           size={"icon"}
           className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-plum-light"
           onClick={() => {
-            navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
-            // rescanIssues();
-            if (issueGroupList.length === 0) {
+            if (isQuickCheckActive) {
+              navigateTo("INDEX");
               setSingleIssue(null);
-              parent.postMessage(
-                { pluginMessage: { type: "cancel-quickcheck" } },
-                "*",
-              );
+
+              postMessageToBackend("cancel-quickcheck");
+            } else {
+              navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
             }
           }}
         >
@@ -174,7 +167,7 @@ export default function IssuesWrapper({
       {issueGroupList.length > 0 ? (
         <>
           {description && (
-            <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
+            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
               {description}
             </p>
           )}
@@ -213,6 +206,7 @@ export default function IssuesWrapper({
           )}
 
           <div className="my-4 flex w-full items-center justify-between space-x-2">
+            {/* Pagination */}
             <Button
               title="Goto previous issue"
               variant="ghost"
@@ -241,7 +235,7 @@ export default function IssuesWrapper({
       ) : (
         <>
           {singleIssue?.description && (
-            <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
+            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
               {singleIssue?.description}
             </p>
           )}

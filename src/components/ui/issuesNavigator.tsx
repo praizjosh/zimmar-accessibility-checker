@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
   CaseSensitive,
@@ -16,10 +16,9 @@ import {
 import Input from "./input";
 import { MIN_FONT_SIZE } from "@/lib/constants";
 import IssuesWrapper from "./IssuesWrapper";
-import { IssueX } from "@/lib/types";
+import { postMessageToBackend } from "@/lib/figmaUtils";
 
 const IssuesNavigator: React.FC = () => {
-  const [passed, setPassed] = useState<boolean | null>(false);
   const {
     currentIndex,
     singleIssue,
@@ -28,22 +27,6 @@ const IssuesNavigator: React.FC = () => {
     getIssueGroupList,
     setSingleIssue,
   } = useIssuesStore();
-
-  onmessage = (event) => {
-    // console.log("window event data ==> ", event.data);
-    const { type, data } = event.data.pluginMessage;
-
-    if (type === "single-issue") {
-      const singleIssue = data.filter(
-        (issue: IssueX) =>
-          issue.type?.toLowerCase() === selectedType.toLowerCase(),
-      );
-
-      setPassed(true);
-
-      setSingleIssue(singleIssue[0]);
-    }
-  };
 
   const handleFontSizeChange = (
     id: string,
@@ -63,34 +46,16 @@ const IssuesNavigator: React.FC = () => {
           },
         };
 
-        setSingleIssue(updatedSingleIssue); // Update the singleIssue in the store
+        setSingleIssue(updatedSingleIssue); // Update the singleIssue in the global store
 
-        parent.postMessage(
-          {
-            pluginMessage: {
-              type: "updateFontSize",
-              id,
-              fontSize: newSize,
-            },
-          },
-          "*",
-        );
+        postMessageToBackend("updateFontSize", { id, fontSize: newSize });
       } else {
         // Update current issue in the issues list
         updateIssue(id, {
           nodeData: { ...currentIssue.nodeData, fontSize: newSize },
         });
 
-        parent.postMessage(
-          {
-            pluginMessage: {
-              type: "updateFontSize",
-              id,
-              fontSize: newSize,
-            },
-          },
-          "*",
-        );
+        postMessageToBackend("updateFontSize", { id, fontSize: newSize });
       }
     }
   };
@@ -105,18 +70,18 @@ const IssuesNavigator: React.FC = () => {
   const fontSizeIsValid = getFontSize() >= MIN_FONT_SIZE;
 
   // eslint-disable-next-line no-console
-  console.log("passed", passed);
+  // console.log("singleIssue state in store: ", singleIssue);
 
   return (
     <IssuesWrapper>
       {issueGroupList.length === 0 ? (
         <>
-          {singleIssue === undefined && (
-            <p className="mb-2.5 text-pretty px-3 text-lg font-semibold text-plum-light">
-              No issue detected
+          {singleIssue === null && (
+            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
+              No {selectedType} issue detected
             </p>
           )}
-          <div className="mb-2 flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade py-4 font-medium">
+          <div className="my-2 flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
             <div className="flex items-center justify-between gap-x-6 py-1.5">
               <div className="flex items-center text-sm">
                 <CaseSensitive className="mr-3 size-5" />
@@ -221,25 +186,23 @@ const IssuesNavigator: React.FC = () => {
               </div>
             )}
 
-            {singleIssue?.status !== "passed" && (
-              <div className="flex items-center justify-between py-1.5">
-                <div className="flex items-center text-sm">
-                  <OctagonAlert className="mr-3 size-5" />
-                  <span className="text-sm">Severity: </span>
-                </div>
-                <span
-                  className={`font-medium capitalize ${
-                    singleIssue?.severity === "critical"
-                      ? "text-red-500"
-                      : singleIssue?.severity === "major"
-                        ? "text-amber-500"
-                        : "text-orange-500"
-                  }`}
-                >
-                  {singleIssue?.severity}
-                </span>
+            <div className="flex items-center justify-between py-1.5">
+              <div className="flex items-center text-sm">
+                <OctagonAlert className="mr-3 size-5" />
+                <span className="text-sm">Severity: </span>
               </div>
-            )}
+              <span
+                className={`font-medium capitalize ${
+                  singleIssue?.severity === "critical"
+                    ? "text-red-500"
+                    : singleIssue?.severity === "major"
+                      ? "text-amber-500"
+                      : "text-orange-500"
+                }`}
+              >
+                {singleIssue?.severity}
+              </span>
+            </div>
           </div>
         </>
       ) : (

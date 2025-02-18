@@ -1,15 +1,5 @@
 import { RGBColor } from "wcag-contrast";
 
-export interface Issue {
-  type: string;
-  description: string;
-  severity: string; // Options: High, Medium, Low
-  id: string;
-  fontSize: number;
-  nodeType: string | string[];
-  node?: unknown;
-}
-
 export type Severity = "critical" | "major" | "minor";
 
 export type NodeDataType = {

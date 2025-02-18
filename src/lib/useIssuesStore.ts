@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { create } from "zustand";
 import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "./types";
+import { postMessageToBackend } from "./figmaUtils";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   issues: [],
@@ -18,7 +19,7 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   startScan: () => {
     const { setScanning } = get();
     setScanning(true);
-    parent.postMessage({ pluginMessage: { type: "scan" } }, "*");
+    postMessageToBackend("scan");
   },
 
   setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),

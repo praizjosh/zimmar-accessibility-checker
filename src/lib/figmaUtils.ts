@@ -4,6 +4,29 @@ import { RGBColor } from "wcag-contrast";
 import { MIN_TOUCH_TARGET_SIZE, MIN_TOUCH_TARGET_SPACING } from "./constants";
 
 /**
+ * Sends a message to the Figma UI.
+ *
+ * @param {string} type - The type of the message.
+ * @param {unknown} data - The data to be sent with the message.
+ */
+export function postMessageToUI(type: string, data: unknown) {
+  figma.ui.postMessage({ type, data });
+}
+
+/**
+ * Sends a message to the backend using the Figma plugin API.
+ *
+ * @param type - The type of the message to be sent.
+ * @param payload - An optional object containing additional data to be sent with the message.
+ */
+export function postMessageToBackend(
+  type: string,
+  payload: Record<string, unknown> = {},
+) {
+  parent.postMessage({ pluginMessage: { type, ...payload } }, "*");
+}
+
+/**
  * Extracts the foreground color from the given Paint array.
  *
  * @param {Paint[]} nodeFills - Array of Paint objects from a Figma node.
@@ -160,18 +183,6 @@ export const isTouchTargetTooClose = (
       Math.abs(nodeBounds.y + nodeBounds.height - otherBounds.y) <
         MIN_TOUCH_TARGET_SPACING;
 
-    // console.log(`Node 1 Bounds:`, nodeBounds);
-    // console.log(`Node 2 Bounds:`, otherBounds);
-    // console.log(
-    //   `Horizontal Proximity:`,
-    //   Math.abs(nodeBounds.x - otherBounds.x),
-    // );
-    // console.log(`Vertical Proximity:`, Math.abs(nodeBounds.y - otherBounds.y));
-    // console.log(
-    //   `Is Too Close:`,
-    //   isTooCloseHorizontally && isTooCloseVertically,
-    // );
-
     return isTooCloseHorizontally && isTooCloseVertically;
   });
 };
@@ -186,19 +197,49 @@ export const isTouchTargetTooClose = (
 export const createTouchTargetIssue = (
   node: SceneNode,
   issueType: "Size" | "Spacing",
-): IssueX => ({
-  description:
-    issueType === "Size"
-      ? "Touch target size is too small for accessibility. Should be at least 48x48 pixels."
-      : "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
-  severity: "minor",
-  type: issueType === "Size" ? "Touch Target Size" : "Touch Target Spacing",
-  nodeData: {
-    id: node.id,
-    name: node.name,
-    width: "width" in node ? node.width : undefined,
-    height: "height" in node ? node.height : undefined,
-    nodeType: node.type,
-    requiredSize: `${MIN_TOUCH_TARGET_SIZE} x ${MIN_TOUCH_TARGET_SIZE}px`,
-  },
-});
+): IssueX | null => {
+  if (!node || typeof node !== "object" || !node.id || !node.name) {
+    console.error("Invalid node passed to createTouchTargetIssue:", node);
+    return null; // Return null for invalid input
+  }
+
+  // Ensure width and height are only added if the node supports them
+  const hasDimensions = "width" in node && "height" in node;
+
+  return {
+    description:
+      issueType === "Size"
+        ? "Touch target size is too small for accessibility. Should be at least 44x44 pixels."
+        : "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
+    severity: "minor",
+    type: issueType === "Size" ? "Touch Target Size" : "Touch Target Spacing",
+    nodeData: {
+      id: node.id,
+      name: node.name,
+      width: hasDimensions ? node.width : undefined,
+      height: hasDimensions ? node.height : undefined,
+      nodeType: node.type,
+      requiredSize: `${MIN_TOUCH_TARGET_SIZE} x ${MIN_TOUCH_TARGET_SIZE}px`,
+    },
+  };
+};
+
+// export const createTouchTargetIssue = (
+//   node: SceneNode,
+//   issueType: "Size" | "Spacing",
+// ): IssueX => ({
+//   description:
+//     issueType === "Size"
+//       ? "Touch target size is too small for accessibility. Should be at least 48x48 pixels."
+//       : "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
+//   severity: "minor",
+//   type: issueType === "Size" ? "Touch Target Size" : "Touch Target Spacing",
+//   nodeData: {
+//     id: node.id,
+//     name: node.name,
+//     width: "width" in node ? node.width : undefined,
+//     height: "height" in node ? node.height : undefined,
+//     nodeType: node.type,
+//     requiredSize: `${MIN_TOUCH_TARGET_SIZE} x ${MIN_TOUCH_TARGET_SIZE}px`,
+//   },
+// });

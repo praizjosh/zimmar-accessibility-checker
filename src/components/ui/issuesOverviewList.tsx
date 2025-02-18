@@ -5,43 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import ISSUES_DATA_SCHEMA from "@/lib/isssuesDataSchema";
+import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
+import { saveAs } from "file-saver";
 import Separator from "./separator";
 
 const IssuesOverviewList: React.FC = () => {
-  const {
-    issues,
-    // issueGroupList,
-    setIssues,
-    setScanning,
-    setSelectedType,
-    // setSingleIssue
-    navigateTo,
-  } = useIssuesStore();
+  const { issues, setIssues, setSelectedType, navigateTo } = useIssuesStore();
 
-  // Listen for messages from the backend
-  onmessage = (event) => {
-    // eslint-disable-next-line no-console
-    console.log("window event data ==> ", event.data);
+  // onmessage = (event) => {
+  //   const { type, issues } = event.data.pluginMessage;
+  //   if (type === "loadIssues") {
+  //     setIssues(issues);
+  //     setScanning(false);
+  //   }
+  // };
 
-    const { type, issues } = event.data.pluginMessage;
-    if (type === "loadIssues") {
-      setIssues(issues);
-      setScanning(false);
-    }
-  };
-
-  const handleIssuesListClick = (
-    type: IssueType,
-    quickCheck: boolean = false,
-  ) => {
+  const handleIssuesListClick = (type: IssueType) => {
     setSelectedType(type);
-
-    if (quickCheck) {
-      // Quick check for touch target issues
-      parent.postMessage({ pluginMessage: { type: "start-quickcheck" } }, "*");
-    }
-
     navigateTo(
       type === "Touch Target Size" || type === "Touch Target Spacing"
         ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
@@ -53,8 +33,64 @@ const IssuesOverviewList: React.FC = () => {
     issues?.some((i: IssueX) => i.type === issue.type),
   );
 
+  // Convert issues to structured data for reporting
+  const formatIssuesForReport = () => {
+    return issues.map((issue) => {
+      const elementName =
+        issue.nodeData?.nodeType === "TEXT"
+          ? issue.nodeData?.characters
+          : issue.nodeData?.name;
+      return {
+        elementType: issue.nodeData?.nodeType || "N/A",
+        elementName: elementName || "N/A",
+        description: issue.description,
+        severity: issue.severity,
+        type: issue.type,
+        wcagContrastScore: issue.nodeData?.contrastScore || "N/A",
+        fontSize: issue.nodeData?.fontSize || "N/A",
+      };
+    });
+  };
+
+  // Generate CSV report
+  const generateCSV = () => {
+    const formattedIssues = formatIssuesForReport();
+    const csvHeader =
+      "Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score,Font Size\n";
+
+    const csvRows = formattedIssues.map((issue) => {
+      // Handle missing or undefined values gracefully
+      return [
+        `"${issue.elementType || "N/A"}"`, // Element Type
+        `"${issue.elementName}"`, // Element Name
+        `"${issue.type || "N/A"}"`, // Issue Type
+        `"${issue.description || ""}"`, // Description
+        `"${issue.severity || "N/A"}"`, // Severity
+        `"${issue.wcagContrastScore || "N/A"}"`, // WCAG Score
+        `"${issue.fontSize || "N/A"}"`, // Font Size
+      ].join(",");
+    });
+
+    // Join the header and rows to form the CSV content
+    const csvContent = [csvHeader, ...csvRows].join("\n");
+
+    // Create a Blob for the CSV content
+    const csvBlob = new Blob([csvContent], { type: "text/csv" });
+
+    saveAs(csvBlob, "accessibility-issues-report.csv");
+  };
+
+  // Generate JSON report
+  const generateJSON = () => {
+    const formattedIssues = formatIssuesForReport();
+    const jsonBlob = new Blob([JSON.stringify(formattedIssues, null, 2)], {
+      type: "application/json",
+    });
+    saveAs(jsonBlob, "accessibility-issues-report.json");
+  };
+
   return (
-    <div className="w-full px-3">
+    <div className="size-full">
       <div className="flex w-full items-center justify-start gap-x-0.5">
         <Button
           title="Back to Issues Overview"
@@ -63,25 +99,19 @@ const IssuesOverviewList: React.FC = () => {
           className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-plum-light"
           onClick={() => {
             navigateTo("INDEX");
-            // if (issueGroupList.length === 0) {
-            //   setSingleIssue(null);
-            //   parent.postMessage(
-            //     { pluginMessage: { type: "cancel-quickcheck" } },
-            //     "*",
-            //   );
-            // }
+            setIssues([]);
           }}
         >
           <ChevronLeft className="!size-6" />
         </Button>
-        <p className="text-lg capitalize tracking-wide text-white">
+        <p className="font-open-sans text-lg capitalize tracking-wide text-white">
           Scan Results
         </p>
       </div>
 
       <Separator className="my-2 h-px !bg-rose-50/10" />
 
-      <div className="flex w-full flex-col space-y-5">
+      <div className="flex size-full flex-col space-y-5">
         <Tabs defaultValue="issues">
           <TabsList className="mb-2 flex space-x-4 bg-dark-shade !py-6">
             <TabsTrigger value="issues">Issues</TabsTrigger>
@@ -90,18 +120,18 @@ const IssuesOverviewList: React.FC = () => {
           </TabsList>
 
           <TabsContent value="issues">
-            <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
+            <h3 className="mb-4 font-open-sans text-lg font-semibold tracking-wide text-[#C9C9E0]">
               Identified Issues
             </h3>
 
             {issues.length > 0 && (
-              <p className="mb-4 text-sm">
+              <p className="mb-4 font-open-sans text-sm">
                 There are {issues.length} issues detected on this screen.
               </p>
             )}
 
             {filteredIssues.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2 last:mb-2.5">
                 {filteredIssues.map((issue) => {
                   const issueCount = issues.filter(
                     (i: IssueX) => i.type === issue.type,
@@ -199,10 +229,35 @@ const IssuesOverviewList: React.FC = () => {
               Generate a detailed report of all identified issues and
               suggestions.
             </p>
+            <div className="space-x-4">
+              <Button
+                title="Download JSON Report"
+                variant="default"
+                onClick={generateJSON}
+              >
+                Download JSON
+              </Button>
+              <Button
+                title="Download CSV Report"
+                variant="default"
+                onClick={generateCSV}
+              >
+                Download CSV
+              </Button>
+            </div>
+          </TabsContent>
+          {/* <TabsContent value="report">
+            <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
+              Export Report
+            </h3>
+            <p className="mb-4 text-sm">
+              Generate a detailed report of all identified issues and
+              suggestions.
+            </p>
             <Button title="Download Report" variant="default">
               Download Report
             </Button>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>
