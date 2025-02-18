@@ -90,7 +90,7 @@ export default function IssuesWrapper({
   const recommendations = getIssueRecommendations(selectedType);
 
   return (
-    <div className="size-full">
+    <div className="size-full last:!pb-10">
       <div className="flex w-full items-center justify-start gap-x-0.5">
         <Button
           title="Back to Issues Overview"
@@ -110,7 +110,7 @@ export default function IssuesWrapper({
         >
           <ChevronLeft className="!size-6" />
         </Button>
-        <p className="text-lg capitalize tracking-wide text-white">
+        <p className="font-open-sans text-lg capitalize tracking-wide text-white">
           {type ?? selectedType}
         </p>
 
@@ -205,7 +205,7 @@ export default function IssuesWrapper({
             </Collapsible>
           )}
 
-          <div className="my-4 flex w-full items-center justify-between space-x-2">
+          <div className="flex w-full items-center justify-between space-x-2">
             {/* Pagination */}
             <Button
               title="Goto previous issue"
@@ -242,7 +242,7 @@ export default function IssuesWrapper({
 
           {children}
 
-          {/* {singleIssue && recommendations && recommendations.length > 0 && (
+          {singleIssue && recommendations && recommendations.length > 0 && (
             <Collapsible className="mb-6">
               <CollapsibleTrigger asChild>
                 <div className="flex cursor-pointer items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4 py-2">
@@ -271,7 +271,7 @@ export default function IssuesWrapper({
                 </div>
               </CollapsibleContent>
             </Collapsible>
-          )} */}
+          )}
         </>
       )}
     </div>

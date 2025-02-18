@@ -151,12 +151,12 @@ const IssuesOverviewList: React.FC = () => {
                         }
                       >
                         <div className="flex w-full items-center justify-between gap-x-2">
-                          <div className="flex w-full items-center justify-start space-x-2.5">
+                          <div className="flex w-full items-center justify-start space-x-2.5 text-sm">
                             {issue.icon}
                             <span>{issue.type}</span>
                           </div>
 
-                          <div className="flex w-auto items-center justify-end space-x-1.5">
+                          <div className="flex w-auto items-center justify-end space-x-2">
                             <span
                               className={`rounded px-1.5 py-0.5 text-xs font-medium tracking-wide text-dark-shade
                            ${
@@ -171,7 +171,7 @@ const IssuesOverviewList: React.FC = () => {
                               {issueCount}
                             </span>
                             <span
-                              className={`!capitalize ${
+                              className={`text-sm !capitalize ${
                                 issue.severity === "critical"
                                   ? "text-red-500"
                                   : issue.severity === "major"
@@ -185,7 +185,7 @@ const IssuesOverviewList: React.FC = () => {
                         </div>
 
                         <div className="flex w-full items-center justify-between gap-3">
-                          <span className="w-full max-w-sm text-pretty">
+                          <span className="w-full max-w-sm text-pretty font-medium">
                             {issue.description}
                           </span>
 

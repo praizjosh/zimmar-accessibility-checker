@@ -6,6 +6,7 @@ import {
   Check,
   OctagonAlert,
   Ruler,
+  MoveHorizontal,
 } from "lucide-react";
 import {
   Tooltip,
@@ -123,6 +124,16 @@ const TouchTargetNavigator: React.FC = () => {
               </span>
             </div>
 
+            {selectedType === "Touch Target Spacing" && (
+              <div className="flex items-center justify-between py-1.5">
+                <div className="flex items-center text-sm">
+                  <MoveHorizontal className="mr-3 size-5 rounded-full bg-red-500 p-1 text-dark-shade" />
+
+                  <span className="text-sm">Element spacing: </span>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between py-1.5">
               <div className="flex items-center text-sm">
                 <OctagonAlert className="mr-3 size-5" />
@@ -199,6 +210,18 @@ const TouchTargetNavigator: React.FC = () => {
             </div>
             <span className="text-sm">{requiredSize}</span>
           </div>
+
+          {selectedType === "Touch Target Spacing" && (
+            <div className="flex items-center justify-between py-1.5">
+              <div className="flex items-center text-sm">
+                <MoveHorizontal className="mr-3 size-5 rounded-full bg-red-500 p-1 text-dark-shade" />
+
+                <span className="text-sm">Element spacing: </span>
+              </div>
+
+              <span className="text-sm text-red-500">Fail</span>
+            </div>
+          )}
 
           <div className="flex items-center justify-between py-1.5">
             <div className="flex items-center text-sm">

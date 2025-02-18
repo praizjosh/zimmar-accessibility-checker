@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { MIN_FONT_SIZE } from "@/lib/constants";
 import {
   createContrastIssue,
@@ -157,20 +156,20 @@ figma.on("selectionchange", async () => {
   // console.log("Selection change detected.");
 
   if (!isQuickCheckActive) {
-    console.log(
-      "Quickcheck is not active. Skipping single selection change logic.",
-      isQuickCheckActive,
-    );
+    // console.log(
+    //   "Quickcheck is not active. Skipping single selection change logic.",
+    //   isQuickCheckActive,
+    // );
     return;
   }
 
-  console.log(
-    "Is Quickcheck mode activated in selectionchange fn? ",
-    isQuickCheckActive,
-  );
+  // console.log(
+  //   "Is Quickcheck mode activated in selectionchange fn? ",
+  //   isQuickCheckActive,
+  // );
 
   try {
-    console.log("quickcheck started and waiting for user selection...");
+    // console.log("quickcheck started and waiting for user selection...");
     const selectedNodes = figma.currentPage.selection;
     const detectedIssues: IssueX[] = []; // Collect all issues
 
@@ -180,7 +179,7 @@ figma.on("selectionchange", async () => {
     }
 
     selectedNodes.forEach((node) => {
-      console.log("Processing node:", node.name);
+      // console.log("Processing node:", node.name);
 
       // Size Check
       if (isTouchTargetTooSmall(node)) {

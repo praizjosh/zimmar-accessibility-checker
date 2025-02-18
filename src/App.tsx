@@ -16,8 +16,10 @@ export default function App() {
   };
 
   return (
-    <div className="container mx-auto flex size-full flex-col p-5 lg:max-w-xl">
-      {RoutesMap[currentRoute]}
+    <div className="mx-auto grid size-full max-w-3xl items-center p-5">
+      <div className="container flex size-full flex-col items-center">
+        {RoutesMap[currentRoute]}
+      </div>
     </div>
   );
 }

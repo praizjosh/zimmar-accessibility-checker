@@ -159,6 +159,67 @@ export const isTouchTargetTooSmall = (node: SceneNode): boolean => {
  * @param {SceneNode[]} allNodes - The list of all nodes to compare against.
  * @returns {boolean} True if the node is too close to another node, otherwise false.
  */
+// export const isTouchTargetTooClose = (
+//   node: SceneNode,
+//   allNodes: SceneNode[],
+// ): boolean => {
+//   const nodeBounds = node.absoluteBoundingBox;
+//   if (!nodeBounds) return false; // Skip if no bounding box
+
+//   return allNodes.some((otherNode) => {
+//     if (node.id === otherNode.id) return false; // Skip the same node
+
+//     const otherBounds = otherNode.absoluteBoundingBox;
+//     if (!otherBounds) return false;
+
+//     // Check horizontal and vertical proximity
+//     const isTooCloseHorizontally =
+//       Math.abs(nodeBounds.x - otherBounds.x) < MIN_TOUCH_TARGET_SPACING ||
+//       Math.abs(nodeBounds.x + nodeBounds.width - otherBounds.x) <
+//         MIN_TOUCH_TARGET_SPACING;
+
+//     const isTooCloseVertically =
+//       Math.abs(nodeBounds.y - otherBounds.y) < MIN_TOUCH_TARGET_SPACING ||
+//       Math.abs(nodeBounds.y + nodeBounds.height - otherBounds.y) <
+//         MIN_TOUCH_TARGET_SPACING;
+
+//     return isTooCloseHorizontally && isTooCloseVertically;
+//   });
+// };
+
+// New ChatGPT version
+// export const isTouchTargetTooClose = (
+//   node: SceneNode,
+//   allNodes: SceneNode[],
+// ): boolean => {
+//   const nodeBounds = node.absoluteBoundingBox;
+//   if (!nodeBounds) return false; // Skip if no bounding box
+
+//   return allNodes.some((otherNode) => {
+//     if (node.id === otherNode.id) return false; // Skip the same node
+
+//     const otherBounds = otherNode.absoluteBoundingBox;
+//     if (!otherBounds) return false;
+
+//     // Check for overlap or insufficient spacing
+//     const isHorizontallyTooClose =
+//       nodeBounds.x <
+//         otherBounds.x + otherBounds.width + MIN_TOUCH_TARGET_SPACING &&
+//       nodeBounds.x + nodeBounds.width + MIN_TOUCH_TARGET_SPACING >
+//         otherBounds.x;
+
+//     const isVerticallyTooClose =
+//       nodeBounds.y <
+//         otherBounds.y + otherBounds.height + MIN_TOUCH_TARGET_SPACING &&
+//       nodeBounds.y + nodeBounds.height + MIN_TOUCH_TARGET_SPACING >
+//         otherBounds.y;
+
+//     // If there is an overlap or spacing violation in both directions
+//     return isHorizontallyTooClose && isVerticallyTooClose;
+//   });
+// };
+
+// Claude's version
 export const isTouchTargetTooClose = (
   node: SceneNode,
   allNodes: SceneNode[],
@@ -172,18 +233,41 @@ export const isTouchTargetTooClose = (
     const otherBounds = otherNode.absoluteBoundingBox;
     if (!otherBounds) return false;
 
-    // Check horizontal and vertical proximity
-    const isTooCloseHorizontally =
-      Math.abs(nodeBounds.x - otherBounds.x) < MIN_TOUCH_TARGET_SPACING ||
-      Math.abs(nodeBounds.x + nodeBounds.width - otherBounds.x) <
-        MIN_TOUCH_TARGET_SPACING;
+    // Calculate overlap or distance between elements
+    const overlapHorizontal = Math.max(
+      0,
+      Math.min(
+        nodeBounds.x + nodeBounds.width,
+        otherBounds.x + otherBounds.width,
+      ) - Math.max(nodeBounds.x, otherBounds.x),
+    );
 
-    const isTooCloseVertically =
-      Math.abs(nodeBounds.y - otherBounds.y) < MIN_TOUCH_TARGET_SPACING ||
-      Math.abs(nodeBounds.y + nodeBounds.height - otherBounds.y) <
-        MIN_TOUCH_TARGET_SPACING;
+    const overlapVertical = Math.max(
+      0,
+      Math.min(
+        nodeBounds.y + nodeBounds.height,
+        otherBounds.y + otherBounds.height,
+      ) - Math.max(nodeBounds.y, otherBounds.y),
+    );
 
-    return isTooCloseHorizontally && isTooCloseVertically;
+    // If they overlap in one dimension, check spacing in the other dimension
+    if (overlapVertical > 0) {
+      const horizontalDistance = Math.min(
+        Math.abs(nodeBounds.x - (otherBounds.x + otherBounds.width)),
+        Math.abs(otherBounds.x - (nodeBounds.x + nodeBounds.width)),
+      );
+      if (horizontalDistance < MIN_TOUCH_TARGET_SPACING) return true;
+    }
+
+    if (overlapHorizontal > 0) {
+      const verticalDistance = Math.min(
+        Math.abs(nodeBounds.y - (otherBounds.y + otherBounds.height)),
+        Math.abs(otherBounds.y - (nodeBounds.y + nodeBounds.height)),
+      );
+      if (verticalDistance < MIN_TOUCH_TARGET_SPACING) return true;
+    }
+
+    return false;
   });
 };
 
