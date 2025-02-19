@@ -125,7 +125,11 @@ export function getContrastCompliance(
   fontSize: number | symbol,
   isBold: boolean = false,
 ): "AAA" | "AA" | "AAA Large" | "AA Large" | "Fail" {
-  if (typeof fontSize !== "number" || isNaN(fontSize)) {
+  if (
+    typeof fontSize !== "number" ||
+    isNaN(fontSize) ||
+    typeof fontSize === "symbol"
+  ) {
     console.error("Invalid fontSize:", fontSize);
     return "Fail"; // Fallback for invalid inputs
   }

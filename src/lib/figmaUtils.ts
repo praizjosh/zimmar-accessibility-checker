@@ -2,6 +2,11 @@
 import { IssueX } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
 import { MIN_TOUCH_TARGET_SIZE, MIN_TOUCH_TARGET_SPACING } from "./constants";
+import {
+  getContrastCompliance,
+  getNearestBackgroundColor,
+  isBoldFont,
+} from "./utils";
 
 /**
  * Sends a message to the Figma UI.
@@ -308,22 +313,43 @@ export const createTouchTargetIssue = (
   };
 };
 
-// export const createTouchTargetIssue = (
-//   node: SceneNode,
-//   issueType: "Size" | "Spacing",
-// ): IssueX => ({
-//   description:
-//     issueType === "Size"
-//       ? "Touch target size is too small for accessibility. Should be at least 48x48 pixels."
-//       : "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
-//   severity: "minor",
-//   type: issueType === "Size" ? "Touch Target Size" : "Touch Target Spacing",
-//   nodeData: {
-//     id: node.id,
-//     name: node.name,
-//     width: "width" in node ? node.width : undefined,
-//     height: "height" in node ? node.height : undefined,
-//     nodeType: node.type,
-//     requiredSize: `${MIN_TOUCH_TARGET_SIZE} x ${MIN_TOUCH_TARGET_SIZE}px`,
-//   },
-// });
+export async function analyzeTextNode(node: TextNode, issues: IssueX[]) {
+  await figma.loadFontAsync(node.fontName as FontName);
+
+  if ("fills" in node) {
+    const foregroundColor = extractForegroundColor(node.fills as Paint[]);
+    const backgroundColor = getNearestBackgroundColor(node) || [255, 255, 255];
+    const fontWeight: number | symbol = node.fontWeight;
+    const fontSize: number | symbol = node.fontSize;
+
+    // Skip nodes with mixed font sizes
+    if (fontSize === figma.mixed) {
+      return;
+    }
+
+    try {
+      if (fontSize !== null || fontSize !== undefined) {
+        const isBold = isBoldFont(fontWeight, node, 0, node.characters.length);
+        const contrastScore = getContrastCompliance(
+          foregroundColor,
+          backgroundColor,
+          fontSize,
+          isBold,
+        );
+
+        if (contrastScore === "Fail") {
+          issues.push(
+            createContrastIssue(
+              node,
+              contrastScore,
+              foregroundColor,
+              backgroundColor,
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error processing contrast compliance:", error);
+    }
+  }
+}

@@ -1,7 +1,5 @@
-/* eslint-disable no-console */
 import { getContrastScore } from "@/lib/utils";
 import React, { useState } from "react";
-// import { getContrastScore } from "@/utils/contrast";
 
 const ContrastChecker = () => {
   const [foreground, setForeground] = useState("#000000");
@@ -10,11 +8,11 @@ const ContrastChecker = () => {
 
   const handleCheckContrast = () => {
     const contrastScore = getContrastScore(foreground, background);
-    console.log("contrast res:", contrastScore);
+    // console.log("contrast res:", contrastScore);
     setScore(contrastScore);
   };
 
-  console.log("foreground", foreground, typeof foreground);
+  // console.log("foreground", foreground, typeof foreground);
 
   return (
     <div className="max-w-sm space-y-4 rounded-md border p-4">

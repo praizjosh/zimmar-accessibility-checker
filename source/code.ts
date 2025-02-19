@@ -1,21 +1,22 @@
 import { MIN_FONT_SIZE } from "@/lib/constants";
 import {
-  createContrastIssue,
+  analyzeTextNode,
+  // createContrastIssue,
   createTouchTargetIssue,
   createTypographyIssue,
-  extractForegroundColor,
+  // extractForegroundColor,
   isTouchTarget,
   isTouchTargetTooClose,
   isTouchTargetTooSmall,
   postMessageToUI,
 } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
-import {
-  collectNodes,
-  getContrastCompliance,
-  getNearestBackgroundColor,
-  isBoldFont,
-} from "@/lib/utils";
+// import {
+//   // collectNodes,
+//   getContrastCompliance,
+//   getNearestBackgroundColor,
+//   isBoldFont,
+// } from "@/lib/utils";
 
 figma.showUI(__html__);
 figma.ui.resize(425, 500);
@@ -47,75 +48,21 @@ figma.ui.onmessage = async (message) => {
         (node) => node.type === "TEXT",
       ) as TextNode[];
 
-      const allPageNodes: SceneNode[] = [];
-      for (const node of figma.currentPage.children) {
-        collectNodes(node, allPageNodes);
-      }
+      const allPageNodes: SceneNode[] = figma.currentPage.findAll(() => true); // Matches all nodes
 
       const issues: IssueX[] = [];
 
-      for (const node of allTextNodes) {
+      for (const textNode of allTextNodes) {
         if (
-          typeof node.fontSize === "number" &&
-          node.fontSize < MIN_FONT_SIZE
+          typeof textNode.fontSize === "number" &&
+          textNode.fontSize < MIN_FONT_SIZE
         ) {
           // Check typography issues
-          issues.push(createTypographyIssue(node));
+          issues.push(createTypographyIssue(textNode));
         }
 
-        if ("fills" in node) {
-          const foregroundColor = extractForegroundColor(node.fills as Paint[]);
-          const backgroundColor = getNearestBackgroundColor(node) || [
-            255, 255, 255,
-          ];
-
-          const fontWeight: number | typeof figma.mixed = node.fontWeight;
-          const fontSize: number | typeof figma.mixed = node.fontSize;
-          let effectiveFontSize: number | undefined;
-
-          if (fontSize === figma.mixed) {
-            // Calculate the maximum font size in the mixed range
-            effectiveFontSize = Math.max(
-              ...Array.from({ length: node.characters.length }, (_, i) =>
-                typeof node.getRangeFontSize(i, i + 1) === "number"
-                  ? (node.getRangeFontSize(i, i + 1) as number)
-                  : 0,
-              ),
-            );
-          } else {
-            effectiveFontSize = fontSize;
-          }
-
-          try {
-            if (effectiveFontSize !== undefined) {
-              const isBold = isBoldFont(
-                fontWeight,
-                node,
-                0,
-                node.characters.length,
-              );
-              const contrastScore = getContrastCompliance(
-                foregroundColor,
-                backgroundColor,
-                effectiveFontSize,
-                isBold,
-              );
-
-              if (contrastScore === "Fail") {
-                issues.push(
-                  createContrastIssue(
-                    node,
-                    contrastScore,
-                    foregroundColor,
-                    backgroundColor,
-                  ),
-                );
-              }
-            }
-          } catch (error) {
-            console.error("Error processing contrast compliance:", error);
-          }
-        }
+        // Check contrast issues
+        await analyzeTextNode(textNode, issues);
       }
 
       for (const node of allPageNodes) {
@@ -175,6 +122,7 @@ figma.ui.onmessage = async (message) => {
     }
   } catch (error) {
     // Log the error to the console, but don't stop execution
+    figma.notify("An error occurred while scanning the design file.");
     console.error("An error occurred while processing the message:", error);
   }
 };
@@ -205,7 +153,7 @@ figma.on("selectionchange", async () => {
       return;
     }
 
-    selectedNodes.forEach((node) => {
+    selectedNodes.forEach(async (node) => {
       // console.log("Processing node:", node.name);
 
       // Size Check
@@ -235,56 +183,7 @@ figma.on("selectionchange", async () => {
 
       // Contrast Check
       if (node.type === "TEXT" && "fills" in node) {
-        const foregroundColor = extractForegroundColor(node.fills as Paint[]);
-        const backgroundColor = getNearestBackgroundColor(node) || [
-          255, 255, 255,
-        ];
-        const fontWeight: number | typeof figma.mixed = node.fontWeight;
-        const fontSize: number | typeof figma.mixed = node.fontSize;
-        let effectiveFontSize: number | undefined;
-
-        if (fontSize === figma.mixed) {
-          // Calculate the maximum font size in the mixed range
-          effectiveFontSize = Math.max(
-            ...Array.from({ length: node.characters.length }, (_, i) =>
-              typeof node.getRangeFontSize(i, i + 1) === "number"
-                ? (node.getRangeFontSize(i, i + 1) as number)
-                : 0,
-            ),
-          );
-        } else {
-          effectiveFontSize = fontSize;
-        }
-
-        try {
-          if (effectiveFontSize !== undefined) {
-            const isBold = isBoldFont(
-              fontWeight,
-              node,
-              0,
-              node.characters.length,
-            );
-            const contrastScore = getContrastCompliance(
-              foregroundColor,
-              backgroundColor,
-              effectiveFontSize,
-              isBold,
-            );
-
-            if (contrastScore === "Fail") {
-              detectedIssues.push(
-                createContrastIssue(
-                  node,
-                  contrastScore,
-                  foregroundColor,
-                  backgroundColor,
-                ),
-              );
-            }
-          }
-        } catch (error) {
-          console.error("Error processing contrast compliance:", error);
-        }
+        await analyzeTextNode(node, detectedIssues);
       }
     });
 

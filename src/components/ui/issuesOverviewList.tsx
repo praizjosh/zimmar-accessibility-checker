@@ -120,12 +120,12 @@ const IssuesOverviewList: React.FC = () => {
           </TabsList>
 
           <TabsContent value="issues">
-            <h3 className="mb-4 font-open-sans text-lg font-semibold tracking-wide text-[#C9C9E0]">
+            <h3 className="mb-2 font-open-sans text-lg font-semibold tracking-wide text-[#C9C9E0]">
               Identified Issues
             </h3>
 
             {issues.length > 0 && (
-              <p className="mb-4 font-open-sans text-sm">
+              <p className="mb-5 font-open-sans text-sm">
                 There are {issues.length} issues detected on this screen.
               </p>
             )}
