@@ -101,8 +101,8 @@ export default function IssuesWrapper({
   const recommendations = getIssueRecommendations(selectedType);
 
   return (
-    <div className="grid size-full gap-y-4 last:!pb-10">
-      <div className="grid">
+    <div className="flex size-full flex-col items-start gap-y-4 last:!pb-10">
+      <div className="grid w-full">
         <div className="flex w-full items-center justify-start gap-x-0.5">
           <Button
             title="Back to Home"
@@ -177,7 +177,7 @@ export default function IssuesWrapper({
           {children}
 
           {recommendations && recommendations.length > 0 && (
-            <Collapsible className="mb-6">
+            <Collapsible className="mb-6 w-full">
               <CollapsibleTrigger asChild>
                 <div className="flex cursor-pointer items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4 py-2">
                   <h4 className="font-open-sans text-sm font-semibold">
