@@ -101,7 +101,7 @@ export default function IssuesWrapper({
   const recommendations = getIssueRecommendations(selectedType);
 
   return (
-    <div className="size-full last:!pb-10">
+    <div className="grid size-full gap-y-4 last:!pb-10">
       <div className="grid">
         <div className="flex w-full items-center justify-start gap-x-0.5">
           <Button
@@ -114,54 +114,54 @@ export default function IssuesWrapper({
             <ChevronLeft className="!size-6" />
           </Button>
           <p className="capitalize tracking-wide">{type ?? selectedType}</p>
-        </div>
 
-        {(selectedType === "Touch Target Size" ||
-          selectedType === "Touch Target Spacing") && (
-          <div className="ml-auto">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="ml-2 size-5 text-gray" />
-                </TooltipTrigger>
-                <TooltipContent
-                  avoidCollisions
-                  align="start"
-                  alignOffset={-290}
-                  className="w-full max-w-80 text-pretty p-5"
-                >
-                  <div className="space-y-2">
-                    <h5 className="mb-3 text-lg font-medium leading-none tracking-tight text-accent">
-                      About Touch Target Detection
-                    </h5>
-                    <>
-                      Our touch target analysis helps identify potential
-                      accessibility issues related to interactive elements.
-                      While we strive for accuracy, this is an experimental
-                      feature that uses:
-                      <ul className="ml-4 mt-2 list-disc">
-                        <li>
-                          Interactive element identification through common
-                          keywords (button, link, touch, btn).
-                        </li>
-                        <li>
-                          Analysis of spacing and proximity between design
-                          elements
-                        </li>
-                      </ul>
-                      <p className="mt-2">
-                        As this is an automated process, we recommend using
-                        these results as a starting point for your accessibility
-                        review. Please use the results as a reference and verify
-                        them manually.
-                      </p>
-                    </>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
+          {(selectedType === "Touch Target Size" ||
+            selectedType === "Touch Target Spacing") && (
+            <div className="ml-auto">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="ml-2 size-5 text-gray hover:text-accent" />
+                  </TooltipTrigger>
+                  <TooltipContent
+                    avoidCollisions
+                    align="start"
+                    alignOffset={-290}
+                    className="w-full max-w-80 text-pretty p-5"
+                  >
+                    <div className="space-y-2">
+                      <h5 className="mb-3 text-lg font-medium leading-none tracking-tight text-accent">
+                        About Touch Target Detection
+                      </h5>
+                      <>
+                        Our touch target analysis helps identify potential
+                        accessibility issues related to interactive elements.
+                        While we strive for accuracy, this is an experimental
+                        feature that uses:
+                        <ul className="ml-4 mt-2 list-disc">
+                          <li>
+                            Interactive element identification through common
+                            keywords (button, link, touch, btn).
+                          </li>
+                          <li>
+                            Analysis of spacing and proximity between design
+                            elements
+                          </li>
+                        </ul>
+                        <p className="mt-2">
+                          As this is an automated process, we recommend using
+                          these results as a starting point for your
+                          accessibility review. Please use the results as a
+                          reference and verify them manually.
+                        </p>
+                      </>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
+        </div>
 
         <Separator className="my-2 h-px !bg-rose-50/10" />
       </div>
@@ -169,7 +169,7 @@ export default function IssuesWrapper({
       {issueGroupList.length > 0 ? (
         <>
           {description && (
-            <p className="my-4 text-pretty px-3 font-open-sans text-lg font-medium text-gray">
+            <p className="text-pretty px-3 font-open-sans text-lg font-medium text-gray">
               {description}
             </p>
           )}
