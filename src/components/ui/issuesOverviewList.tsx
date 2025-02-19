@@ -131,7 +131,7 @@ const IssuesOverviewList: React.FC = () => {
             )}
 
             {filteredIssues.length > 0 ? (
-              <ul className="space-y-2 last:mb-2.5">
+              <ul className="space-y-2">
                 {filteredIssues.map((issue) => {
                   const issueCount = issues.filter(
                     (i: IssueX) => i.type === issue.type,

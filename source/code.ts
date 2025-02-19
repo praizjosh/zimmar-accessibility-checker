@@ -64,23 +64,41 @@ figma.ui.onmessage = async (message) => {
         }
 
         if ("fills" in node) {
-          // Check contrast issues
           const foregroundColor = extractForegroundColor(node.fills as Paint[]);
           const backgroundColor = getNearestBackgroundColor(node) || [
             255, 255, 255,
           ];
 
           const fontWeight: number | typeof figma.mixed = node.fontWeight;
+          const fontSize: number | typeof figma.mixed = node.fontSize;
+          let effectiveFontSize: number | undefined;
+
+          if (fontSize === figma.mixed) {
+            // Calculate the maximum font size in the mixed range
+            effectiveFontSize = Math.max(
+              ...Array.from({ length: node.characters.length }, (_, i) =>
+                typeof node.getRangeFontSize(i, i + 1) === "number"
+                  ? (node.getRangeFontSize(i, i + 1) as number)
+                  : 0,
+              ),
+            );
+          } else {
+            effectiveFontSize = fontSize;
+          }
 
           try {
-            if (isBoldFont(fontWeight)) {
-              // Process bold font node
+            if (effectiveFontSize !== undefined) {
+              const isBold = isBoldFont(
+                fontWeight,
+                node,
+                0,
+                node.characters.length,
+              );
               const contrastScore = getContrastCompliance(
                 foregroundColor,
                 backgroundColor,
-                node.fontSize as number,
-                // isBoldFont(fontWeight, node, 0, node.characters.length),
-                isBoldFont(fontWeight),
+                effectiveFontSize,
+                isBold,
               );
 
               if (contrastScore === "Fail") {
@@ -221,15 +239,36 @@ figma.on("selectionchange", async () => {
         const backgroundColor = getNearestBackgroundColor(node) || [
           255, 255, 255,
         ];
-        const fontWeight = node.fontWeight;
+        const fontWeight: number | typeof figma.mixed = node.fontWeight;
+        const fontSize: number | typeof figma.mixed = node.fontSize;
+        let effectiveFontSize: number | undefined;
+
+        if (fontSize === figma.mixed) {
+          // Calculate the maximum font size in the mixed range
+          effectiveFontSize = Math.max(
+            ...Array.from({ length: node.characters.length }, (_, i) =>
+              typeof node.getRangeFontSize(i, i + 1) === "number"
+                ? (node.getRangeFontSize(i, i + 1) as number)
+                : 0,
+            ),
+          );
+        } else {
+          effectiveFontSize = fontSize;
+        }
 
         try {
-          if (isBoldFont(fontWeight)) {
+          if (effectiveFontSize !== undefined) {
+            const isBold = isBoldFont(
+              fontWeight,
+              node,
+              0,
+              node.characters.length,
+            );
             const contrastScore = getContrastCompliance(
               foregroundColor,
               backgroundColor,
-              node.fontSize as number,
-              isBoldFont(fontWeight),
+              effectiveFontSize,
+              isBold,
             );
 
             if (contrastScore === "Fail") {
