@@ -52,7 +52,7 @@ const TouchTargetNavigator: React.FC = () => {
       {issueGroupList.length === 0 ? (
         <>
           {singleIssue === null && (
-            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
+            <p className="my-4 text-pretty px-3 font-open-sans text-lg font-semibold text-gray">
               No {selectedType} issue detected
             </p>
           )}
@@ -87,7 +87,7 @@ const TouchTargetNavigator: React.FC = () => {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <CircleAlert className="ml-2 size-4" />
+                        <CircleAlert className="ml-2 size-4 text-gray" />
                       </TooltipTrigger>
                       <TooltipContent className="w-full max-w-52 text-pretty">
                         <p className="text-xs font-light">
@@ -180,7 +180,7 @@ const TouchTargetNavigator: React.FC = () => {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <CircleAlert className="ml-2 size-4" />
+                      <CircleAlert className="ml-2 size-4 text-gray" />
                     </TooltipTrigger>
                     <TooltipContent className="w-full max-w-52 text-pretty">
                       <p className="text-xs font-light">

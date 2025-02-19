@@ -4,7 +4,7 @@ export default function LoadingSpinner({ className }: { className?: string }) {
   return (
     <svg
       aria-hidden="true"
-      className={cn("animate-spin text-white", className)}
+      className={cn("animate-spin text-white fill-accent", className)}
       viewBox="0 0 100 101"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

@@ -12,7 +12,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-accent text-stone-50 hover:bg-accent/90 dark:bg-stone-50 dark:text-accent dark:hover:bg-stone-50/90",
+          "bg-accent text-stone-50 hover:bg-[#2980b9] dark:bg-stone-50 dark:text-accent dark:hover:bg-stone-50/90",
         destructive:
           "bg-red-500 text-stone-50 hover:bg-red-500/90 dark:bg-red-900 dark:text-stone-50 dark:hover:bg-red-900/90",
         outline:
@@ -20,7 +20,7 @@ const buttonVariants = cva(
         secondary:
           "bg-stone-100 text-accent hover:bg-stone-100/80 dark:bg-stone-800 dark:text-stone-50 dark:hover:bg-stone-800/80",
         ghost:
-          "hover:bg-stone-100 hover:text-accent dark:hover:bg-stone-800 dark:hover:text-stone-50",
+          "hover:bg-dark-shade hover:text-accent dark:hover:bg-stone-800 dark:hover:text-stone-50",
         link: "text-accent underline-offset-4 hover:underline dark:text-stone-50",
         nude: "",
       },

@@ -15,9 +15,14 @@ const NavigationButtons = () => {
         onClick={() => navigate("ISSUE_LIST_VIEW")}
         className="rounded bg-green-500 px-4 py-2 text-white"
       >
-        Go to Issues List
+        Go to Single Issue List
       </button>
-
+      <button
+        onClick={() => navigate("ISSUE_OVERVIEW_LIST_VIEW")}
+        className="rounded bg-green-500 px-4 py-2 text-white"
+      >
+        Go to Issues Overview List
+      </button>
       <button
         onClick={() => navigate("TOUCH_TARGET_ISSUE_LIST_VIEW")}
         className="rounded bg-green-500 px-4 py-2 text-white"

@@ -65,6 +65,17 @@ export default function IssuesWrapper({
     navigateToIssue(0); // Navigate to the first issue when Issue view has been navigated to
   }, [navigateToIssue]);
 
+  const handleBackBtnClick = () => {
+    if (isQuickCheckActive) {
+      navigateTo("INDEX");
+      setSingleIssue(null);
+
+      postMessageToBackend("cancel-quickcheck");
+    } else {
+      navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
+    }
+  };
+
   const handlePrevious = () => {
     if (currentIndex > 0) {
       navigateToIssue(currentIndex - 1);
@@ -91,28 +102,19 @@ export default function IssuesWrapper({
 
   return (
     <div className="size-full last:!pb-10">
-      <div className="flex w-full items-center justify-start gap-x-0.5">
-        <Button
-          title="Back to Issues Overview"
-          variant="nude"
-          size={"icon"}
-          className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-plum-light"
-          onClick={() => {
-            if (isQuickCheckActive) {
-              navigateTo("INDEX");
-              setSingleIssue(null);
-
-              postMessageToBackend("cancel-quickcheck");
-            } else {
-              navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
-            }
-          }}
-        >
-          <ChevronLeft className="!size-6" />
-        </Button>
-        <p className="font-open-sans text-lg capitalize tracking-wide text-white">
-          {type ?? selectedType}
-        </p>
+      <div className="grid">
+        <div className="flex w-full items-center justify-start gap-x-0.5">
+          <Button
+            title="Back to Home"
+            variant="nude"
+            size={"icon"}
+            className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-accent"
+            onClick={handleBackBtnClick}
+          >
+            <ChevronLeft className="!size-6" />
+          </Button>
+          <p className="capitalize tracking-wide">{type ?? selectedType}</p>
+        </div>
 
         {(selectedType === "Touch Target Size" ||
           selectedType === "Touch Target Spacing") && (
@@ -120,7 +122,7 @@ export default function IssuesWrapper({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Info className="ml-2 size-5 text-sky-500" />
+                  <Info className="ml-2 size-5 text-gray" />
                 </TooltipTrigger>
                 <TooltipContent
                   avoidCollisions
@@ -129,7 +131,7 @@ export default function IssuesWrapper({
                   className="w-full max-w-80 text-pretty p-5"
                 >
                   <div className="space-y-2">
-                    <h5 className="mb-3 text-lg font-medium leading-none tracking-tight">
+                    <h5 className="mb-3 text-lg font-medium leading-none tracking-tight text-accent">
                       About Touch Target Detection
                     </h5>
                     <>
@@ -160,14 +162,14 @@ export default function IssuesWrapper({
             </TooltipProvider>
           </div>
         )}
-      </div>
 
-      <Separator className="my-2 h-px !bg-rose-50/10" />
+        <Separator className="my-2 h-px !bg-rose-50/10" />
+      </div>
 
       {issueGroupList.length > 0 ? (
         <>
           {description && (
-            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
+            <p className="my-4 text-pretty px-3 font-open-sans text-lg font-medium text-gray">
               {description}
             </p>
           )}
@@ -178,7 +180,9 @@ export default function IssuesWrapper({
             <Collapsible className="mb-6">
               <CollapsibleTrigger asChild>
                 <div className="flex cursor-pointer items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4 py-2">
-                  <h4 className="text-sm font-semibold">Recommendations</h4>
+                  <h4 className="font-open-sans text-sm font-semibold">
+                    Recommendations
+                  </h4>
                   <Button title="View recommendations" variant="nude" size="sm">
                     <ChevronsUpDown className="size-4" />
                     <span className="sr-only">Toggle</span>
@@ -235,7 +239,7 @@ export default function IssuesWrapper({
       ) : (
         <>
           {singleIssue?.description && (
-            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
+            <p className="my-4 text-pretty px-3 font-open-sans text-lg font-medium text-gray">
               {singleIssue?.description}
             </p>
           )}
@@ -246,7 +250,9 @@ export default function IssuesWrapper({
             <Collapsible className="mb-6">
               <CollapsibleTrigger asChild>
                 <div className="flex cursor-pointer items-center justify-between space-x-4 rounded-md border border-rose-50/40 px-4 py-2">
-                  <h4 className="text-sm font-semibold">Recommendations</h4>
+                  <h4 className="font-open-sans text-sm font-semibold">
+                    Recommendations
+                  </h4>
                   <Button title="View recommendations" variant="nude" size="sm">
                     <ChevronsUpDown className="size-4" />
                     <span className="sr-only">Toggle</span>

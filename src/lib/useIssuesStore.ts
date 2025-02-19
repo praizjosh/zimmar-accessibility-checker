@@ -17,9 +17,10 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     }),
 
   startScan: () => {
-    const { setScanning } = get();
+    const { setScanning, navigateTo } = get();
     setScanning(true);
     postMessageToBackend("scan");
+    navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
   },
 
   setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),

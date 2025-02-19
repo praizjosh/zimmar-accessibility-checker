@@ -22,7 +22,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     description: "Text contrast is below WCAG AA standard.",
     severity: "critical",
     nodeType: "TEXT",
-    icon: <Contrast className="size-5 text-plum-light" />,
+    icon: <Contrast className="size-5 text-gray group-hover:text-accent" />,
   },
   {
     id: 2,
@@ -30,7 +30,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     description: "Text size is too small for readability.",
     severity: "major",
     nodeType: "TEXT",
-    icon: <TypeOutline className="size-5 text-plum-light" />,
+    icon: <TypeOutline className="size-5 text-gray group-hover:text-accent" />,
   },
   {
     id: 3,
@@ -49,7 +49,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
       "VECTOR",
       "WIDGET",
     ],
-    icon: <Pointer className="size-5 text-plum-light" />,
+    icon: <Pointer className="size-5 text-gray group-hover:text-accent" />,
   },
 
   {
@@ -69,7 +69,9 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
       "VECTOR",
       "WIDGET",
     ],
-    icon: <MoveHorizontal className="size-5 text-plum-light" />,
+    icon: (
+      <MoveHorizontal className="size-5 text-gray group-hover:text-accent" />
+    ),
   },
 ];
 

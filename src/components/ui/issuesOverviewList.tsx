@@ -8,17 +8,32 @@ import useIssuesStore from "@/lib/useIssuesStore";
 import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { saveAs } from "file-saver";
 import Separator from "./separator";
+import LoadingScreen from "./LoadingScreen";
 
 const IssuesOverviewList: React.FC = () => {
-  const { issues, setIssues, setSelectedType, navigateTo } = useIssuesStore();
+  const {
+    scanning,
+    issues,
+    setIssues,
+    setScanning,
+    setSelectedType,
+    navigateTo,
+  } = useIssuesStore();
 
-  // onmessage = (event) => {
-  //   const { type, issues } = event.data.pluginMessage;
-  //   if (type === "loadIssues") {
-  //     setIssues(issues);
-  //     setScanning(false);
-  //   }
-  // };
+  // Listen for messages from the backend
+  onmessage = (event) => {
+    if (!event.data || !event.data.pluginMessage) {
+      console.error("Invalid message format:", event.data);
+      return;
+    }
+
+    const { type, data } = event.data.pluginMessage;
+
+    if (type === "loadIssues") {
+      setIssues(data);
+      setScanning(false);
+    }
+  };
 
   const handleIssuesListClick = (type: IssueType) => {
     setSelectedType(type);
@@ -90,75 +105,80 @@ const IssuesOverviewList: React.FC = () => {
   };
 
   return (
-    <div className="size-full">
-      <div className="flex w-full items-center justify-start gap-x-0.5">
-        <Button
-          title="Back to Issues Overview"
-          variant="nude"
-          size={"icon"}
-          className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-plum-light"
-          onClick={() => {
-            navigateTo("INDEX");
-            setIssues([]);
-          }}
-        >
-          <ChevronLeft className="!size-6" />
-        </Button>
-        <p className="font-open-sans text-lg capitalize tracking-wide text-white">
-          Scan Results
-        </p>
+    <div className="flex size-full flex-col">
+      <div className="grid">
+        <div className="flex w-full items-center justify-start gap-x-0.5">
+          <Button
+            title="Back to Issues Overview"
+            variant="nude"
+            size={"icon"}
+            className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-accent"
+            onClick={() => {
+              navigateTo("INDEX");
+              setIssues([]);
+            }}
+          >
+            <ChevronLeft className="!size-6" />
+          </Button>
+          <p className="capitalize tracking-wide">Scan Results</p>
+        </div>
+
+        <Separator className="my-2 h-px !bg-rose-50/10" />
       </div>
 
-      <Separator className="my-2 h-px !bg-rose-50/10" />
+      {!scanning ? (
+        <div className="flex size-full flex-col">
+          <Tabs defaultValue="issues">
+            <TabsList className="mb-2 flex space-x-4 bg-dark-shade !py-6">
+              <TabsTrigger value="issues">Issues</TabsTrigger>
+              <TabsTrigger value="report">Report</TabsTrigger>
+            </TabsList>
 
-      <div className="flex size-full flex-col space-y-5">
-        <Tabs defaultValue="issues">
-          <TabsList className="mb-2 flex space-x-4 bg-dark-shade !py-6">
-            <TabsTrigger value="issues">Issues</TabsTrigger>
-            {/* <TabsTrigger value="simulate">Simulate</TabsTrigger> */}
-            <TabsTrigger value="report">Report</TabsTrigger>
-          </TabsList>
+            <TabsContent value="issues">
+              <h3
+                className={`text-lg font-semibold tracking-wide text-gray ${issues.length > 0 ? "mb-2" : "mb-4"}`}
+              >
+                Identified Issues
+              </h3>
 
-          <TabsContent value="issues">
-            <h3 className="mb-2 font-open-sans text-lg font-semibold tracking-wide text-[#C9C9E0]">
-              Identified Issues
-            </h3>
+              {issues.length > 0 && (
+                <p className="mb-5 font-open-sans text-sm">
+                  There are {issues.length} issues detected on this screen.
+                </p>
+              )}
 
-            {issues.length > 0 && (
-              <p className="mb-5 font-open-sans text-sm">
-                There are {issues.length} issues detected on this screen.
-              </p>
-            )}
+              {filteredIssues.length > 0 ? (
+                <ul className="space-y-2 last:!mb-5">
+                  {filteredIssues.map((issue) => {
+                    const issueCount = issues.filter(
+                      (i: IssueX) => i.type === issue.type,
+                    ).length;
 
-            {filteredIssues.length > 0 ? (
-              <ul className="space-y-2">
-                {filteredIssues.map((issue) => {
-                  const issueCount = issues.filter(
-                    (i: IssueX) => i.type === issue.type,
-                  ).length;
-
-                  return (
-                    <li
-                      key={issue.id}
-                      title={`View all ${issue.type} issues`}
-                      className="group flex items-center justify-between rounded-xl bg-dark-shade transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-plum-light"
-                    >
-                      <button
-                        className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
-                        aria-label={issue.type}
-                        onClick={() =>
-                          handleIssuesListClick(issue.type as IssueType)
-                        }
+                    return (
+                      <li
+                        key={issue.id}
+                        title={`View all ${issue.type} issues`}
+                        className="group flex items-center justify-between rounded-xl bg-dark-shade text-gray transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
                       >
-                        <div className="flex w-full items-center justify-between gap-x-2">
-                          <div className="flex w-full items-center justify-start space-x-2.5 text-sm">
-                            {issue.icon}
-                            <span>{issue.type}</span>
-                          </div>
+                        <button
+                          className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
+                          aria-label={issue.type}
+                          onClick={() =>
+                            handleIssuesListClick(issue.type as IssueType)
+                          }
+                        >
+                          <div className="flex w-full items-center justify-between gap-x-2">
+                            <div className="flex w-full items-center justify-start space-x-2.5 text-sm">
+                              {issue.icon}
 
-                          <div className="flex w-auto items-center justify-end space-x-2">
-                            <span
-                              className={`rounded px-1.5 py-0.5 text-xs font-medium tracking-wide text-dark-shade
+                              <span className="group-hover:text-accent">
+                                {issue.type}
+                              </span>
+                            </div>
+
+                            <div className="flex w-auto items-center justify-end space-x-2">
+                              <span
+                                className={`rounded px-1.5 py-0.5 text-xs font-medium tracking-wide text-dark-shade
                            ${
                              issue.severity === "critical"
                                ? "bg-red-500"
@@ -167,99 +187,72 @@ const IssuesOverviewList: React.FC = () => {
                                  : "bg-yellow-400"
                            }
                             `}
-                            >
-                              {issueCount}
-                            </span>
-                            <span
-                              className={`text-sm !capitalize ${
-                                issue.severity === "critical"
-                                  ? "text-red-500"
-                                  : issue.severity === "major"
-                                    ? "text-orange-500"
-                                    : "text-yellow-400"
-                              }`}
-                            >
-                              {issue.severity}
-                            </span>
+                              >
+                                {issueCount}
+                              </span>
+                              <span
+                                className={`text-sm !capitalize ${
+                                  issue.severity === "critical"
+                                    ? "text-red-500"
+                                    : issue.severity === "major"
+                                      ? "text-orange-500"
+                                      : "text-yellow-400"
+                                }`}
+                              >
+                                {issue.severity}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex w-full items-center justify-between gap-3">
-                          <span className="w-full max-w-sm text-pretty font-medium">
-                            {issue.description}
-                          </span>
+                          <div className="flex w-full items-center justify-between gap-3">
+                            <span className="w-full max-w-sm text-pretty font-medium group-hover:text-white">
+                              {issue.description}
+                            </span>
 
-                          <ChevronRight className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-plum-light" />
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="w-full text-left text-slate-400">No issues found</p>
-            )}
-          </TabsContent>
+                            <ChevronRight className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent" />
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="w-full text-left font-semibold text-gray">
+                  No issues found
+                </p>
+              )}
+            </TabsContent>
 
-          {/* <TabsContent value="simulate">
-          <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
-            Simulations
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <Button title="Color Blindness">
-              <Eye className="mr-2" />
-              Color Blindness
-            </Button>
-            <Button title="Keyboard Navigation">
-              <Keyboard className="mr-2" />
-              Keyboard Navigation
-            </Button>
-            <Button title="Screen Reader">
-              <TextCursorInput className="mr-2" />
-              Screen Reader
-            </Button>
-          </div>
-        </TabsContent> */}
-
-          <TabsContent value="report">
-            <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
-              Export Report
-            </h3>
-            <p className="mb-4 text-sm">
-              Generate a detailed report of all identified issues and
-              suggestions.
-            </p>
-            <div className="space-x-4">
-              <Button
-                title="Download JSON Report"
-                variant="default"
-                onClick={generateJSON}
-              >
-                Download JSON
-              </Button>
-              <Button
-                title="Download CSV Report"
-                variant="default"
-                onClick={generateCSV}
-              >
-                Download CSV
-              </Button>
-            </div>
-          </TabsContent>
-          {/* <TabsContent value="report">
-            <h3 className="mb-4 text-lg font-semibold tracking-wide text-[#C9C9E0]">
-              Export Report
-            </h3>
-            <p className="mb-4 text-sm">
-              Generate a detailed report of all identified issues and
-              suggestions.
-            </p>
-            <Button title="Download Report" variant="default">
-              Download Report
-            </Button>
-          </TabsContent> */}
-        </Tabs>
-      </div>
+            <TabsContent value="report">
+              <h3 className="mb-4 text-lg font-semibold tracking-wide text-gray">
+                Export Report
+              </h3>
+              <p className="mb-4 text-sm">
+                Generate a detailed report of all identified issues and
+                suggestions.
+              </p>
+              <div className="space-x-4">
+                <Button
+                  title="Download JSON Report"
+                  variant="default"
+                  onClick={generateJSON}
+                >
+                  Download JSON
+                </Button>
+                <Button
+                  title="Download CSV Report"
+                  variant="default"
+                  onClick={generateCSV}
+                >
+                  Download CSV
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      ) : (
+        <LoadingScreen message="Scanning for issues..." />
+      )}
     </div>
   );
 };

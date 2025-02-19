@@ -69,15 +69,12 @@ const IssuesNavigator: React.FC = () => {
   const getFontSize = () => fontSize ?? singleIssue?.nodeData?.fontSize ?? 0;
   const fontSizeIsValid = getFontSize() >= MIN_FONT_SIZE;
 
-  // eslint-disable-next-line no-console
-  // console.log("singleIssue state in store: ", singleIssue);
-
   return (
     <IssuesWrapper>
       {issueGroupList.length === 0 ? (
         <>
           {singleIssue === null && (
-            <p className="my-2.5 text-pretty px-3 font-open-sans text-lg font-semibold text-plum-light">
+            <p className="my-4 text-pretty px-3 font-open-sans text-lg font-semibold text-gray">
               No {selectedType} issue detected
             </p>
           )}
