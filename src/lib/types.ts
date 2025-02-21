@@ -2,10 +2,21 @@ import { RGBColor } from "wcag-contrast";
 
 export type Severity = "critical" | "major" | "minor";
 
+export type IssueType =
+  | "Typography"
+  | "Contrast"
+  | "Touch Target Size"
+  | "Touch Target Spacing";
+
+export type contrastScore = {
+  compliance: string;
+  ratio: number;
+};
+
 export type NodeDataType = {
   id: string;
   characters?: string;
-  contrastScore?: string;
+  contrastScore?: contrastScore;
   fontSize?: number;
   width?: number;
   height?: number;
@@ -16,12 +27,6 @@ export type NodeDataType = {
   nodeType: string | string[];
   requiredSize?: string;
 };
-
-export type IssueType =
-  | "Typography"
-  | "Contrast"
-  | "Touch Target Size"
-  | "Touch Target Spacing";
 
 export interface IssueX {
   description?: string;

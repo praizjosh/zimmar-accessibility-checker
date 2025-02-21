@@ -9,6 +9,7 @@ import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { saveAs } from "file-saver";
 import Separator from "./separator";
 import LoadingScreen from "./LoadingScreen";
+import { ISSUES_TYPES } from "@/lib/constants";
 
 const IssuesOverviewList: React.FC = () => {
   const {
@@ -19,6 +20,19 @@ const IssuesOverviewList: React.FC = () => {
     setSelectedType,
     navigateTo,
   } = useIssuesStore();
+
+  const groupListRecords = issues.filter((issue) => {
+    if (issue.type && ISSUES_TYPES.includes(issue.type)) {
+      if (
+        issue.type === "Contrast" &&
+        issue.nodeData.contrastScore?.compliance === "Fail"
+      ) {
+        return true;
+      }
+      return issue.type !== "Contrast";
+    }
+    return false;
+  });
 
   // Listen for messages from the backend
   onmessage = (event) => {
@@ -50,7 +64,7 @@ const IssuesOverviewList: React.FC = () => {
 
   // Convert issues to structured data for reporting
   const formatIssuesForReport = () => {
-    return issues.map((issue) => {
+    return groupListRecords.map((issue) => {
       const elementName =
         issue.nodeData?.nodeType === "TEXT"
           ? issue.nodeData?.characters
@@ -61,7 +75,8 @@ const IssuesOverviewList: React.FC = () => {
         description: issue.description,
         severity: issue.severity,
         type: issue.type,
-        wcagContrastScore: issue.nodeData?.contrastScore || "N/A",
+        wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
+        contrastRatio: issue.nodeData?.contrastScore?.ratio || "N/A",
         fontSize: issue.nodeData?.fontSize || "N/A",
       };
     });
@@ -82,6 +97,7 @@ const IssuesOverviewList: React.FC = () => {
         `"${issue.description || ""}"`, // Description
         `"${issue.severity || "N/A"}"`, // Severity
         `"${issue.wcagContrastScore || "N/A"}"`, // WCAG Score
+        `"${issue.contrastRatio || "N/A"}"`, // Contrast ratio
         `"${issue.fontSize || "N/A"}"`, // Font Size
       ].join(",");
     });
@@ -107,20 +123,26 @@ const IssuesOverviewList: React.FC = () => {
   return (
     <div className="flex size-full flex-col">
       <div className="grid">
-        <div className="flex w-full items-center justify-start gap-x-0.5">
-          <Button
-            title="Back to Issues Overview"
-            variant="nude"
-            size={"icon"}
-            className="!w-fit transition-transform delay-100 ease-in-out hover:!-translate-x-0.5 hover:text-accent"
-            onClick={() => {
-              navigateTo("INDEX");
-              setIssues([]);
-            }}
-          >
-            <ChevronLeft className="!size-6" />
-          </Button>
-          <p className="capitalize tracking-wide">Scan Results</p>
+        <div className="flex w-full items-center justify-between gap-x-0.5">
+          <div className="group inline-flex items-center justify-start gap-x-0.5">
+            <Button
+              title="Back to Issues Overview"
+              variant="nude"
+              size={"icon"}
+              className="!w-fit gap-0.5 group-hover:text-accent"
+              onClick={() => {
+                navigateTo("INDEX");
+                setIssues([]);
+              }}
+            >
+              <ChevronLeft className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5" />
+              <span className="text-base">Back</span>
+            </Button>
+          </div>
+
+          <span className="font-medium capitalize tracking-wide">
+            Scan Results
+          </span>
         </div>
 
         <Separator className="my-2 h-px !bg-rose-50/10" />
@@ -129,7 +151,7 @@ const IssuesOverviewList: React.FC = () => {
       {!scanning ? (
         <div className="flex size-full flex-col">
           <Tabs defaultValue="issues">
-            <TabsList className="mb-2 flex space-x-4 bg-dark-shade !py-6">
+            <TabsList className="mb-4 mt-2 flex space-x-4 bg-dark-shade !py-6">
               <TabsTrigger value="issues">Issues</TabsTrigger>
               <TabsTrigger value="report">Report</TabsTrigger>
             </TabsList>
@@ -141,16 +163,21 @@ const IssuesOverviewList: React.FC = () => {
                 Identified Issues
               </h3>
 
-              {issues.length > 0 && (
+              {groupListRecords.length > 0 && (
                 <p className="mb-5 font-open-sans text-sm">
-                  There are {issues.length} issues detected on this screen.
+                  There are {groupListRecords.length} issues detected on this
+                  screen.
                 </p>
               )}
 
               {filteredIssues.length > 0 ? (
                 <ul className="space-y-2 last:!mb-5">
                   {filteredIssues.map((issue) => {
-                    const issueCount = issues.filter(
+                    // const issueCount = issues.filter(
+                    //   (i: IssueX) => i.type === issue.type,
+                    // ).length;
+
+                    const issueCount = groupListRecords.filter(
                       (i: IssueX) => i.type === issue.type,
                     ).length;
 

@@ -17,9 +17,10 @@ export default {
       },
       colors: {
         accent: "#3498db",
-        dark: "#17171b",
+        dark: "#141213",
         "dark-alt": "#1a1a1d",
-        "dark-shade": "#141213",
+        "dark-shade": "#232325",
+        // "dark-shade": "#17171b",
         gray: "#D1D1D1",
         "light-blue": "#B0D4FF",
       },

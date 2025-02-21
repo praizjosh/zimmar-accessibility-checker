@@ -39,7 +39,9 @@ const AccessibilityValidator: React.FC = () => {
       </Card>
 
       <ul className="space-y-2">
-        {ISSUES_DATA_SCHEMA.map((issue) => {
+        {ISSUES_DATA_SCHEMA.filter(
+          (issue) => issue.type !== "Touch Target Spacing",
+        ).map((issue) => {
           return (
             <li
               key={issue.id}

@@ -117,21 +117,24 @@ export function getContrastScore(
  * @param backgroundColor - The background color in rgb format.
  * @param fontSize - The font size in pixels.
  * @param isBold - Whether the text is bold. Defaults to `false`.
- * @returns The WCAG compliance level as one of "AAA", "AA", "AAA Large", "AA Large", or "Fail".
+ * @returns The WCAG compliance level as one of "AAA", "AA", "AAA Large", "AA Large", or "Fail" and the contrast ratio.
  */
 export function getContrastCompliance(
   foregroundColor: RGBColor,
   backgroundColor: RGBColor,
   fontSize: number | symbol,
   isBold: boolean = false,
-): "AAA" | "AA" | "AAA Large" | "AA Large" | "Fail" {
+): {
+  compliance: "AAA" | "AA" | "AAA Large" | "AA Large" | "Fail";
+  ratio: number;
+} {
   if (
     typeof fontSize !== "number" ||
     isNaN(fontSize) ||
     typeof fontSize === "symbol"
   ) {
     console.error("Invalid fontSize:", fontSize);
-    return "Fail"; // Fallback for invalid inputs
+    return { compliance: "Fail", ratio: 0 }; // Fallback for invalid inputs
   }
 
   const ratio: number = rgb(foregroundColor, backgroundColor); // Ensure `rgb` handles errors gracefully
@@ -142,19 +145,19 @@ export function getContrastCompliance(
   // Determine compliance level based on contrast ratio and text size
   if (isLargeText) {
     if (ratio >= 4.5) {
-      return "AAA Large"; // Large text meeting AAA standards
+      return { compliance: "AAA Large", ratio }; // Large text meeting AAA standards
     } else if (ratio >= 3) {
-      return "AA Large"; // Large text meeting AA standards
+      return { compliance: "AA Large", ratio }; // Large text meeting AA standards
     }
   } else {
     if (ratio >= 7) {
-      return "AAA"; // Normal text meeting AAA standards
+      return { compliance: "AAA", ratio }; // Normal text meeting AAA standards
     } else if (ratio >= 4.5) {
-      return "AA"; // Normal text meeting AA standards
+      return { compliance: "AA", ratio }; // Normal text meeting AA standards
     }
   }
 
-  return "Fail"; // Text does not meet any WCAG standards
+  return { compliance: "Fail", ratio }; // Text does not meet any WCAG standards
 }
 
 /**
@@ -280,4 +283,83 @@ export function getComputedBackground(
   const backgroundImage = computedStyle.backgroundImage;
 
   return { backgroundColor, backgroundImage };
+}
+
+// Helper function to check if two nodes overlap
+function overlaps(node1: SceneNode, node2: SceneNode): boolean {
+  const bounds1 = node1.absoluteBoundingBox;
+  const bounds2 = node2.absoluteBoundingBox;
+
+  if (!bounds1 || !bounds2) return false;
+
+  return !(
+    bounds1.x > bounds2.x + bounds2.width ||
+    bounds1.x + bounds1.width < bounds2.x ||
+    bounds1.y > bounds2.y + bounds2.height ||
+    bounds1.y + bounds1.height < bounds2.y
+  );
+}
+
+export function getBackgroundColorForTextNode(
+  textNode: TextNode | undefined,
+): RGBColor | null {
+  if (!textNode) return null;
+  // Check if the text node has a parent
+  if (!textNode.parent) return null;
+
+  const parent = textNode.parent;
+
+  // Case 1: Parent has fills (most common case)
+  if ("fills" in parent && parent.fills && Array.isArray(parent.fills)) {
+    const nodeFills: Paint[] = parent.fills;
+    const solidFill = nodeFills.find(
+      (fill) => fill.type === "SOLID" && fill.visible,
+    );
+    if (solidFill && "color" in solidFill) {
+      // return solidFill.color;
+      const { r, g, b } = solidFill.color;
+      const rectColor: RGBColor = [
+        Math.round(r * 255),
+        Math.round(g * 255),
+        Math.round(b * 255),
+      ];
+      return rectColor;
+    }
+  }
+
+  // Case 2: Look for frame/rectangle siblings that might be positioned behind the text
+  if ("children" in parent) {
+    // Get the index of our text node
+    const textNodeIndex = parent.children.indexOf(textNode);
+
+    // Look at nodes before our text node (they would be behind the text in z-order)
+    for (let i = 0; i < textNodeIndex; i++) {
+      const sibling = parent.children[i];
+      if ("fills" in sibling && sibling.fills && Array.isArray(sibling.fills)) {
+        // Check if this sibling is positioned under our text node
+        if (overlaps(sibling, textNode)) {
+          const solidFill = sibling.fills.find(
+            (fill) => fill.type === "SOLID" && fill.visible,
+          );
+          if (solidFill && "color" in solidFill) {
+            const { r, g, b } = solidFill.color;
+            const rectColor: RGBColor = [
+              Math.round(r * 255),
+              Math.round(g * 255),
+              Math.round(b * 255),
+            ];
+            return rectColor;
+          }
+        }
+      }
+    }
+  }
+
+  // Case 3: Recursively check parent's parent
+  if (parent.parent) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return getBackgroundColorForTextNode(parent as any);
+  }
+
+  return null;
 }

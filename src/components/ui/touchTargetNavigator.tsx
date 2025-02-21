@@ -17,29 +17,11 @@ import {
 import useIssuesStore from "@/lib/useIssuesStore";
 import { MIN_TOUCH_TARGET_SIZE } from "@/lib/constants";
 import IssuesWrapper from "./IssuesWrapper";
-import { IssueX } from "@/lib/types";
+import cn from "@/lib/utils";
 
 const TouchTargetNavigator: React.FC = () => {
-  const {
-    currentIndex,
-    singleIssue,
-    selectedType,
-    setSingleIssue,
-    getIssueGroupList,
-  } = useIssuesStore();
-
-  onmessage = (event) => {
-    const { type, data } = event.data.pluginMessage;
-
-    if (type === "single-issue") {
-      const singleIssue = data.filter(
-        (issue: IssueX) =>
-          issue.type?.toLowerCase() === selectedType.toLowerCase(),
-      );
-
-      setSingleIssue(singleIssue[0]);
-    }
-  };
+  const { currentIndex, singleIssue, selectedType, getIssueGroupList } =
+    useIssuesStore();
 
   const issueGroupList = getIssueGroupList();
   const currentIssue = issueGroupList[currentIndex];
@@ -52,12 +34,12 @@ const TouchTargetNavigator: React.FC = () => {
       {issueGroupList.length === 0 ? (
         <>
           {singleIssue === null && (
-            <p className="my-4 text-pretty px-3 font-open-sans text-lg font-semibold text-gray">
-              No {selectedType} issue detected
+            <p className="text-pretty px-3 font-open-sans text-lg font-medium text-gray">
+              No {selectedType} issue detected.
             </p>
           )}
 
-          <div className="my-2 flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
+          <div className="flex w-full flex-col justify-center space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
             <div className="flex items-center justify-between gap-x-6 py-1.5">
               <div className="flex items-center text-sm">
                 <Target className="mr-3 size-5" />
@@ -74,9 +56,35 @@ const TouchTargetNavigator: React.FC = () => {
                 (singleIssue?.nodeData.height ?? 0) >= MIN_TOUCH_TARGET_SIZE ? (
                   <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
                 ) : (
-                  <X className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
+                  <X
+                    className={cn(
+                      "mr-3 size-5 rounded-full p-1 text-dark-shade",
+                      (singleIssue?.nodeData.width ?? 0) <
+                        MIN_TOUCH_TARGET_SIZE ||
+                        (singleIssue?.nodeData.height ?? 0) <
+                          MIN_TOUCH_TARGET_SIZE
+                        ? singleIssue?.severity === "minor"
+                          ? "bg-amber-500"
+                          : "bg-rose-600"
+                        : "",
+                    )}
+                  />
                 )}
-                <span className="text-sm">Current size: </span>
+                <span
+                  className={cn(
+                    "text-sm",
+                    (singleIssue?.nodeData.width ?? 0) <
+                      MIN_TOUCH_TARGET_SIZE ||
+                      (singleIssue?.nodeData.height ?? 0) <
+                        MIN_TOUCH_TARGET_SIZE
+                      ? singleIssue?.severity === "minor"
+                        ? "text-amber-500"
+                        : "text-inherit"
+                      : "",
+                  )}
+                >
+                  Current size:
+                </span>
               </div>
               <div className="flex items-center text-sm">
                 {selectedType === "Touch Target Size" &&
@@ -90,7 +98,7 @@ const TouchTargetNavigator: React.FC = () => {
                         <CircleAlert className="ml-2 size-4 text-gray" />
                       </TooltipTrigger>
                       <TooltipContent className="w-full max-w-52 text-pretty">
-                        <p className="text-xs font-light">
+                        <p className="text-xs">
                           Touch targets should be at least 44x44px to ensure
                           they are easily tappable on mobile devices.
                         </p>
@@ -99,12 +107,36 @@ const TouchTargetNavigator: React.FC = () => {
                   </TooltipProvider>
                 ) : null}
 
-                <span className="ml-2.5">
-                  {(singleIssue?.nodeData.width ?? 0) &&
-                  (singleIssue?.nodeData.height ?? 0)
-                    ? `${(singleIssue?.nodeData.width ?? 0).toFixed(1)} x ${(singleIssue?.nodeData.height ?? 0).toFixed(1)}px`
-                    : null}
-                </span>
+                {singleIssue?.nodeData.width !== undefined &&
+                  singleIssue?.nodeData.height !== undefined && (
+                    <div className="ml-2.5 inline-flex gap-x-1">
+                      <span
+                        className={cn(
+                          (singleIssue?.nodeData.width ?? 0) <
+                            MIN_TOUCH_TARGET_SIZE
+                            ? singleIssue?.severity === "minor"
+                              ? "text-amber-500"
+                              : "text-inherit"
+                            : "",
+                        )}
+                      >
+                        {(singleIssue?.nodeData.width ?? 0)?.toFixed(1)}
+                      </span>
+                      <span>x</span>
+                      <span
+                        className={cn(
+                          (singleIssue?.nodeData.height ?? 0) <
+                            MIN_TOUCH_TARGET_SIZE
+                            ? singleIssue?.severity === "minor"
+                              ? "text-amber-500"
+                              : "text-inherit"
+                            : "",
+                        )}
+                      >
+                        {(singleIssue?.nodeData.height ?? 0)?.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
               </div>
             </div>
 
@@ -127,8 +159,7 @@ const TouchTargetNavigator: React.FC = () => {
             {selectedType === "Touch Target Spacing" && (
               <div className="flex items-center justify-between py-1.5">
                 <div className="flex items-center text-sm">
-                  <MoveHorizontal className="mr-3 size-5 rounded-full bg-red-500 p-1 text-dark-shade" />
-
+                  <MoveHorizontal className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
                   <span className="text-sm">Element spacing: </span>
                 </div>
               </div>
@@ -142,10 +173,10 @@ const TouchTargetNavigator: React.FC = () => {
               <span
                 className={`font-medium capitalize ${
                   singleIssue?.severity === "critical"
-                    ? "text-red-500"
+                    ? "text-rose-600"
                     : singleIssue?.severity === "major"
-                      ? "text-amber-500"
-                      : "text-orange-500"
+                      ? "text-orange-500"
+                      : "text-amber-500"
                 }`}
               >
                 {singleIssue?.severity}
@@ -171,9 +202,31 @@ const TouchTargetNavigator: React.FC = () => {
               (height ?? 0) >= MIN_TOUCH_TARGET_SIZE ? (
                 <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
               ) : (
-                <X className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
+                <X
+                  className={cn(
+                    "mr-3 size-5 rounded-full p-1 text-dark-shade",
+                    (width ?? 0) < MIN_TOUCH_TARGET_SIZE ||
+                      (height ?? 0) < MIN_TOUCH_TARGET_SIZE
+                      ? severity === "minor"
+                        ? "bg-amber-500"
+                        : "bg-rose-600"
+                      : "",
+                  )}
+                />
               )}
-              <span className="text-sm">Current size: </span>
+              <span
+                className={cn(
+                  "text-sm",
+                  (width ?? 0) < MIN_TOUCH_TARGET_SIZE ||
+                    (height ?? 0) < MIN_TOUCH_TARGET_SIZE
+                    ? severity === "minor"
+                      ? "text-amber-500"
+                      : "text-inherit"
+                    : "",
+                )}
+              >
+                Current size:
+              </span>
             </div>
             <div className="flex items-center text-sm">
               {selectedType === "Touch Target Size" && (
@@ -183,7 +236,7 @@ const TouchTargetNavigator: React.FC = () => {
                       <CircleAlert className="ml-2 size-4 text-gray" />
                     </TooltipTrigger>
                     <TooltipContent className="w-full max-w-52 text-pretty">
-                      <p className="text-xs font-light">
+                      <p className="text-xs">
                         Touch targets should be at least 44x44px to ensure they
                         are easily tappable on mobile devices.
                       </p>
@@ -191,9 +244,31 @@ const TouchTargetNavigator: React.FC = () => {
                   </Tooltip>
                 </TooltipProvider>
               )}
-              <span className="ml-2.5">
-                {(width ?? 0).toFixed(1)} x {(height ?? 0).toFixed(1)}px
-              </span>
+              <div className="ml-2.5 inline-flex gap-x-1">
+                <span
+                  className={cn(
+                    (width ?? 0) < MIN_TOUCH_TARGET_SIZE
+                      ? severity === "minor"
+                        ? "text-amber-500"
+                        : "text-inherit"
+                      : "",
+                  )}
+                >
+                  {(width ?? 0).toFixed(1)}
+                </span>
+                <span>x</span>
+                <span
+                  className={cn(
+                    (height ?? 0) < MIN_TOUCH_TARGET_SIZE
+                      ? severity === "minor"
+                        ? "text-amber-500"
+                        : "text-inherit"
+                      : "",
+                  )}
+                >
+                  {(height ?? 0).toFixed(1)}px
+                </span>
+              </div>
             </div>
           </div>
 
@@ -214,12 +289,12 @@ const TouchTargetNavigator: React.FC = () => {
           {selectedType === "Touch Target Spacing" && (
             <div className="flex items-center justify-between py-1.5">
               <div className="flex items-center text-sm">
-                <MoveHorizontal className="mr-3 size-5 rounded-full bg-red-500 p-1 text-dark-shade" />
+                <MoveHorizontal className="mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade" />
 
                 <span className="text-sm">Element spacing: </span>
               </div>
 
-              <span className="text-sm text-red-500">Fail</span>
+              <span className="text-sm text-rose-600">Fail</span>
             </div>
           )}
 
@@ -231,10 +306,10 @@ const TouchTargetNavigator: React.FC = () => {
             <span
               className={`font-medium capitalize ${
                 severity === "critical"
-                  ? "text-red-500"
+                  ? "text-rose-600"
                   : severity === "major"
-                    ? "text-amber-500"
-                    : "text-orange-500"
+                    ? "text-orange-500"
+                    : "text-amber-500"
               }`}
             >
               {severity}

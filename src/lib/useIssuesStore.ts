@@ -34,12 +34,34 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   getIssueGroupList: () => {
     const { issues, selectedType } = get();
 
-    return issues.filter((issue) => {
-      return (
-        issue.type && issue.type.toLowerCase() === selectedType.toLowerCase()
-      );
+    const response = issues.filter((issue) => {
+      if (
+        issue.type &&
+        issue.type.toLowerCase() === selectedType.toLowerCase()
+      ) {
+        if (
+          issue.type === "Contrast" &&
+          issue.nodeData.contrastScore?.compliance === "Fail"
+        ) {
+          return true;
+        }
+        return issue.type !== "Contrast";
+      }
+      return false;
     });
+
+    return response;
   },
+
+  // getIssueGroupList: () => {
+  //   const { issues, selectedType } = get();
+
+  //   return issues.filter((issue) => {
+  //     return (
+  //       issue.type && issue.type.toLowerCase() === selectedType.toLowerCase()
+  //     );
+  //   });
+  // },
 
   updateIssue: (id: string, updates: Partial<IssueX>) => {
     set((state) => ({

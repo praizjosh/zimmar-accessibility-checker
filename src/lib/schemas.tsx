@@ -78,8 +78,8 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
 const ISSUE_RECOMMENDATIONS: IssueRecommendations[] = [
   {
     contrast: [
-      "Increase the contrast ratio to at least 4.5:1 for normal text and 3:1 for large text.",
-      "To improve contrast, use a darker text color or a lighter background color",
+      "Increase the contrast ratio to at least 4.5:1 for normal text and 3:1 for large text (18px and up).",
+      "To improve contrast, use a darker text color or a lighter background color.",
     ],
   },
   {

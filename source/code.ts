@@ -51,10 +51,15 @@ figma.ui.onmessage = async (message) => {
 figma.on("selectionchange", async () => {
   if (!isQuickCheckActive) return;
 
+  const selection = figma.currentPage.selection;
+
+  if (selection.length === 0) {
+    postMessageToUI("no-selection", true);
+    return;
+  }
+
   try {
-    const detectedIssues = await detectIssuesInSelection(
-      figma.currentPage.selection,
-    );
+    const detectedIssues = await detectIssuesInSelection(selection);
     if (detectedIssues.length) {
       postMessageToUI("detected-issue", detectedIssues);
     }

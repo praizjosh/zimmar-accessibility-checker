@@ -1,10 +1,14 @@
 /* eslint-disable no-console */
-import { IssueX } from "@/lib/types";
+import { contrastScore, IssueX } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
-import { MIN_TOUCH_TARGET_SIZE, MIN_TOUCH_TARGET_SPACING } from "./constants";
 import {
+  MIN_TOUCH_TARGET_SIZE,
+  MIN_TOUCH_TARGET_SPACING,
+  TOUCH_TARGET_KEYWORDS,
+} from "./constants";
+import {
+  getBackgroundColorForTextNode,
   getContrastCompliance,
-  getNearestBackgroundColor,
   isBoldFont,
 } from "./utils";
 
@@ -82,7 +86,7 @@ export const createTypographyIssue = (node: TextNode): IssueX => ({
 
 export const createContrastIssue = (
   node: TextNode,
-  contrastScore: string,
+  contrastScore: contrastScore,
   foregroundColor: RGBColor,
   backgroundColor: RGBColor | null,
 ): IssueX => ({
@@ -110,12 +114,10 @@ export const createContrastIssue = (
  * @returns {Promise<boolean>} True if the node is a touch target, otherwise false.
  */
 export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
-  const touchTargetKeywords = ["btn", "button", "link", "touch"];
-
   if ("name" in node) {
     const lowerCaseName = node.name.toLowerCase();
     if (
-      touchTargetKeywords.some((keyword) => lowerCaseName.includes(keyword))
+      TOUCH_TARGET_KEYWORDS.some((keyword) => lowerCaseName.includes(keyword))
     ) {
       return true;
     }
@@ -125,7 +127,7 @@ export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
     const mainComponent = await node.getMainComponentAsync();
     if (
       mainComponent &&
-      touchTargetKeywords.some((keyword) =>
+      TOUCH_TARGET_KEYWORDS.some((keyword) =>
         mainComponent.name.toLowerCase().includes(keyword),
       )
     ) {
@@ -143,13 +145,6 @@ export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
  * @returns {boolean} True if the node is too small, otherwise false.
  */
 export const isTouchTargetTooSmall = (node: SceneNode): boolean => {
-  //   console.log(
-  //     `Is Too Small:`,
-  //     "width" in node &&
-  //       "height" in node &&
-  //       (node.width < MIN_TOUCH_TARGET_SIZE ||
-  //         node.height < MIN_TOUCH_TARGET_SIZE),
-  //   );
   return (
     "width" in node &&
     "height" in node &&
@@ -318,12 +313,18 @@ export async function analyzeTextNode(node: TextNode, issues: IssueX[]) {
 
   if ("fills" in node) {
     const foregroundColor = extractForegroundColor(node.fills as Paint[]);
-    const backgroundColor = getNearestBackgroundColor(node) || [255, 255, 255];
+    const backgroundColor = getBackgroundColorForTextNode(node);
     const fontWeight: number | symbol = node.fontWeight;
     const fontSize: number | symbol = node.fontSize;
 
     // Skip nodes with mixed font sizes
     if (fontSize === figma.mixed) {
+      return;
+    }
+
+    if (backgroundColor === null) {
+      // No background detected, handle accordingly
+      console.warn("No background detected for this text node");
       return;
     }
 
@@ -337,7 +338,7 @@ export async function analyzeTextNode(node: TextNode, issues: IssueX[]) {
           isBold,
         );
 
-        if (contrastScore === "Fail") {
+        if (contrastScore) {
           issues.push(
             createContrastIssue(
               node,

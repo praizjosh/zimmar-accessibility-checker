@@ -8,11 +8,8 @@ const ContrastChecker = () => {
 
   const handleCheckContrast = () => {
     const contrastScore = getContrastScore(foreground, background);
-    // console.log("contrast res:", contrastScore);
     setScore(contrastScore);
   };
-
-  // console.log("foreground", foreground, typeof foreground);
 
   return (
     <div className="max-w-sm space-y-4 rounded-md border p-4">
