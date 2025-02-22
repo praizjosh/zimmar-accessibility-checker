@@ -172,10 +172,6 @@ const IssuesOverviewList: React.FC = () => {
               {filteredIssues.length > 0 ? (
                 <ul className="space-y-2 last:!mb-5">
                   {filteredIssues.map((issue) => {
-                    // const issueCount = issues.filter(
-                    //   (i: IssueX) => i.type === issue.type,
-                    // ).length;
-
                     const issueCount = groupListRecords.filter(
                       (i: IssueX) => i.type === issue.type,
                     ).length;
@@ -222,7 +218,7 @@ const IssuesOverviewList: React.FC = () => {
                                     ? "text-red-500"
                                     : issue.severity === "major"
                                       ? "text-orange-500"
-                                      : "text-yellow-400"
+                                      : "text-amber-500"
                                 }`}
                               >
                                 {issue.severity}
