@@ -40,10 +40,12 @@ figma.ui.onmessage = async (message) => {
         break;
 
       default:
-        console.warn(`Unhandled message type does not exist: ${message.type}`);
+        console.warn(
+          `Unhandled request. Message type does not exist: ${message.type}`,
+        );
     }
   } catch (error) {
-    figma.notify("An error occurred while processing the message.");
+    figma.notify("An error occurred while executing task.");
     console.error("Error in onmessage handler:", error);
   }
 };

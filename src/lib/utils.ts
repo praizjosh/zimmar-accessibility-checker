@@ -3,11 +3,78 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { score, rgb, RGBColor } from "wcag-contrast";
 
-export default function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Recursive function to collect all nodes
+export const getSeverityStylesa = (
+  severity: string | undefined,
+  isCritical: boolean = false,
+  isMajor: boolean = false,
+  isMinor: boolean = false,
+  isIcon: boolean = false,
+) =>
+  cn(
+    severity === "critical" && "text-rose-600",
+    isCritical && severity === "critical" && "text-rose-600 font-bold",
+    isIcon &&
+      isCritical &&
+      severity === "critical" &&
+      "mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade",
+
+    severity === "major" && "text-orange-500",
+    isMajor && severity === "major" && "text-orange-500 font-bold",
+    isIcon &&
+      isMajor &&
+      severity === "major" &&
+      "mr-3 size-5 rounded-full bg-orange-600 p-1 text-dark-shade",
+
+    severity === "minor" && "text-amber-500",
+    isMinor && severity === "minor" && "text-amber-500 font-bold",
+    isIcon &&
+      isMinor &&
+      severity === "minor" &&
+      "mr-3 size-5 rounded-full bg-amber-600 p-1 text-dark-shade",
+  );
+
+export const getSeverityStyles = (
+  severity: string | undefined,
+  {
+    isIcon = false,
+    isBold = false,
+  }: { isIcon?: boolean; isBold?: boolean } = {},
+) => {
+  const baseStyles = {
+    critical: "text-rose-500",
+    major: "text-orange-500",
+    minor: "text-amber-500",
+  };
+
+  const boldStyles = {
+    critical: "font-bold",
+    major: "font-bold",
+    minor: "font-bold",
+  };
+
+  const iconStyles = {
+    critical: "mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade",
+    major: "mr-3 size-5 rounded-full bg-orange-600 p-1 text-dark-shade",
+    minor: "mr-3 size-5 rounded-full bg-amber-500 p-1 text-dark-shade",
+  };
+
+  return cn(
+    baseStyles[(severity as keyof typeof baseStyles) ?? ""] || "",
+    isBold && boldStyles[(severity as keyof typeof baseStyles) ?? ""],
+    isIcon && iconStyles[(severity as keyof typeof baseStyles) ?? ""],
+  );
+};
+
+/**
+ * Recursively collects all nodes in a scene graph starting from the given node.
+ *
+ * @param node - The starting node from which to begin collecting nodes.
+ * @param collectedNodes - An array to store the collected nodes.
+ */
 export const collectNodes = (node: SceneNode, collectedNodes: SceneNode[]) => {
   collectedNodes.push(node);
   if ("children" in node) {

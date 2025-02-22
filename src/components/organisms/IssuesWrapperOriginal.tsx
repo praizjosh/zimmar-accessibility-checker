@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { Button } from "./button";
-import Separator from "./separator";
+import { Button } from "../ui/button";
+import Separator from "../ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,7 +18,7 @@ import { IssueType, IssueX } from "@/lib/types";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
 
-export default function IssuesWrapper({
+export default function IssuesWrapperOriginal({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -32,7 +32,6 @@ export default function IssuesWrapper({
     setSingleIssue,
     navigateToIssue,
     getIssueGroupList,
-    // rescanIssues,
   } = useIssuesStore();
 
   onmessage = (event) => {
@@ -101,6 +100,7 @@ export default function IssuesWrapper({
   const issueGroupList = getIssueGroupList();
   const currentIssue = issueGroupList[currentIndex];
   const { type, description } = currentIssue ?? {};
+
   function getIssueRecommendations(issueType: IssueType | string) {
     const issue = ISSUE_RECOMMENDATIONS.find(
       (entry) => entry[issueType.toLowerCase()] !== undefined,

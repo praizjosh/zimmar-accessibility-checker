@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +6,7 @@ import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { saveAs } from "file-saver";
-import Separator from "./separator";
+import Separator from "../ui/separator";
 import LoadingScreen from "./LoadingScreen";
 import { ISSUES_TYPES } from "@/lib/constants";
 
@@ -211,7 +210,7 @@ const IssuesOverviewList: React.FC = () => {
                                ? "bg-red-500"
                                : issue.severity === "major"
                                  ? "bg-orange-500"
-                                 : "bg-yellow-400"
+                                 : "bg-yellow-500"
                            }
                             `}
                               >
