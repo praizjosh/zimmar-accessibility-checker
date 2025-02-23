@@ -4,6 +4,7 @@ import IssuesOverviewList from "./components/organisms/issuesOverviewList";
 import TouchTargetNavigator from "./components/organisms/touchTargetNavigator";
 import { ROUTES_LIST } from "./lib/types";
 import useIssuesStore from "./lib/useIssuesStore";
+import { cn } from "./lib/utils";
 
 export default function App() {
   const { currentRoute } = useIssuesStore();
@@ -16,7 +17,11 @@ export default function App() {
   };
 
   return (
-    <div className="mx-auto grid size-full max-w-3xl items-center p-5">
+    <div
+      className={cn("mx-auto grid size-full max-w-3xl items-center p-5 py-4", {
+        "!mb-6": currentRoute === "ISSUE_OVERVIEW_LIST_VIEW",
+      })}
+    >
       <div className="container flex size-full flex-col items-center">
         {RoutesMap[currentRoute]}
       </div>

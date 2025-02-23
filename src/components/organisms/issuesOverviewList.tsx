@@ -88,7 +88,6 @@ const IssuesOverviewList: React.FC = () => {
       "Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score,Font Size\n";
 
     const csvRows = formattedIssues.map((issue) => {
-      // Handle missing or undefined values gracefully
       return [
         `"${issue.elementType || "N/A"}"`, // Element Type
         `"${issue.elementName}"`, // Element Name
@@ -125,7 +124,7 @@ const IssuesOverviewList: React.FC = () => {
         <div className="flex w-full items-center justify-between gap-x-0.5">
           <div className="group inline-flex items-center justify-start gap-x-0.5">
             <Button
-              title="Back to Issues Overview"
+              title="Go back"
               variant="nude"
               size={"icon"}
               className="!w-fit gap-0.5 group-hover:text-accent"
@@ -134,7 +133,10 @@ const IssuesOverviewList: React.FC = () => {
                 setIssues([]);
               }}
             >
-              <ChevronLeft className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5" />
+              <ChevronLeft
+                strokeWidth={1.5}
+                className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5"
+              />
               <span className="text-base">Back</span>
             </Button>
           </div>
@@ -157,7 +159,7 @@ const IssuesOverviewList: React.FC = () => {
 
             <TabsContent value="issues">
               <h3
-                className={`text-lg font-semibold tracking-wide text-gray ${issues.length > 0 ? "mb-2" : "mb-4"}`}
+                className={`text-lg font-medium tracking-wide text-gray ${issues.length > 0 ? "mb-2" : "mb-4"}`}
               >
                 Identified Issues
               </h3>
@@ -231,7 +233,10 @@ const IssuesOverviewList: React.FC = () => {
                               {issue.description}
                             </span>
 
-                            <ChevronRight className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent" />
+                            <ChevronRight
+                              strokeWidth={1.5}
+                              className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
+                            />
                           </div>
                         </button>
                       </li>

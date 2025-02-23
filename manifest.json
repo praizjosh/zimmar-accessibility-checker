@@ -1,5 +1,5 @@
 {
-  "name": "Zimmar - Accessibility Checker (a11y)",
+  "name": "Zimmar - Accessibility Compliance Checker",
   "id": "14676619212dd996xccx9125c11740203kjhf46578fv023",
   "api": "1.0.0",
   "main": "dist/code.js",

@@ -12,9 +12,7 @@ const AccessibilityValidator: React.FC = () => {
 
   const handleIssuesListClick = (type: IssueType) => {
     postMessageToBackend("start-quickcheck");
-
     setSelectedType(type);
-
     navigateTo(
       type === "Touch Target Size" || type === "Touch Target Spacing"
         ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
@@ -61,7 +59,10 @@ const AccessibilityValidator: React.FC = () => {
                       {issue.type}
                     </span>
                   </div>
-                  <ChevronRight className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent" />
+                  <ChevronRight
+                    strokeWidth={1.5}
+                    className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
+                  />
                 </div>
               </button>
             </li>

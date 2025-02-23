@@ -11,7 +11,7 @@ import {
 import { IssueX } from "@/lib/types";
 
 figma.showUI(__html__);
-figma.ui.resize(410, 500);
+figma.ui.resize(400, 550);
 
 // Global state for quickcheck mode
 let isQuickCheckActive = false;
@@ -120,7 +120,6 @@ async function collectIssues(
       // Safeguard font loading
       try {
         if (textNode.fontName === figma.mixed) {
-          // console.warn(`Text node "${textNode.name}" has mixed fonts.`);
           return;
         }
 

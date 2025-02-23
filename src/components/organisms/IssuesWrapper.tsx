@@ -19,7 +19,6 @@ export default function IssuesWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  const [showRecommendations, setShowRecommendations] = useState(false);
   const [isQuickCheckActive, setIsQuickCheckActive] = useState(false);
   const {
     currentIndex,
@@ -41,30 +40,19 @@ export default function IssuesWrapper({
       );
 
       if (matchingIssues.length === 0) {
-        // console.log("No issues found for selected type:", selectedType);
         setSingleIssue(null);
         return;
       }
 
       setSingleIssue(matchingIssues[0] || data[0] || null);
-      setShowRecommendations(true);
     }
 
     if (type === "no-selection" && data) {
       setSingleIssue(null);
-      setShowRecommendations(!true);
     }
 
     if (type === "quickcheck-active") {
       setIsQuickCheckActive(data);
-    }
-
-    if (type === "single-issue") {
-      const matchingIssues = data.filter(
-        (issue: IssueX) =>
-          issue.type?.toLowerCase() === selectedType.toLowerCase(),
-      );
-      setSingleIssue(matchingIssues[0] || null);
     }
   };
 
@@ -107,7 +95,7 @@ export default function IssuesWrapper({
   const renderWrapper = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <p className="text-pretty px-3 font-open-sans text-lg font-medium text-gray">
+        <p className="px-3 font-open-sans text-lg font-medium text-gray">
           No {selectedType} issue detected.
         </p>
       );
@@ -123,9 +111,7 @@ export default function IssuesWrapper({
 
         {children}
 
-        {showRecommendations && (
-          <Recommendations recommendations={recommendations || []} />
-        )}
+        <Recommendations recommendations={recommendations || []} />
       </>
     );
   };
@@ -135,13 +121,16 @@ export default function IssuesWrapper({
       <div className="grid w-full">
         <div className="flex w-full items-center justify-between gap-x-0.5">
           <Button
-            title="Back to Home"
+            title="Go back"
             variant="nude"
-            size="icon"
+            size={"icon"}
             className="!w-fit gap-0.5 group-hover:text-accent"
             onClick={handleBackBtnClick}
           >
-            <ChevronLeft className="!size-6 transition-transform group-hover:!-translate-x-0.5" />
+            <ChevronLeft
+              strokeWidth={1.5}
+              className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5"
+            />
             <span className="text-base">Back</span>
           </Button>
 
@@ -163,7 +152,7 @@ export default function IssuesWrapper({
                     className="w-full max-w-80 text-pretty p-5"
                   >
                     <div className="space-y-2">
-                      <h5 className="mb-3 text-lg font-medium text-accent">
+                      <h5 className="mb-2.5 text-lg font-medium text-accent">
                         About Touch Target Detection
                       </h5>
                       <p>
@@ -179,7 +168,7 @@ export default function IssuesWrapper({
           </div>
         </div>
 
-        <Separator className="my-2 h-px !bg-rose-50/10" />
+        <Separator className="my-1 h-px !bg-rose-50/10" />
 
         {issueGroupList.length > 0 && (
           <div className="flex w-full items-center justify-end space-x-2">
@@ -191,7 +180,7 @@ export default function IssuesWrapper({
               disabled={currentIndex === 0}
               className="p-2.5"
             >
-              <ChevronLeft className="!size-6" />
+              <ChevronLeft strokeWidth={1.5} className="!size-6" />
             </Button>
             <span className="text-sm text-slate-200">
               Issue {currentIndex + 1} of {issueGroupList.length}
@@ -204,7 +193,7 @@ export default function IssuesWrapper({
               disabled={currentIndex === issueGroupList.length - 1}
               className="p-2.5"
             >
-              <ChevronRight className="!size-6" />
+              <ChevronRight strokeWidth={1.5} className="!size-6" />
             </Button>
           </div>
         )}

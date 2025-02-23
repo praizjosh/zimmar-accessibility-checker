@@ -116,13 +116,16 @@ export default function IssuesWrapperOriginal({
         <div className="flex w-full items-center justify-between gap-x-0.5">
           <div className="group inline-flex items-center justify-start gap-x-0.5">
             <Button
-              title="Back to Home"
+              title="Go back"
               variant="nude"
               size={"icon"}
               className="!w-fit gap-0.5 group-hover:text-accent"
               onClick={handleBackBtnClick}
             >
-              <ChevronLeft className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5" />
+              <ChevronLeft
+                strokeWidth={1.5}
+                className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5"
+              />
               <span className="text-base">Back</span>
             </Button>
           </div>
@@ -147,7 +150,7 @@ export default function IssuesWrapperOriginal({
                       className="w-full max-w-80 text-pretty p-5"
                     >
                       <div className="space-y-2">
-                        <h5 className="mb-3 text-lg font-medium leading-none tracking-tight text-accent">
+                        <h5 className="mb-2.5 text-lg font-medium leading-none tracking-tight text-accent">
                           About Touch Target Detection
                         </h5>
                         <>
@@ -194,7 +197,7 @@ export default function IssuesWrapperOriginal({
               disabled={currentIndex === 0}
               className="p-2.5"
             >
-              <ChevronLeft className="!size-6" />
+              <ChevronLeft strokeWidth={1.5} className="!size-6" />
             </Button>
             <span className="text-sm text-slate-200">
               Issue {currentIndex + 1} of {issueGroupList.length}
@@ -207,7 +210,7 @@ export default function IssuesWrapperOriginal({
               disabled={currentIndex === issueGroupList.length - 1}
               className="p-2.5"
             >
-              <ChevronRight className="!size-6" />
+              <ChevronRight strokeWidth={1.5} className="!size-6" />
             </Button>
           </div>
         )}
@@ -231,7 +234,7 @@ export default function IssuesWrapperOriginal({
                     Recommendations
                   </h4>
                   <Button title="View recommendations" variant="nude" size="sm">
-                    <ChevronsUpDown className="size-4" />
+                    <ChevronsUpDown strokeWidth={1.5} className="size-4" />
                     <span className="sr-only">Toggle</span>
                   </Button>
                 </div>

@@ -24,7 +24,7 @@ const TouchTargetNavigator: React.FC = () => {
   const renderIssueDetails = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <p className="text-pretty px-3 font-open-sans text-lg font-medium text-gray">
+        <p className="px-3 font-open-sans text-lg font-medium text-gray">
           No {selectedType} issue detected.
         </p>
       );
