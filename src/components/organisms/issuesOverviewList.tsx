@@ -208,7 +208,7 @@ const IssuesOverviewList: React.FC = () => {
                                ? "bg-red-500"
                                : issue.severity === "major"
                                  ? "bg-orange-500"
-                                 : "bg-yellow-500"
+                                 : "bg-amber-500"
                            }
                             `}
                               >
@@ -260,18 +260,18 @@ const IssuesOverviewList: React.FC = () => {
               </p>
               <div className="space-x-4">
                 <Button
-                  title="Download JSON Report"
-                  variant="default"
-                  onClick={generateJSON}
-                >
-                  Download JSON
-                </Button>
-                <Button
                   title="Download CSV Report"
                   variant="default"
                   onClick={generateCSV}
                 >
                   Download CSV
+                </Button>
+                <Button
+                  title="Download JSON Report"
+                  variant="default"
+                  onClick={generateJSON}
+                >
+                  Download JSON
                 </Button>
               </div>
             </TabsContent>

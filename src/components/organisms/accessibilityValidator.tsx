@@ -31,7 +31,7 @@ const AccessibilityValidator: React.FC = () => {
             disabled={scanning}
           >
             <Radar className="mr-2" />
-            <span>{scanning ? "Scanning..." : "Start Scan"}</span>
+            <span>Start scan</span>
           </Button>
         </CardContent>
       </Card>
@@ -70,7 +70,7 @@ const AccessibilityValidator: React.FC = () => {
         })}
       </ul>
 
-      <div className="flex size-full max-w-lg flex-col items-center text-xs text-rose-50/40">
+      <div className="flex size-full flex-col items-center text-xs text-rose-50/40">
         <p className="mt-auto">
           &copy; {new Date().getFullYear()} Zimmar Technologies. All rights
           reserved.
