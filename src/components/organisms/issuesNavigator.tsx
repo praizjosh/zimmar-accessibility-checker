@@ -66,7 +66,7 @@ const IssuesNavigator: React.FC = () => {
           icon={<CaseSensitive className="mr-3 size-5" />}
           label="Text:"
           value={
-            <span className="line-clamp-1 w-full max-w-xs text-right font-mono">
+            <span className="line-clamp-1 w-full max-w-[10.938rem] text-right font-mono">
               {characters}
             </span>
           }

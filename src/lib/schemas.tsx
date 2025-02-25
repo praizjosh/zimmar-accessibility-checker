@@ -25,7 +25,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <Contrast
         strokeWidth={1.5}
-        className="size-5 text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-gray group-hover:text-accent"
       />
     ),
   },
@@ -38,7 +38,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <TypeOutline
         strokeWidth={1.5}
-        className="size-5 text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-gray group-hover:text-accent"
       />
     ),
   },
@@ -62,7 +62,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <Pointer
         strokeWidth={1.5}
-        className="size-5 text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-gray group-hover:text-accent"
       />
     ),
   },
@@ -70,7 +70,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
   {
     id: 4,
     type: "Touch Target Spacing",
-    description: "Touch target elements are too close. Minimum spacing is 8px.",
+    description: "Touch target elements are too close.",
     severity: "minor",
     nodeType: [
       "COMPONENT",
@@ -87,7 +87,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <MoveHorizontal
         strokeWidth={1.5}
-        className="size-5 text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-gray group-hover:text-accent"
       />
     ),
   },

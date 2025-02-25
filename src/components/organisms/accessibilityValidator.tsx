@@ -23,10 +23,10 @@ const AccessibilityValidator: React.FC = () => {
   return (
     <div className="flex size-full flex-col space-y-5">
       <Card className="border border-rose-50/10 bg-dark-shade text-white">
-        <CardContent className="flex flex-col items-center p-6">
+        <CardContent className="flex flex-col items-center p-4">
           <Button
             className="w-full bg-accent"
-            title="Start scan"
+            title="Scan design for accessibility issues"
             onClick={startScan}
             disabled={scanning}
           >
@@ -48,7 +48,7 @@ const AccessibilityValidator: React.FC = () => {
               className="group flex items-center justify-between rounded-xl bg-dark-shade text-gray transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
             >
               <button
-                className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
+                className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left text-sm"
                 aria-label={issue.type}
                 onClick={() => handleIssuesListClick(issue.type as IssueType)}
               >

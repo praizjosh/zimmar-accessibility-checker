@@ -18,7 +18,7 @@ export default function App() {
 
   return (
     <div
-      className={cn("mx-auto grid size-full max-w-3xl items-center p-5 py-4", {
+      className={cn("mx-auto grid size-full max-w-3xl items-center p-4", {
         "!mb-6": currentRoute === "ISSUE_OVERVIEW_LIST_VIEW",
       })}
     >

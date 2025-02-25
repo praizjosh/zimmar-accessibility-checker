@@ -11,7 +11,7 @@ import {
 import { IssueX } from "@/lib/types";
 
 figma.showUI(__html__);
-figma.ui.resize(400, 550);
+figma.ui.resize(375, 550);
 
 // Global state for quickcheck mode
 let isQuickCheckActive = false;
