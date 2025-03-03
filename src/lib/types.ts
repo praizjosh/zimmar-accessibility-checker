@@ -38,11 +38,9 @@ export interface IssueX {
 
 export interface IssuesStore {
   issues: IssueX[]; // List of issues
-  // issueGroupList: IssueX[]; // List of related issues by type
   currentIndex: number; // Index of the currently selected issue
   startScan: () => void; // Start the scan
   setIssues: (newIssues: IssueX[]) => void; // Setter for issues
-  // setIssueGroupList: (newIssues: IssueX[]) => void; // Setter for related issues
   setCurrentIndex: (index: number) => void; // Setter for the current index
   navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }

@@ -10,27 +10,21 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   currentRoute: "INDEX", // Default route
   selectedType: "",
   scanning: false,
-
   setScanning: (isScanning) =>
     set({
       scanning: isScanning,
     }),
-
   startScan: () => {
     const { setScanning, navigateTo } = get();
     setScanning(true);
     postMessageToBackend("scan");
     navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
   },
-
   setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
-
   setIssues: (newIssues: IssueX[]) => {
     set({ issues: newIssues });
   },
-
   setSelectedType: (type: IssueType) => set({ selectedType: type }),
-
   getIssueGroupList: () => {
     const { issues, selectedType } = get();
 
@@ -52,17 +46,6 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 
     return response;
   },
-
-  // getIssueGroupList: () => {
-  //   const { issues, selectedType } = get();
-
-  //   return issues.filter((issue) => {
-  //     return (
-  //       issue.type && issue.type.toLowerCase() === selectedType.toLowerCase()
-  //     );
-  //   });
-  // },
-
   updateIssue: (id: string, updates: Partial<IssueX>) => {
     set((state) => ({
       issues: state.issues.map((issue) =>
@@ -70,9 +53,7 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
       ),
     }));
   },
-
   setCurrentIndex: (index: number) => set({ currentIndex: index }),
-
   navigateToIssue: (index: number) => {
     const { getIssueGroupList } = get();
     const issueGroupList = getIssueGroupList();
@@ -90,11 +71,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
       set({ currentIndex: index });
     }
   },
-
   navigateTo: (route: Routes) => {
     set({ currentRoute: route });
   },
-
   rescanIssues: () => {
     const { startScan, setIssues } = get();
     setIssues([]); // Clear old issues

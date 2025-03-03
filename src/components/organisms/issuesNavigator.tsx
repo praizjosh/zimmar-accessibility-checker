@@ -56,7 +56,6 @@ const IssuesNavigator: React.FC = () => {
 
     const { type, severity } = issue;
     const { characters, fontSize, contrastScore, id } = issue.nodeData ?? {};
-
     const getFontSize = () => fontSize ?? singleIssue?.nodeData?.fontSize ?? 0;
     const fontSizeIsValid = getFontSize() >= MIN_FONT_SIZE;
 

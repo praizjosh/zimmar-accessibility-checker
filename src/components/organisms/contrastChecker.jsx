@@ -37,6 +37,8 @@ const ContrastChecker = () => {
         </label>
       </div>
       <button
+        type="button"
+        aria-label="Check Contrast"
         onClick={handleCheckContrast}
         className="w-full rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
       >

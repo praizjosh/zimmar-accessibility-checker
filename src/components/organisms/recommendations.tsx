@@ -4,7 +4,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronsUpDown } from "lucide-react";
-
 import { Button } from "../ui/button";
 
 export default function Recommendations({
