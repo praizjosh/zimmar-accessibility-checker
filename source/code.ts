@@ -1,202 +1,207 @@
-import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
-import {
-  analyzeTextNode,
-  createTouchTargetIssue,
-  createTypographyIssue,
-  isTouchTarget,
-  isTouchTargetTooClose,
-  isTouchTargetTooSmall,
-  postMessageToUI,
-} from "@/lib/figmaUtils";
+/* eslint-disable no-console */
 import { IssueX } from "@/lib/types";
+import {
+  getContrastCompliance,
+  getNearestBackgroundColor,
+  isBoldFont,
+} from "@/lib/utils";
+import { RGBColor } from "wcag-contrast";
 
 figma.showUI(__html__);
-figma.ui.resize(375, 550);
+figma.ui.resize(450, 500);
 
-// Global state for quickcheck mode
-let isQuickCheckActive = false;
+// Helper: Extract foreground color
+const extractForegroundColor = (nodeFills: Paint[]): RGBColor => {
+  if (
+    nodeFills.length > 0 &&
+    nodeFills[0].type === "SOLID" &&
+    nodeFills[0].visible !== false
+  ) {
+    const { r, g, b } = nodeFills[0].color;
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+  return [0, 0, 0]; // Default black
+};
 
+// Helper: Create a typography issue
+const createTypographyIssue = (node: TextNode): IssueX => ({
+  description: "Text size is too small for readability.",
+  severity: "major",
+  type: "Typography",
+  nodeData: {
+    id: node.id,
+    characters: node.characters,
+    fontSize: node.fontSize as number,
+    height: node.height,
+    lineHeight: node.lineHeight,
+    name: node.name,
+    nodeType: node.type,
+  },
+});
+
+// Helper: Create a contrast issue
+const createContrastIssue = (
+  node: TextNode,
+  contrastScore: string,
+  foregroundColor: RGBColor,
+  backgroundColor: RGBColor | null,
+): IssueX => ({
+  description: "Text contrast is below WCAG AA standard.",
+  severity: "critical",
+  type: "Contrast",
+  nodeData: {
+    id: node.id,
+    contrastScore,
+    characters: node.characters,
+    fontSize: node.fontSize as number,
+    height: node.height,
+    lineHeight: node.lineHeight,
+    name: node.name,
+    nodeType: node.type,
+    foregroundColor,
+    backgroundColor: backgroundColor || [255, 255, 255],
+  },
+});
+
+// Constants
+const MIN_TOUCH_TARGET_SIZE = 44;
+
+// Helper: Check touch target size
+const isTouchTargetTooSmall = (node: SceneNode): boolean => {
+  return (
+    "width" in node &&
+    "height" in node &&
+    (node.width < MIN_TOUCH_TARGET_SIZE || node.height < MIN_TOUCH_TARGET_SIZE)
+  );
+};
+
+// Helper: Create a touch target issue
+const createTouchTargetIssue = (node: SceneNode): IssueX => ({
+  description: "Touch target size is too small for accessibility.",
+  severity: "minor",
+  type: "Touch Target Size",
+  nodeData: {
+    id: node.id,
+    name: node.name,
+    width: "width" in node ? node.width : undefined,
+    height: "height" in node ? node.height : undefined,
+    nodeType: node.type,
+  },
+});
+
+// Handle messages from the UI
 figma.ui.onmessage = async (message) => {
   try {
-    switch (message.type) {
-      case MESSAGE_TYPES.START_QUICKCHECK:
-        handleStartQuickCheck();
-        break;
+    if (message.type === "scan") {
+      console.log("Starting scan...");
 
-      case MESSAGE_TYPES.CANCEL_QUICKCHECK:
-        handleCancelQuickCheck();
-        break;
+      const allNodes = figma.currentPage.findAll();
+      const textNodes = figma.currentPage.findAll(
+        (node) => node.type === "TEXT",
+      ) as TextNode[];
 
-      case MESSAGE_TYPES.SCAN:
-        await handleScan();
-        break;
+      const issues: IssueX[] = [];
 
-      case MESSAGE_TYPES.UPDATE_FONT_SIZE:
-        await handleUpdateFontSize(message);
-        break;
+      for (const node of allNodes) {
+        // Check touch target issues
+        if (isTouchTargetTooSmall(node)) {
+          issues.push(createTouchTargetIssue(node));
+        }
+      }
 
-      case MESSAGE_TYPES.NAVIGATE:
-        await handleNavigate(message);
-        break;
+      for (const node of textNodes) {
+        // Check typography issues
+        if (typeof node.fontSize === "number" && node.fontSize < 11) {
+          issues.push(createTypographyIssue(node));
+        }
 
-      default:
-        console.warn(
-          `Unhandled request. Message type does not exist: ${message.type}`,
+        // Check contrast issues
+        if ("fills" in node) {
+          const foregroundColor = extractForegroundColor(node.fills as Paint[]);
+          const backgroundColor = getNearestBackgroundColor(node) || [
+            255, 255, 255,
+          ];
+          const contrastScore = getContrastCompliance(
+            foregroundColor,
+            backgroundColor,
+            node.fontSize as number,
+            isBoldFont(node.fontWeight as number),
+          );
+
+          if (contrastScore === "Fail") {
+            issues.push(
+              createContrastIssue(
+                node,
+                contrastScore,
+                foregroundColor,
+                backgroundColor,
+              ),
+            );
+          }
+        }
+      }
+
+      console.log(`Scan completed. Total issues identified: ${issues.length}`);
+      figma.ui.postMessage({ type: "loadIssues", issues });
+    }
+
+    if (message.type === "navigate") {
+      const node = (await figma.getNodeByIdAsync(message.id)) as SceneNode;
+      if (node) {
+        figma.currentPage.selection = [node];
+        figma.viewport.scrollAndZoomIntoView([node]);
+      } else {
+        console.warn(`Node with ID ${message.id} not found.`);
+      }
+    }
+
+    if (message.type === "updateFontSize") {
+      const node = (await figma.getNodeByIdAsync(
+        message.id,
+      )) as TextNode | null;
+      if (node && node.type === "TEXT") {
+        await figma.loadFontAsync(node.fontName as FontName);
+        node.fontSize = message.fontSize;
+        console.log(
+          `Updated font size for node ${node.id} to ${message.fontSize}`,
         );
+      } else {
+        console.warn(`Failed to update font size for node ${message.id}`);
+      }
     }
   } catch (error) {
-    figma.notify("An error occurred while executing task.");
-    console.error("Error in onmessage handler:", error);
+    console.error("An error occurred while processing the message:", error);
   }
 };
 
-figma.on("selectionchange", async () => {
-  if (!isQuickCheckActive) return;
+// Handle selection change to provide dynamic feedback
+figma.on("selectionchange", () => {
+  const selectedNode = figma.currentPage.selection[0];
+  console.log("Selected node:", selectedNode);
 
-  const selection = figma.currentPage.selection;
+  if (selectedNode && selectedNode.type === "TEXT" && "fills" in selectedNode) {
+    const foregroundColor = extractForegroundColor(
+      selectedNode.fills as Paint[],
+    );
+    const backgroundColor = getNearestBackgroundColor(selectedNode);
 
-  if (selection.length === 0) {
-    postMessageToUI("no-selection", true);
-    return;
-  }
+    const compliance = getContrastCompliance(
+      foregroundColor,
+      backgroundColor || [255, 255, 255],
+      selectedNode.fontSize as number,
+      isBoldFont(selectedNode.fontWeight as number),
+    );
 
-  try {
-    const detectedIssues = await detectIssuesInSelection(selection);
-    if (detectedIssues.length) {
-      postMessageToUI("detected-issue", detectedIssues);
+    figma.ui.postMessage({ type: "single-issue", compliance });
+
+    console.log(
+      `Contrast compliance for node "${selectedNode.name}" (${selectedNode.id}): ${compliance}`,
+    );
+
+    if (selectedNode && isTouchTargetTooSmall(selectedNode)) {
+      console.log(
+        `Selected node "${selectedNode.name}" has a touch target issue.`,
+      );
     }
-  } catch (error) {
-    console.error("Error in selectionchange handler:", error);
   }
 });
-
-async function handleStartQuickCheck() {
-  isQuickCheckActive = true;
-  postMessageToUI("quickcheck-active", isQuickCheckActive);
-}
-
-function handleCancelQuickCheck() {
-  isQuickCheckActive = false;
-}
-
-async function handleScan() {
-  const allTextNodes = figma.currentPage.findAll(
-    (node) => node.type === "TEXT",
-  ) as TextNode[];
-  const allPageNodes = figma.currentPage.findAll(() => true) as SceneNode[];
-
-  const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
-  postMessageToUI("loadIssues", issues);
-}
-
-async function handleUpdateFontSize(message: { id: string; fontSize: number }) {
-  const node = (await figma.getNodeByIdAsync(message.id)) as TextNode | null;
-  if (node && node.type === "TEXT") {
-    await figma.loadFontAsync(node.fontName as FontName);
-    node.fontSize = message.fontSize;
-  } else {
-    console.warn(`Failed to update font size for node ${message.id}`);
-  }
-}
-
-async function handleNavigate(message: { id: string }) {
-  const node = (await figma.getNodeByIdAsync(message.id)) as SceneNode;
-  if (node) {
-    figma.currentPage.selection = [node];
-    figma.viewport.scrollAndZoomIntoView([node]);
-  } else {
-    console.warn(`Node with ID ${message.id} not found.`);
-  }
-}
-
-async function collectIssues(
-  allTextNodes: TextNode[],
-  allPageNodes: SceneNode[],
-): Promise<IssueX[]> {
-  const issues: IssueX[] = [];
-
-  await Promise.all(
-    allTextNodes.map(async (textNode) => {
-      // Safeguard font loading
-      try {
-        if (textNode.fontName === figma.mixed) {
-          return;
-        }
-
-        // Ensure fontName is of the correct format
-        const fontName = textNode.fontName as FontName;
-        await figma.loadFontAsync(fontName);
-
-        if (
-          typeof textNode.fontSize === "number" &&
-          textNode.fontSize < MIN_FONT_SIZE
-        ) {
-          issues.push(createTypographyIssue(textNode));
-        }
-
-        await analyzeTextNode(textNode, issues);
-      } catch (error) {
-        console.error(
-          `Failed to load font for text node "${textNode.name}":`,
-          error,
-        );
-      }
-    }),
-  );
-
-  for (const node of allPageNodes) {
-    if ("absoluteBoundingBox" in node && (await isTouchTarget(node))) {
-      if (isTouchTargetTooSmall(node)) {
-        const issue = createTouchTargetIssue(node, "Size");
-        if (issue) {
-          issues.push(issue);
-        }
-      }
-      if (isTouchTargetTooClose(node, allPageNodes)) {
-        const issue = createTouchTargetIssue(node, "Spacing");
-        if (issue) {
-          issues.push(issue);
-        }
-      }
-    }
-  }
-
-  return issues;
-}
-
-async function detectIssuesInSelection(
-  selectedNodes: readonly SceneNode[],
-): Promise<IssueX[]> {
-  const issues: IssueX[] = [];
-
-  await Promise.all(
-    selectedNodes.map(async (node) => {
-      if (isTouchTargetTooSmall(node)) {
-        const issue = createTouchTargetIssue(node, "Size");
-        if (issue) {
-          issues.push(issue);
-        }
-      }
-      if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
-        const issue = createTouchTargetIssue(node, "Spacing");
-        if (issue) {
-          issues.push(issue);
-        }
-      }
-
-      if (
-        node.type === "TEXT" &&
-        node.fontSize &&
-        typeof node.fontSize === "number" &&
-        node.fontSize < MIN_FONT_SIZE
-      ) {
-        issues.push(createTypographyIssue(node));
-      }
-      if (node.type === "TEXT" && "fills" in node) {
-        await analyzeTextNode(node, issues);
-      }
-    }),
-  );
-
-  return issues;
-}
