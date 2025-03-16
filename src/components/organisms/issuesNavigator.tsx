@@ -1,14 +1,13 @@
-import React from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { CaseSensitive, X, Check, OctagonAlert } from "lucide-react";
+import IssueDetailRow from "./IssueDetailRow";
 import Input from "../ui/input";
 import { MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { cn, getSeverityStyles } from "@/lib/utils";
-import IssueDetailRow from "./issueDetailRow";
 import IssuesWrapper from "./IssuesWrapper";
 
-const IssuesNavigator: React.FC = () => {
+export default function IssuesNavigator() {
   const {
     currentIndex,
     singleIssue,
@@ -126,7 +125,7 @@ const IssuesNavigator: React.FC = () => {
           }
           tooltip={
             !fontSizeIsValid &&
-            `The text size is below recommended standards for readability. Consider increasing it to at least ${MIN_FONT_SIZE}px. to ensure better legibility.`
+            `The text size is below recommended standards for readability. Consider increasing it to at least ${MIN_FONT_SIZE}px to ensure better legibility.`
           }
         />
 
@@ -203,7 +202,7 @@ const IssuesNavigator: React.FC = () => {
                       getSeverityStyles(severity, { isBold: true }),
                   )}
                 >
-                  {contrastScore?.ratio.toFixed(1)}
+                  {contrastScore?.ratio.toFixed(2)}
                 </span>
               }
             />
@@ -236,6 +235,4 @@ const IssuesNavigator: React.FC = () => {
         : renderIssueDetails(currentIssue)}
     </IssuesWrapper>
   );
-};
-
-export default IssuesNavigator;
+}

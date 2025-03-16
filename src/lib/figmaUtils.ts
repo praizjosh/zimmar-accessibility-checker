@@ -114,7 +114,10 @@ export const createContrastIssue = (
  * @returns {Promise<boolean>} True if the node is a touch target, otherwise false.
  */
 export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
-  if ("name" in node) {
+  if (!node) return false;
+  // if (node.type === "TextNode") return false;
+
+  if ("name" in node && node.type !== "TEXT") {
     const lowerCaseName = node.name.toLowerCase();
     if (
       TOUCH_TARGET_KEYWORDS.some((keyword) => lowerCaseName.includes(keyword))
@@ -308,7 +311,10 @@ export const createTouchTargetIssue = (
   };
 };
 
-export async function analyzeTextNode(node: TextNode, issues: IssueX[]) {
+export async function analyzeTextNodeForContrastIssue(
+  node: TextNode,
+  issues: IssueX[],
+) {
   await figma.loadFontAsync(node.fontName as FontName);
 
   if ("fills" in node) {

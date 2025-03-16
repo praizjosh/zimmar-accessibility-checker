@@ -1,7 +1,7 @@
-import AccessibilityValidator from "./components/organisms/accessibilityValidator";
-import IssuesNavigator from "./components/organisms/issuesNavigator";
-import IssuesOverviewList from "./components/organisms/issuesOverviewList";
-import TouchTargetNavigator from "./components/organisms/touchTargetNavigator";
+import AccessibilityValidator from "./components/organisms/AccessibilityValidator";
+import IssuesNavigator from "./components/organisms/IssuesNavigator";
+import IssuesOverviewList from "./components/organisms/IssuesOverviewList";
+import TouchTargetNavigator from "./components/organisms/TouchTargetNavigator";
 import { ROUTES_LIST } from "./lib/types";
 import useIssuesStore from "./lib/useIssuesStore";
 import { cn } from "./lib/utils";

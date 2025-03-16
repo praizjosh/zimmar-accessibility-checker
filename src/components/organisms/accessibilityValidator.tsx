@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Radar, ChevronRight } from "lucide-react";
@@ -7,7 +6,7 @@ import useIssuesStore from "@/lib/useIssuesStore";
 import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 
-const AccessibilityValidator: React.FC = () => {
+export default function AccessibilityValidator() {
   const { scanning, startScan, setSelectedType, navigateTo } = useIssuesStore();
 
   const handleIssuesListClick = (type: IssueType) => {
@@ -78,6 +77,4 @@ const AccessibilityValidator: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default AccessibilityValidator;
+}

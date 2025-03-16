@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Target,
   Check,
@@ -7,14 +6,13 @@ import {
   MoveHorizontal,
   X,
 } from "lucide-react";
-
 import useIssuesStore from "@/lib/useIssuesStore";
 import { MIN_TOUCH_TARGET_SIZE } from "@/lib/constants";
 import { cn, getSeverityStyles } from "@/lib/utils";
-import IssueDetailRow from "./issueDetailRow";
+import IssueDetailRow from "./IssueDetailRow";
 import IssuesWrapper from "./IssuesWrapper";
 
-const TouchTargetNavigator: React.FC = () => {
+export default function TouchTargetNavigator() {
   const { currentIndex, singleIssue, selectedType, getIssueGroupList } =
     useIssuesStore();
 
@@ -42,7 +40,7 @@ const TouchTargetNavigator: React.FC = () => {
           icon={<Target className="mr-3 size-5" />}
           label="Element:"
           value={
-            <span className="line-clamp-1 w-full max-w-xs text-right font-mono text-sm">
+            <span className="w-full max-w-44 truncate text-right font-mono text-sm">
               {characters ?? name}
             </span>
           }
@@ -159,6 +157,4 @@ const TouchTargetNavigator: React.FC = () => {
         : renderIssueDetails(currentIssue)}
     </IssuesWrapper>
   );
-};
-
-export default TouchTargetNavigator;
+}

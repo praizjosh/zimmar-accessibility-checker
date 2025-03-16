@@ -1,6 +1,6 @@
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
-  analyzeTextNode,
+  analyzeTextNodeForContrastIssue,
   createTouchTargetIssue,
   createTypographyIssue,
   isTouchTarget,
@@ -134,7 +134,7 @@ async function collectIssues(
           issues.push(createTypographyIssue(textNode));
         }
 
-        await analyzeTextNode(textNode, issues);
+        await analyzeTextNodeForContrastIssue(textNode, issues);
       } catch (error) {
         console.error(
           `Failed to load font for text node "${textNode.name}":`,
@@ -146,6 +146,7 @@ async function collectIssues(
 
   for (const node of allPageNodes) {
     if ("absoluteBoundingBox" in node && (await isTouchTarget(node))) {
+      // eslint-disable-next-line no-console
       if (isTouchTargetTooSmall(node)) {
         const issue = createTouchTargetIssue(node, "Size");
         if (issue) {
@@ -193,7 +194,7 @@ async function detectIssuesInSelection(
         issues.push(createTypographyIssue(node));
       }
       if (node.type === "TEXT" && "fills" in node) {
-        await analyzeTextNode(node, issues);
+        await analyzeTextNodeForContrastIssue(node, issues);
       }
     }),
   );

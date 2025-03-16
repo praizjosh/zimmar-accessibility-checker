@@ -1,7 +1,6 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
@@ -10,7 +9,7 @@ import Separator from "../ui/separator";
 import LoadingScreen from "./LoadingScreen";
 import { ISSUES_TYPES } from "@/lib/constants";
 
-const IssuesOverviewList: React.FC = () => {
+export default function IssuesOverviewList() {
   const {
     scanning,
     issues,
@@ -18,6 +17,7 @@ const IssuesOverviewList: React.FC = () => {
     setScanning,
     setSelectedType,
     navigateTo,
+    rescanIssues,
   } = useIssuesStore();
 
   const groupListRecords = issues.filter((issue) => {
@@ -75,7 +75,7 @@ const IssuesOverviewList: React.FC = () => {
         severity: issue.severity,
         type: issue.type,
         wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
-        contrastRatio: issue.nodeData?.contrastScore?.ratio || "N/A",
+        contrastRatio: issue.nodeData?.contrastScore?.ratio.toFixed(2) || "N/A",
         fontSize: issue.nodeData?.fontSize || "N/A",
       };
     });
@@ -85,7 +85,7 @@ const IssuesOverviewList: React.FC = () => {
   const generateCSV = () => {
     const formattedIssues = formatIssuesForReport();
     const csvHeader =
-      "Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score,Font Size\n";
+      "Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,Font Size";
 
     const csvRows = formattedIssues.map((issue) => {
       return [
@@ -141,9 +141,26 @@ const IssuesOverviewList: React.FC = () => {
             </Button>
           </div>
 
-          <span className="font-medium capitalize tracking-wide">
-            Scan Results
-          </span>
+          <div className="inline-flex items-center">
+            {!scanning && (
+              <Button
+                title="Rescan for issues"
+                variant="nude"
+                size={"icon"}
+                className="group me-2 !w-fit"
+                onClick={() => rescanIssues()}
+              >
+                <RefreshCcw
+                  strokeWidth={1.5}
+                  className="!size-5 cursor-pointer text-green-500 transition-transform duration-300 ease-in-out group-hover:-rotate-180"
+                />
+              </Button>
+            )}
+
+            <span className="font-medium capitalize tracking-wide">
+              Scan Results
+            </span>
+          </div>
         </div>
 
         <Separator className="my-2 h-px !bg-rose-50/10" />
@@ -282,6 +299,4 @@ const IssuesOverviewList: React.FC = () => {
       )}
     </div>
   );
-};
-
-export default IssuesOverviewList;
+}
