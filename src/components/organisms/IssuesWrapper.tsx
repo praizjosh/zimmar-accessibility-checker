@@ -12,7 +12,7 @@ import {
 import { IssueType, IssueX } from "@/lib/types";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
-import Recommendations from "./recommendations";
+import Recommendations from "./Recommendations";
 
 export default function IssuesWrapper({
   children,
@@ -90,7 +90,7 @@ export default function IssuesWrapper({
     return entry ? entry[issueType.toLowerCase()] : null;
   };
 
-  const recommendations = getIssueRecommendations(selectedType);
+  const suggestions = getIssueRecommendations(selectedType);
 
   const renderWrapper = (issue: typeof singleIssue | null) => {
     if (!issue) {
@@ -111,7 +111,7 @@ export default function IssuesWrapper({
 
         {children}
 
-        <Recommendations recommendations={recommendations || []} />
+        <Recommendations recommendations={suggestions || []} />
       </>
     );
   };

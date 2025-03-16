@@ -268,7 +268,7 @@ export default function IssuesOverviewList() {
             </TabsContent>
 
             <TabsContent value="report">
-              <h3 className="mb-2 text-lg font-semibold tracking-wide text-gray">
+              <h3 className="mb-2 text-lg font-medium tracking-wide text-gray">
                 Export Report
               </h3>
               <p className="mb-4 text-sm">

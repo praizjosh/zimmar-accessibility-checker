@@ -1,6 +1,6 @@
 import useIssuesStore from "@/lib/useIssuesStore";
 
-const NavigationButtons = () => {
+export default function NavigationButtons() {
   const navigate = useIssuesStore((state) => state.navigateTo);
 
   return (
@@ -31,6 +31,4 @@ const NavigationButtons = () => {
       </button>
     </div>
   );
-};
-
-export default NavigationButtons;
+}
