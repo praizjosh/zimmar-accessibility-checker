@@ -3,11 +3,16 @@
 @tailwind utilities;
 
 :root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  /* color-scheme: light dark; */
+
+  color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #141213;
+  /* background-color: #141213; */
+  /* background-color: #17171b; */
+  /* background-color: #1a1a1d; */
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,9 +21,13 @@
 
 body {
   margin: 0;
+  /* display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh; */
 }
 
-/* @media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
@@ -29,23 +38,10 @@ body {
   button {
     background-color: #f9f9f9;
   }
-} */
+}
 
 @layer base {
   :root {
     --radius: 0.5rem;
-  }
-
-  /* @font-face {
-    font-family: "Open Sansz";
-    font-style: normal;
-    font-weight: 300 800;
-    font-display: swap;
-    src: url("https://fonts.gstatic.com/s/opensans/v18/mem8YaGs126MiZpBA-UFVZ0e.ttf")
-      format("truetype");
-  } */
-
-  html {
-    font-family: Inter, system-ui, Helvetica, Arial, sans-serif;
   }
 }

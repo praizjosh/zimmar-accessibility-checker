@@ -1,5 +1,7 @@
+/* eslint-disable no-console */
 import { getContrastScore } from "@/lib/utils";
 import React, { useState } from "react";
+// import { getContrastScore } from "@/utils/contrast";
 
 const ContrastChecker = () => {
   const [foreground, setForeground] = useState("#000000");
@@ -8,8 +10,11 @@ const ContrastChecker = () => {
 
   const handleCheckContrast = () => {
     const contrastScore = getContrastScore(foreground, background);
+    console.log("contrast res:", contrastScore);
     setScore(contrastScore);
   };
+
+  console.log("foreground", foreground, typeof foreground);
 
   return (
     <div className="max-w-sm space-y-4 rounded-md border p-4">
@@ -37,8 +42,6 @@ const ContrastChecker = () => {
         </label>
       </div>
       <button
-        type="button"
-        aria-label="Check Contrast"
         onClick={handleCheckContrast}
         className="w-full rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
       >

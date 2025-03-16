@@ -1,22 +1,21 @@
 import { RGBColor } from "wcag-contrast";
 
+export interface Issue {
+  type: string;
+  description: string;
+  severity: string; // Options: High, Medium, Low
+  id: string;
+  fontSize: number;
+  nodeType: string | string[];
+  node?: unknown;
+}
+
 export type Severity = "critical" | "major" | "minor";
-
-export type IssueType =
-  | "Typography"
-  | "Contrast"
-  | "Touch Target Size"
-  | "Touch Target Spacing";
-
-export type contrastScore = {
-  compliance: string;
-  ratio: number;
-};
 
 export type NodeDataType = {
   id: string;
   characters?: string;
-  contrastScore?: contrastScore;
+  contrastScore?: string;
   fontSize?: number;
   width?: number;
   height?: number;
@@ -25,43 +24,37 @@ export type NodeDataType = {
   foregroundColor?: RGBColor;
   backgroundColor?: RGBColor;
   nodeType: string | string[];
-  requiredSize?: string;
 };
 
 export interface IssueX {
   description?: string;
-  type?: IssueType;
+  type?: string;
   severity: Severity;
-  status?: string;
   nodeData: NodeDataType;
 }
 
 export interface IssuesStore {
   issues: IssueX[]; // List of issues
+  // issueGroupList: IssueX[]; // List of related issues by type
   currentIndex: number; // Index of the currently selected issue
   startScan: () => void; // Start the scan
   setIssues: (newIssues: IssueX[]) => void; // Setter for issues
+  // setIssueGroupList: (newIssues: IssueX[]) => void; // Setter for related issues
   setCurrentIndex: (index: number) => void; // Setter for the current index
   navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }
 
-export type Routes =
-  | "INDEX"
-  | "ISSUE_OVERVIEW_LIST_VIEW"
-  | "ISSUE_LIST_VIEW"
-  | "TOUCH_TARGET_ISSUE_LIST_VIEW";
+export type Routes = "INDEX" | "ISSUE_LIST_VIEW";
 
 export type ROUTES_LIST = Record<Routes, JSX.Element>;
 
 export interface EnhancedIssuesStore extends IssuesStore {
-  singleIssue: IssueX | null; // An issue instance
   scanning: boolean;
   selectedType: string; // Selected issue type
   currentRoute: Routes;
-  setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
   navigateTo: (route: Routes) => void;
   setScanning: (isScanning: boolean) => void;
-  setSelectedType: (type: IssueType) => void;
+  setSelectedType: (type: string) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];
   rescanIssues: () => void; // Rescan the document for issues

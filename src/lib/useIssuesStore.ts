@@ -1,51 +1,38 @@
 /* eslint-disable no-console */
 import { create } from "zustand";
-import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "./types";
-import { postMessageToBackend } from "./figmaUtils";
+import { EnhancedIssuesStore, IssueX, Routes } from "./types";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   issues: [],
-  singleIssue: null,
   currentIndex: 0,
   currentRoute: "INDEX", // Default route
   selectedType: "",
   scanning: false,
+
   setScanning: (isScanning) =>
     set({
       scanning: isScanning,
     }),
+
   startScan: () => {
-    const { setScanning, navigateTo } = get();
+    const { setScanning } = get();
     setScanning(true);
-    postMessageToBackend("scan");
-    navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
+    parent.postMessage({ pluginMessage: { type: "scan" } }, "*");
   },
-  setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
+
   setIssues: (newIssues: IssueX[]) => {
     set({ issues: newIssues });
   },
-  setSelectedType: (type: IssueType) => set({ selectedType: type }),
+
+  setSelectedType: (type: string) => set({ selectedType: type }),
+
   getIssueGroupList: () => {
     const { issues, selectedType } = get();
-
-    const response = issues.filter((issue) => {
-      if (
-        issue.type &&
-        issue.type.toLowerCase() === selectedType.toLowerCase()
-      ) {
-        if (
-          issue.type === "Contrast" &&
-          issue.nodeData.contrastScore?.compliance === "Fail"
-        ) {
-          return true;
-        }
-        return issue.type !== "Contrast";
-      }
-      return false;
-    });
-
-    return response;
+    return issues.filter(
+      (issue) => issue.type?.toLowerCase() === selectedType.toLowerCase(),
+    );
   },
+
   updateIssue: (id: string, updates: Partial<IssueX>) => {
     set((state) => ({
       issues: state.issues.map((issue) =>
@@ -53,7 +40,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
       ),
     }));
   },
+
   setCurrentIndex: (index: number) => set({ currentIndex: index }),
+
   navigateToIssue: (index: number) => {
     const { getIssueGroupList } = get();
     const issueGroupList = getIssueGroupList();
@@ -71,9 +60,11 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
       set({ currentIndex: index });
     }
   },
+
   navigateTo: (route: Routes) => {
     set({ currentRoute: route });
   },
+
   rescanIssues: () => {
     const { startScan, setIssues } = get();
     setIssues([]); // Clear old issues

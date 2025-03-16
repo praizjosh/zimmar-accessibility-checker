@@ -1,30 +1,25 @@
-import AccessibilityValidator from "./components/organisms/accessibilityValidator";
-import IssuesNavigator from "./components/organisms/issuesNavigator";
-import IssuesOverviewList from "./components/organisms/issuesOverviewList";
-import TouchTargetNavigator from "./components/organisms/touchTargetNavigator";
+import AccessibilityValidator from "./components/ui/accessibilityValidator";
+import IssuesNavigator from "./components/ui/issuesNavigator";
 import { ROUTES_LIST } from "./lib/types";
 import useIssuesStore from "./lib/useIssuesStore";
-import { cn } from "./lib/utils";
 
 export default function App() {
   const { currentRoute } = useIssuesStore();
 
   const RoutesMap: ROUTES_LIST = {
     INDEX: <AccessibilityValidator />,
-    ISSUE_OVERVIEW_LIST_VIEW: <IssuesOverviewList />,
     ISSUE_LIST_VIEW: <IssuesNavigator />,
-    TOUCH_TARGET_ISSUE_LIST_VIEW: <TouchTargetNavigator />,
   };
 
   return (
-    <div
-      className={cn("mx-auto grid size-full max-w-3xl items-center p-4", {
-        "!mb-6": currentRoute === "ISSUE_OVERVIEW_LIST_VIEW",
-      })}
-    >
-      <div className="container flex size-full flex-col items-center">
-        {RoutesMap[currentRoute]}
-      </div>
+    <div className="container mx-auto flex min-h-screen w-full flex-col p-5 lg:max-w-xl">
+      {/* Main Accessibility Validator Page */}
+      {/* <AccessibilityValidator /> */}
+
+      {/* <NavigationButtons /> */}
+      {/* <br /> */}
+
+      {RoutesMap[currentRoute]}
     </div>
   );
 }
