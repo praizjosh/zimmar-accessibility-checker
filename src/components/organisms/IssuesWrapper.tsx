@@ -95,9 +95,15 @@ export default function IssuesWrapper({
   const renderWrapper = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <p className="px-3 font-open-sans text-lg font-medium text-gray">
-          No {selectedType} issue detected.
-        </p>
+        <div className="flex w-full flex-col items-start px-3 text-gray">
+          <p className="mb-1.5 font-open-sans text-lg font-medium">
+            No {selectedType} issue detected
+          </p>
+
+          <p className="text-base">
+            Select a layer to check for {selectedType} issues.
+          </p>
+        </div>
       );
     }
 

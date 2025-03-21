@@ -30,10 +30,21 @@ export default function AccessibilityValidator() {
             disabled={scanning}
           >
             <Radar className="mr-2" />
-            <span>Start scan</span>
+            <span>Scan entire page</span>
           </Button>
         </CardContent>
       </Card>
+
+      <div className="relative m-4">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-rose-50/10" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-dark px-5 text-sm text-gray">
+            or scan a layer for
+          </span>
+        </div>
+      </div>
 
       <ul className="space-y-2">
         {/* {ISSUES_DATA_SCHEMA.filter(
@@ -55,7 +66,7 @@ export default function AccessibilityValidator() {
                   <div className="flex w-full items-center justify-start space-x-2.5">
                     {issue.icon}
                     <span className="group-hover:text-accent">
-                      {issue.type}
+                      {issue.type} issues
                     </span>
                   </div>
                   <ChevronRight
