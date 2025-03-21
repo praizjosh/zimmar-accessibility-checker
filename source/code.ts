@@ -60,6 +60,10 @@ figma.on("selectionchange", async () => {
     return;
   }
 
+  if (selection.length > 0) {
+    postMessageToUI("layer-selected", true);
+  }
+
   try {
     const detectedIssues = await detectIssuesInSelection(selection);
     if (detectedIssues.length) {
