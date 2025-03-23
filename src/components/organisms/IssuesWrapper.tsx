@@ -20,6 +20,7 @@ export default function IssuesWrapper({
   children: React.ReactNode;
 }) {
   const [isQuickCheckActive, setIsQuickCheckActive] = useState(false);
+  const [isSelection, setIsSelection] = useState(true);
   const {
     currentIndex,
     singleIssue,
@@ -47,8 +48,13 @@ export default function IssuesWrapper({
       setSingleIssue(matchingIssues[0] || data[0] || null);
     }
 
+    if (type === "layer-selected" && data) {
+      setIsSelection(true);
+    }
+
     if (type === "no-selection" && data) {
       setSingleIssue(null);
+      setIsSelection(false);
     }
 
     if (type === "quickcheck-active") {
@@ -95,9 +101,21 @@ export default function IssuesWrapper({
   const renderWrapper = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <p className="px-3 font-open-sans text-lg font-medium text-gray">
-          No {selectedType} issue detected.
-        </p>
+        <div className="flex w-full flex-col items-start px-3 text-gray">
+          <p className="mb-1.5 font-open-sans text-lg font-medium">
+            No {selectedType} issue detected
+          </p>
+
+          {!isSelection && (
+            <p className="text-base">
+              Select a{" "}
+              {selectedType === "Typography" || selectedType === "Contrast"
+                ? "Text"
+                : "Touch Target"}{" "}
+              layer to check for {selectedType} issues.
+            </p>
+          )}
+        </div>
       );
     }
 

@@ -60,6 +60,10 @@ figma.on("selectionchange", async () => {
     return;
   }
 
+  if (selection.length > 0) {
+    postMessageToUI("layer-selected", true);
+  }
+
   try {
     const detectedIssues = await detectIssuesInSelection(selection);
     if (detectedIssues.length) {
@@ -72,7 +76,24 @@ figma.on("selectionchange", async () => {
 
 async function handleStartQuickCheck() {
   isQuickCheckActive = true;
+
   postMessageToUI("quickcheck-active", isQuickCheckActive);
+
+  const selection = figma.currentPage.selection;
+
+  if (selection.length === 0) {
+    postMessageToUI("no-selection", true);
+    return;
+  }
+
+  try {
+    const detectedIssues = await detectIssuesInSelection(selection);
+    if (detectedIssues.length) {
+      postMessageToUI("detected-issue", detectedIssues);
+    }
+  } catch (error) {
+    console.error("Error in selectionchange handler:", error);
+  }
 }
 
 function handleCancelQuickCheck() {
