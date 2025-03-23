@@ -13,6 +13,14 @@ export type contrastScore = {
   ratio: number;
 };
 
+export type Routes =
+  | "INDEX"
+  | "ISSUE_OVERVIEW_LIST_VIEW"
+  | "ISSUE_LIST_VIEW"
+  | "TOUCH_TARGET_ISSUE_LIST_VIEW";
+
+export type ROUTES_LIST = Record<Routes, JSX.Element>;
+
 export type NodeDataType = {
   id: string;
   characters?: string;
@@ -44,14 +52,6 @@ export interface IssuesStore {
   setCurrentIndex: (index: number) => void; // Setter for the current index
   navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }
-
-export type Routes =
-  | "INDEX"
-  | "ISSUE_OVERVIEW_LIST_VIEW"
-  | "ISSUE_LIST_VIEW"
-  | "TOUCH_TARGET_ISSUE_LIST_VIEW";
-
-export type ROUTES_LIST = Record<Routes, JSX.Element>;
 
 export interface EnhancedIssuesStore extends IssuesStore {
   singleIssue: IssueX | null; // An issue instance

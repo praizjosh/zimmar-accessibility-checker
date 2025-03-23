@@ -6,6 +6,7 @@ import { MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { cn, getSeverityStyles } from "@/lib/utils";
 import IssuesWrapper from "./IssuesWrapper";
+import { IssueX } from "@/lib/types";
 
 export default function IssuesNavigator() {
   const {
@@ -17,8 +18,8 @@ export default function IssuesNavigator() {
     setSingleIssue,
   } = useIssuesStore();
 
-  const issueGroupList = getIssueGroupList();
-  const currentIssue = issueGroupList[currentIndex] ?? {};
+  const issueGroupList: IssueX[] = getIssueGroupList();
+  const currentIssue: IssueX = issueGroupList[currentIndex] ?? {};
 
   const handleFontSizeChange = (
     id: string,
