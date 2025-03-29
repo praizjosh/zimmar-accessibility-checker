@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
   analyzeTextNodeForContrastIssue,
@@ -106,16 +107,12 @@ async function handleScan() {
   const allTextNodes = figma.currentPage.findAll(
     (node) => node.type === "TEXT",
   ) as TextNode[];
-  const allVectorNodes = figma.currentPage.findAll(
-    (node) => node.type === "VECTOR",
-  ) as VectorNode[];
+  // const allVectorNodes = figma.currentPage.findAll(
+  //   (node) => node.type === "VECTOR",
+  // ) as VectorNode[];
   const allPageNodes = figma.currentPage.findAll(() => true) as SceneNode[];
 
-  const issues: IssueX[] = await collectIssues(
-    allTextNodes,
-    allVectorNodes,
-    allPageNodes,
-  );
+  const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
   postMessageToUI("loadIssues", issues);
 }
 
@@ -141,12 +138,9 @@ async function handleNavigate(message: { id: string }) {
 
 async function collectIssues(
   allTextNodes: TextNode[],
-  allVectorNodes: VectorNode[],
   allPageNodes: SceneNode[],
 ): Promise<IssueX[]> {
   const issues: IssueX[] = [];
-  // eslint-disable-next-line no-console
-  console.log("allVectorNodes ===- ", allVectorNodes);
 
   await Promise.all(
     allTextNodes.map(async (textNode) => {
@@ -226,7 +220,7 @@ async function detectIssuesInSelection(
       ) {
         issues.push(createTypographyIssue(node));
       }
-      if (node.type === "TEXT" && "fills" in node) {
+      if (node.type === "TEXT") {
         await analyzeTextNodeForContrastIssue(node, issues);
       }
     }),

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { contrastScore, IssueX } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
 import {
@@ -7,7 +6,8 @@ import {
   TOUCH_TARGET_KEYWORDS,
 } from "./constants";
 import {
-  getBackgroundColorForTextNode,
+  figmaRGBtoRGBColor,
+  getBackgroundColorForNode,
   getContrastCompliance,
   isBoldFont,
 } from "./utils";
@@ -47,8 +47,7 @@ export const extractForegroundColor = (nodeFills: Paint[]): RGBColor => {
     nodeFills[0].type === "SOLID" &&
     nodeFills[0].visible !== false
   ) {
-    const { r, g, b } = nodeFills[0].color;
-    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    return figmaRGBtoRGBColor(nodeFills[0].color);
   }
   return [0, 0, 0]; // Default black
 };
@@ -129,67 +128,6 @@ export const isTouchTargetTooSmall = (node: SceneNode): boolean => {
  * @param {SceneNode[]} allNodes - The list of all nodes to compare against.
  * @returns {boolean} True if the node is too close to another node, otherwise false.
  */
-// export const isTouchTargetTooClose = (
-//   node: SceneNode,
-//   allNodes: SceneNode[],
-// ): boolean => {
-//   const nodeBounds = node.absoluteBoundingBox;
-//   if (!nodeBounds) return false; // Skip if no bounding box
-
-//   return allNodes.some((otherNode) => {
-//     if (node.id === otherNode.id) return false; // Skip the same node
-
-//     const otherBounds = otherNode.absoluteBoundingBox;
-//     if (!otherBounds) return false;
-
-//     // Check horizontal and vertical proximity
-//     const isTooCloseHorizontally =
-//       Math.abs(nodeBounds.x - otherBounds.x) < MIN_TOUCH_TARGET_SPACING ||
-//       Math.abs(nodeBounds.x + nodeBounds.width - otherBounds.x) <
-//         MIN_TOUCH_TARGET_SPACING;
-
-//     const isTooCloseVertically =
-//       Math.abs(nodeBounds.y - otherBounds.y) < MIN_TOUCH_TARGET_SPACING ||
-//       Math.abs(nodeBounds.y + nodeBounds.height - otherBounds.y) <
-//         MIN_TOUCH_TARGET_SPACING;
-
-//     return isTooCloseHorizontally && isTooCloseVertically;
-//   });
-// };
-
-// New ChatGPT version
-// export const isTouchTargetTooClose = (
-//   node: SceneNode,
-//   allNodes: SceneNode[],
-// ): boolean => {
-//   const nodeBounds = node.absoluteBoundingBox;
-//   if (!nodeBounds) return false; // Skip if no bounding box
-
-//   return allNodes.some((otherNode) => {
-//     if (node.id === otherNode.id) return false; // Skip the same node
-
-//     const otherBounds = otherNode.absoluteBoundingBox;
-//     if (!otherBounds) return false;
-
-//     // Check for overlap or insufficient spacing
-//     const isHorizontallyTooClose =
-//       nodeBounds.x <
-//         otherBounds.x + otherBounds.width + MIN_TOUCH_TARGET_SPACING &&
-//       nodeBounds.x + nodeBounds.width + MIN_TOUCH_TARGET_SPACING >
-//         otherBounds.x;
-
-//     const isVerticallyTooClose =
-//       nodeBounds.y <
-//         otherBounds.y + otherBounds.height + MIN_TOUCH_TARGET_SPACING &&
-//       nodeBounds.y + nodeBounds.height + MIN_TOUCH_TARGET_SPACING >
-//         otherBounds.y;
-
-//     // If there is an overlap or spacing violation in both directions
-//     return isHorizontallyTooClose && isVerticallyTooClose;
-//   });
-// };
-
-// Claude's version
 export const isTouchTargetTooClose = (
   node: SceneNode,
   allNodes: SceneNode[],
@@ -318,7 +256,7 @@ export async function analyzeTextNodeForContrastIssue(
 
   if ("fills" in node) {
     const foregroundColor = extractForegroundColor(node.fills as Paint[]);
-    const backgroundColor = getBackgroundColorForTextNode(node);
+    const backgroundColor = getBackgroundColorForNode(node);
     const fontWeight: number | symbol = node.fontWeight;
     const fontSize: number | symbol = node.fontSize;
 
