@@ -75,39 +75,6 @@ export const createTypographyIssue = (node: TextNode): IssueX => ({
 });
 
 /**
- * Creates a contrast issue object for the given TextNode.
- *
- * @param {TextNode} node - The Figma TextNode to analyze.
- * @param {string} contrastScore - The WCAG contrast score.
- * @param {RGBColor} foregroundColor - The text's foreground color in RGB.
- * @param {RGBColor | null} backgroundColor - The background color in RGB or null.
- * @returns {IssueX} An issue object detailing the contrast issue.
- */
-
-export const createContrastIssue = (
-  node: TextNode,
-  contrastScore: contrastScore,
-  foregroundColor: RGBColor,
-  backgroundColor: RGBColor | null,
-): IssueX => ({
-  description: "Text contrast is below WCAG AA standard.",
-  severity: "critical",
-  type: "Contrast",
-  nodeData: {
-    id: node.id,
-    contrastScore,
-    characters: node.characters,
-    fontSize: node.fontSize as number,
-    height: node.height,
-    lineHeight: node.lineHeight,
-    name: node.name,
-    nodeType: node.type,
-    foregroundColor,
-    backgroundColor: backgroundColor || [255, 255, 255], // Default white
-  },
-});
-
-/**
  * Determines if a SceneNode is a touch target based on its properties.
  *
  * @param {SceneNode} node - The node to analyze.
@@ -287,7 +254,7 @@ export const createTouchTargetIssue = (
 ): IssueX | null => {
   if (!node || typeof node !== "object" || !node.id || !node.name) {
     console.error("Invalid node passed to createTouchTargetIssue:", node);
-    return null; // Return null for invalid input
+    return null;
   }
 
   // Ensure width and height are only added if the node supports them
@@ -311,6 +278,38 @@ export const createTouchTargetIssue = (
   };
 };
 
+/**
+ * Creates a contrast issue object for the given TextNode.
+ *
+ * @param {TextNode} node - The Figma TextNode to analyze.
+ * @param {string} contrastScore - The WCAG contrast score.
+ * @param {RGBColor} foregroundColor - The text's foreground color in RGB.
+ * @param {RGBColor | null} backgroundColor - The background color in RGB or null.
+ * @returns {IssueX} An issue object detailing the contrast issue.
+ */
+export const createContrastIssue = (
+  node: TextNode,
+  contrastScore: contrastScore,
+  foregroundColor: RGBColor,
+  backgroundColor: RGBColor | undefined,
+): IssueX => ({
+  description: "Text contrast is below WCAG AA standard.",
+  severity: "critical",
+  type: "Contrast",
+  nodeData: {
+    id: node.id,
+    contrastScore,
+    characters: node.characters,
+    fontSize: node.fontSize as number,
+    height: node.height,
+    lineHeight: node.lineHeight,
+    name: node.name,
+    nodeType: node.type,
+    foregroundColor,
+    backgroundColor: backgroundColor, // || [255, 255, 255]
+  },
+});
+
 export async function analyzeTextNodeForContrastIssue(
   node: TextNode,
   issues: IssueX[],
@@ -324,18 +323,18 @@ export async function analyzeTextNodeForContrastIssue(
     const fontSize: number | symbol = node.fontSize;
 
     // Skip nodes with mixed font sizes
-    if (fontSize === figma.mixed) {
-      return;
-    }
+    if (fontSize === figma.mixed) return;
 
-    if (backgroundColor === null) {
-      // No background detected, handle accordingly
-      console.warn("No background detected for this text node");
+    if (!backgroundColor) {
+      postMessageToUI(
+        "no-background",
+        `No background elements detected for the selected layer. Please check the layer's properties.`,
+      );
       return;
     }
 
     try {
-      if (fontSize !== null || fontSize !== undefined) {
+      if (fontSize != null) {
         const isBold = isBoldFont(fontWeight, node, 0, node.characters.length);
         const contrastScore = getContrastCompliance(
           foregroundColor,

@@ -23,7 +23,8 @@ export default function IssuesWrapperOriginal({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isQuickCheckActive, setIsQuickCheckActive] = useState<boolean>(false);
+  const [IsQuickCheckModeActive, setIsQuickCheckModeActive] =
+    useState<boolean>(false);
   const {
     currentIndex,
     singleIssue,
@@ -44,7 +45,6 @@ export default function IssuesWrapperOriginal({
       );
 
       if (singleIssue.length === 0) {
-        // console.log("No issues found for selected type:", selectedType);
         setSingleIssue(null);
         return;
       }
@@ -57,7 +57,7 @@ export default function IssuesWrapperOriginal({
     }
 
     if (type === "quickcheck-active") {
-      setIsQuickCheckActive(data);
+      setIsQuickCheckModeActive(data);
     }
 
     if (type === "single-issue") {
@@ -75,7 +75,7 @@ export default function IssuesWrapperOriginal({
   }, [navigateToIssue]);
 
   const handleBackBtnClick = () => {
-    if (isQuickCheckActive) {
+    if (IsQuickCheckModeActive) {
       navigateTo("INDEX");
       setSingleIssue(null);
 

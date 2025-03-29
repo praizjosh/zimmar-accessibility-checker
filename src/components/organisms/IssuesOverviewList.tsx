@@ -20,7 +20,7 @@ export default function IssuesOverviewList() {
     rescanIssues,
   } = useIssuesStore();
 
-  const groupListRecords = issues.filter((issue) => {
+  const issuesGroupListRecords = issues.filter((issue) => {
     if (issue.type && ISSUES_TYPES.includes(issue.type)) {
       if (
         issue.type === "Contrast" &&
@@ -57,13 +57,13 @@ export default function IssuesOverviewList() {
     );
   };
 
-  const filteredIssues = ISSUES_DATA_SCHEMA.filter((issue) =>
+  const issuesGroup = ISSUES_DATA_SCHEMA.filter((issue) =>
     issues?.some((i: IssueX) => i.type === issue.type),
   );
 
   // Convert issues to structured data for reporting
   const formatIssuesForReport = () => {
-    return groupListRecords.map((issue) => {
+    return issuesGroupListRecords.map((issue) => {
       const elementName =
         issue.nodeData?.nodeType === "TEXT"
           ? issue.nodeData?.characters
@@ -181,19 +181,22 @@ export default function IssuesOverviewList() {
                 Identified Issues
               </h3>
 
-              {groupListRecords.length > 0 && (
+              {issuesGroupListRecords.length > 0 && (
                 <p className="mb-4 font-open-sans text-sm">
-                  There are {groupListRecords.length} issues detected on this
-                  screen.
+                  There are {issuesGroupListRecords.length} issues detected on
+                  this screen.
                 </p>
               )}
 
-              {filteredIssues.length > 0 ? (
+              {issuesGroup.length > 0 ? (
                 <ul className="space-y-2 last:!mb-5">
-                  {filteredIssues.map((issue) => {
-                    const issueCount = groupListRecords.filter(
+                  {issuesGroup.map((issue) => {
+                    const issueCount = issuesGroupListRecords.filter(
                       (i: IssueX) => i.type === issue.type,
                     ).length;
+
+                    // Skip rendering if the issueCount is zero
+                    if (issueCount === 0) return null;
 
                     return (
                       <li

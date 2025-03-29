@@ -58,9 +58,9 @@ export interface EnhancedIssuesStore extends IssuesStore {
   scanning: boolean;
   selectedType: string; // Selected issue type
   currentRoute: Routes;
+  setScanning: (isScanning: boolean) => void; // Setter for scanning state
   setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
   navigateTo: (route: Routes) => void;
-  setScanning: (isScanning: boolean) => void;
   setSelectedType: (type: IssueType) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];

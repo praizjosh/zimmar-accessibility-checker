@@ -9,12 +9,13 @@ import {
   postMessageToUI,
 } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
+import {
+  getIsQuickCheckModeActive,
+  setIsQuickCheckModeActive,
+} from "@/lib/utils";
 
 figma.showUI(__html__);
 figma.ui.resize(375, 550);
-
-// Global state for quickcheck mode
-let isQuickCheckActive = false;
 
 figma.ui.onmessage = async (message) => {
   try {
@@ -51,7 +52,8 @@ figma.ui.onmessage = async (message) => {
 };
 
 figma.on("selectionchange", async () => {
-  if (!isQuickCheckActive) return;
+  const isQuickCheckModeActive = getIsQuickCheckModeActive();
+  if (!isQuickCheckModeActive) return;
 
   const selection = figma.currentPage.selection;
 
@@ -75,9 +77,9 @@ figma.on("selectionchange", async () => {
 });
 
 async function handleStartQuickCheck() {
-  isQuickCheckActive = true;
+  setIsQuickCheckModeActive(true);
 
-  postMessageToUI("quickcheck-active", isQuickCheckActive);
+  postMessageToUI("quickcheck-active", getIsQuickCheckModeActive());
 
   const selection = figma.currentPage.selection;
 
@@ -97,16 +99,23 @@ async function handleStartQuickCheck() {
 }
 
 function handleCancelQuickCheck() {
-  isQuickCheckActive = false;
+  setIsQuickCheckModeActive(false);
 }
 
 async function handleScan() {
   const allTextNodes = figma.currentPage.findAll(
     (node) => node.type === "TEXT",
   ) as TextNode[];
+  const allVectorNodes = figma.currentPage.findAll(
+    (node) => node.type === "VECTOR",
+  ) as VectorNode[];
   const allPageNodes = figma.currentPage.findAll(() => true) as SceneNode[];
 
-  const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
+  const issues: IssueX[] = await collectIssues(
+    allTextNodes,
+    allVectorNodes,
+    allPageNodes,
+  );
   postMessageToUI("loadIssues", issues);
 }
 
@@ -132,9 +141,12 @@ async function handleNavigate(message: { id: string }) {
 
 async function collectIssues(
   allTextNodes: TextNode[],
+  allVectorNodes: VectorNode[],
   allPageNodes: SceneNode[],
 ): Promise<IssueX[]> {
   const issues: IssueX[] = [];
+  // eslint-disable-next-line no-console
+  console.log("allVectorNodes ===- ", allVectorNodes);
 
   await Promise.all(
     allTextNodes.map(async (textNode) => {

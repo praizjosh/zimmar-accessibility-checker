@@ -7,6 +7,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Global state
+const state = {
+  IsQuickCheckModeActive: false,
+};
+
+export const getIsQuickCheckModeActive = (): boolean =>
+  state.IsQuickCheckModeActive;
+export const setIsQuickCheckModeActive = (value: boolean) => {
+  state.IsQuickCheckModeActive = value;
+};
+
 export const getSeverityStylesa = (
   severity: string | undefined,
   isCritical: boolean = false,

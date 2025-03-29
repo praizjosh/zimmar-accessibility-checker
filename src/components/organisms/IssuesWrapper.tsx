@@ -2,17 +2,32 @@ import { useEffect, useState } from "react";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { Button } from "../ui/button";
 import Separator from "../ui/separator";
-import { ChevronLeft, ChevronRight, Info } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IssueType, IssueX } from "@/lib/types";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
 import Recommendations from "./Recommendations";
+import TooltipInfo from "./TooltipInfo";
+
+type TooltipDataType = Record<string, { title: string; content: string }>;
+
+const tooltipData: TooltipDataType = {
+  "Touch Target Size": {
+    title: "About Touch Target Detection",
+    content:
+      "Our touch target analysis helps identify potential accessibility issues. This is an experimental feature and should be verified manually.",
+  },
+  "Touch Target Spacing": {
+    title: "About Touch Target Detection",
+    content:
+      "Our touch target analysis helps identify potential accessibility issues. This is an experimental feature and should be verified manually.",
+  },
+  Contrast: {
+    title: "About Contrast Detection",
+    content:
+      "Our contrast analysis is designed to help identify potential accessibility issues. While this experimental feature generally provides accurate results, it requires manual verification. In cases involving complex layer structures (e.g., overlapping elements) or intricate color configurations (e.g., multiple colors or gradients), the calculations may sometimes be inaccurate or infeasible. If this happens, we recommend duplicating and isolating the foreground and background elements onto a clean area of the canvas before performing the evaluation again.",
+  },
+};
 
 export default function IssuesWrapper({
   children,
@@ -21,6 +36,7 @@ export default function IssuesWrapper({
 }) {
   const [isQuickCheckActive, setIsQuickCheckActive] = useState(false);
   const [isSelection, setIsSelection] = useState(true);
+  const [hasBackground, setHasBackground] = useState("");
   const {
     currentIndex,
     singleIssue,
@@ -59,6 +75,10 @@ export default function IssuesWrapper({
 
     if (type === "quickcheck-active") {
       setIsQuickCheckActive(data);
+    }
+
+    if (type === "no-background") {
+      setHasBackground(data);
     }
   };
 
@@ -101,19 +121,23 @@ export default function IssuesWrapper({
   const renderWrapper = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <div className="flex w-full flex-col items-start px-3 text-gray">
+        <div className="flex w-full flex-col items-start text-gray">
           <p className="mb-1.5 font-open-sans text-lg font-medium">
             No {selectedType} issue detected
           </p>
 
           {!isSelection && (
-            <p className="text-base">
+            <p className="text-sm">
               Select a{" "}
               {selectedType === "Typography" || selectedType === "Contrast"
                 ? "Text"
                 : "Touch Target"}{" "}
               layer to check for {selectedType} issues.
             </p>
+          )}
+
+          {isSelection && hasBackground && selectedType === "Contrast" && (
+            <p className="text-sm">{hasBackground}</p>
           )}
         </div>
       );
@@ -156,32 +180,11 @@ export default function IssuesWrapper({
             <span className="font-medium capitalize tracking-wide">
               {type ?? selectedType}
             </span>
-            {(selectedType === "Touch Target Size" ||
-              selectedType === "Touch Target Spacing") && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="ml-2 size-5 text-gray hover:text-accent" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    avoidCollisions
-                    align="start"
-                    alignOffset={-290}
-                    className="w-full max-w-80 text-pretty p-5"
-                  >
-                    <div className="space-y-2">
-                      <h5 className="mb-2.5 text-lg font-medium text-accent">
-                        About Touch Target Detection
-                      </h5>
-                      <p>
-                        Our touch target analysis helps identify potential
-                        accessibility issues. This is an experimental feature
-                        and should be verified manually.
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            {tooltipData[selectedType] && (
+              <TooltipInfo
+                title={tooltipData[selectedType].title}
+                content={tooltipData[selectedType].content}
+              />
             )}
           </div>
         </div>
