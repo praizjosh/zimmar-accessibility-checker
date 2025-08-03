@@ -203,7 +203,7 @@ export default function IssuesNavigator() {
                       getSeverityStyles(severity, { isBold: true }),
                   )}
                 >
-                  {contrastScore?.ratio.toFixed(2)}
+                  {contrastScore?.ratio.toFixed(2)} : 1
                 </span>
               }
             />

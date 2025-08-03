@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
   analyzeTextNodeForContrastIssue,
@@ -9,12 +10,13 @@ import {
   postMessageToUI,
 } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
+import {
+  getIsQuickCheckModeActive,
+  setIsQuickCheckModeActive,
+} from "@/lib/utils";
 
 figma.showUI(__html__);
 figma.ui.resize(375, 550);
-
-// Global state for quickcheck mode
-let isQuickCheckActive = false;
 
 figma.ui.onmessage = async (message) => {
   try {
@@ -51,7 +53,8 @@ figma.ui.onmessage = async (message) => {
 };
 
 figma.on("selectionchange", async () => {
-  if (!isQuickCheckActive) return;
+  const isQuickCheckModeActive = getIsQuickCheckModeActive();
+  if (!isQuickCheckModeActive) return;
 
   const selection = figma.currentPage.selection;
 
@@ -75,9 +78,9 @@ figma.on("selectionchange", async () => {
 });
 
 async function handleStartQuickCheck() {
-  isQuickCheckActive = true;
+  setIsQuickCheckModeActive(true);
 
-  postMessageToUI("quickcheck-active", isQuickCheckActive);
+  postMessageToUI("quickcheck-active", getIsQuickCheckModeActive());
 
   const selection = figma.currentPage.selection;
 
@@ -97,13 +100,16 @@ async function handleStartQuickCheck() {
 }
 
 function handleCancelQuickCheck() {
-  isQuickCheckActive = false;
+  setIsQuickCheckModeActive(false);
 }
 
 async function handleScan() {
   const allTextNodes = figma.currentPage.findAll(
     (node) => node.type === "TEXT",
   ) as TextNode[];
+  // const allVectorNodes = figma.currentPage.findAll(
+  //   (node) => node.type === "VECTOR",
+  // ) as VectorNode[];
   const allPageNodes = figma.currentPage.findAll(() => true) as SceneNode[];
 
   const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
@@ -214,7 +220,7 @@ async function detectIssuesInSelection(
       ) {
         issues.push(createTypographyIssue(node));
       }
-      if (node.type === "TEXT" && "fills" in node) {
+      if (node.type === "TEXT") {
         await analyzeTextNodeForContrastIssue(node, issues);
       }
     }),

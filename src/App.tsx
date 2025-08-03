@@ -8,7 +8,6 @@ import { cn } from "./lib/utils";
 
 export default function App() {
   const { currentRoute } = useIssuesStore();
-
   const RoutesMap: ROUTES_LIST = {
     INDEX: <AccessibilityValidator />,
     ISSUE_OVERVIEW_LIST_VIEW: <IssuesOverviewList />,

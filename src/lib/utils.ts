@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { score, rgb, RGBColor } from "wcag-contrast";
@@ -6,6 +5,17 @@ import { score, rgb, RGBColor } from "wcag-contrast";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// Global state
+const state = {
+  IsQuickCheckModeActive: false,
+};
+
+export const getIsQuickCheckModeActive = (): boolean =>
+  state.IsQuickCheckModeActive;
+export const setIsQuickCheckModeActive = (value: boolean) => {
+  state.IsQuickCheckModeActive = value;
+};
 
 export const getSeverityStylesa = (
   severity: string | undefined,
@@ -99,7 +109,6 @@ export const isBoldFont = (
   start?: number,
   end?: number,
 ): boolean => {
-  // Default to false if fontWeight is falsy
   if (!fontWeight) return false;
 
   // Handle mixed font weight
@@ -157,6 +166,23 @@ export const isBoldFont = (
 //   // Check if fontWeight is bold
 //   return fontWeight >= 700;
 // };
+
+export function extractForegroundColorX(fills: Paint[]): RGBColor | null {
+  if (!fills || !Array.isArray(fills)) return null;
+
+  // Iterate over the fills array to find a visible solid color
+  for (const fill of fills) {
+    if (fill.type === "SOLID" && fill.visible) {
+      const { r, g, b } = fill.color;
+
+      // Convert Figma color values (0-1 range) to RGB values (0-255 range)
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+  }
+
+  // Return null if no valid solid fill is found
+  return null;
+}
 
 /**
  * Evaluate the WCAG contrast score between two colors.
@@ -267,7 +293,6 @@ export function getNearestBackgroundColor(node: SceneNode): RGBColor | null {
     }
   }
 
-  // console.log("No valid background color found in ancestor nodes.");
   return null;
 }
 
@@ -304,8 +329,6 @@ export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
   // Case 2: Background from sibling RECTANGLE layer
   const allNodes = figma.currentPage.children;
   const nodeIndex = allNodes.indexOf(node);
-  // console.log("allNodes: ", allNodes);
-  // console.log("nodeIndex: ", nodeIndex);
 
   if (nodeIndex > 0) {
     const possibleBackgroundNode = allNodes[nodeIndex - 1];
@@ -322,48 +345,52 @@ export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
           Math.round(b * 255),
         ];
 
-        // console.log(`Background rectangle color: ${rectColor}`);
         figma.notify(`Background rectangle color: ${rectColor}`);
         return rectColor;
       }
     }
   }
 
-  // console.log("No background color found for selection!");
   figma.notify("No background color found for selection!");
   return null;
 }
 
-export function getComputedBackground(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  element: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): { backgroundColor: any; backgroundImage: string } | null {
-  if (!element) return null;
+/**
+ * Determines if two Figma nodes visually overlap based on their bounding boxes.
+ *
+ * @param {SceneNode} nodeA - The first node to compare.
+ * @param {SceneNode} nodeB - The second node to compare.
+ * @returns {boolean} True if the nodes overlap, false otherwise.
+//  */
+// export function overlaps(nodeA: SceneNode, nodeB: SceneNode): boolean {
+//   const boundsA = nodeA.absoluteBoundingBox;
+//   const boundsB = nodeB.absoluteBoundingBox;
 
-  // Get the computed style of the element
-  const computedStyle = window.getComputedStyle(element);
+//   if (!boundsA || !boundsB) return false;
 
-  // Retrieve the background-related properties
-  const backgroundColor = computedStyle.backgroundColor;
+//   return !(
+//     boundsA.x > boundsB.x + boundsB.width ||
+//     boundsA.x + boundsA.width < boundsB.x ||
+//     boundsA.y > boundsB.y + boundsB.height ||
+//     boundsA.y + boundsA.height < boundsB.y
+//   );
+// }
 
-  const backgroundImage = computedStyle.backgroundImage;
+export function overlaps(nodeA: SceneNode, nodeB: SceneNode): boolean {
+  if (!("absoluteBoundingBox" in nodeA) || !("absoluteBoundingBox" in nodeB)) {
+    return false;
+  }
 
-  return { backgroundColor, backgroundImage };
-}
+  const boxA = nodeA.absoluteBoundingBox;
+  const boxB = nodeB.absoluteBoundingBox;
 
-// Helper function to check if two nodes overlap
-function overlaps(node1: SceneNode, node2: SceneNode): boolean {
-  const bounds1 = node1.absoluteBoundingBox;
-  const bounds2 = node2.absoluteBoundingBox;
+  if (!boxA || !boxB) return false;
 
-  if (!bounds1 || !bounds2) return false;
-
-  return !(
-    bounds1.x > bounds2.x + bounds2.width ||
-    bounds1.x + bounds1.width < bounds2.x ||
-    bounds1.y > bounds2.y + bounds2.height ||
-    bounds1.y + bounds1.height < bounds2.y
+  return (
+    boxA.x < boxB.x + boxB.width &&
+    boxA.x + boxA.width > boxB.x &&
+    boxA.y < boxB.y + boxB.height &&
+    boxA.y + boxA.height > boxB.y
   );
 }
 
@@ -429,4 +456,73 @@ export function getBackgroundColorForTextNode(
   }
 
   return null;
+}
+
+export function getBackgroundColorForNode(node: SceneNode): RGBColor | null {
+  if (!node.parent) return null;
+
+  const parent = node.parent;
+
+  // Case 1: Parent has a solid fill
+  if ("fills" in parent && parent.fills && Array.isArray(parent.fills)) {
+    const solidFill = parent.fills.find(
+      (fill) => fill.type === "SOLID" && fill.visible,
+    );
+    if (solidFill && "color" in solidFill) {
+      return figmaRGBtoRGBColor(solidFill.color);
+    }
+  }
+
+  // Case 2: Check siblings beneath the node
+  if ("children" in parent) {
+    const nodeIndex = parent.children.indexOf(node);
+    for (let i = 0; i < nodeIndex; i++) {
+      const sibling = parent.children[i];
+      if ("fills" in sibling && sibling.fills && Array.isArray(sibling.fills)) {
+        if (overlaps(sibling, node)) {
+          const solidFill = sibling.fills.find(
+            (fill) => fill.type === "SOLID" && fill.visible,
+          );
+          if (solidFill && "color" in solidFill) {
+            return figmaRGBtoRGBColor(solidFill.color);
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Converts a Figma RGB color (0-1 range) to a standard RGB color (0-255 range).
+ *
+ * @param {RGB} figmaColor - The RGB color object from Figma, with values in the 0-1 range.
+ * @returns {RGBColor} An array representing the RGB color in the 0-255 range.
+ *
+ * @example
+ * const figmaColor: RGB = { r: 0.5, g: 0.7, b: 0.2 };
+ * const convertedColor = figmaRGBtoRGBColor(figmaColor);
+ * console.log(convertedColor); // Output: [128, 179, 51]
+ */
+export function figmaRGBtoRGBColor(figmaColor: RGB): RGBColor {
+  return [
+    Math.round(figmaColor.r * 255),
+    Math.round(figmaColor.g * 255),
+    Math.round(figmaColor.b * 255),
+  ];
+}
+
+export function figmaRGBtoHex(rgb: [number, number, number]): string {
+  const [r, g, b] = rgb;
+
+  // Ensure the values are clamped between 0 and 255
+  const clamp = (value: number) => Math.max(0, Math.min(255, value));
+
+  const toHex = (value: number) => {
+    const hex = clamp(value).toString(16);
+    return hex.length === 1 ? `0${hex}` : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
