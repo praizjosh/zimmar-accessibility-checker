@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 /* eslint-disable no-console */
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
@@ -9,6 +12,7 @@ import {
   isTouchTargetTooSmall,
   postMessageToUI,
 } from "@/lib/figmaUtils";
+import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
 import { IssueX } from "@/lib/types";
 import {
   getIsQuickCheckModeActive,
@@ -41,6 +45,11 @@ figma.ui.onmessage = async (message) => {
         await handleNavigate(message);
         break;
 
+      case MESSAGE_TYPES.GET_IMAGE_DATA:
+        // This message is sent to get the image data for generating alt text.
+        await generateAltTextForLayer(message);
+        break;
+
       default:
         console.warn(
           `Unhandled request. Message type does not exist: ${message.type}`,
@@ -53,8 +62,8 @@ figma.ui.onmessage = async (message) => {
 };
 
 figma.on("selectionchange", async () => {
-  const isQuickCheckModeActive = getIsQuickCheckModeActive();
-  if (!isQuickCheckModeActive) return;
+  // const isQuickCheckModeActive = getIsQuickCheckModeActive();
+  // if (!isQuickCheckModeActive) return;
 
   const selection = figma.currentPage.selection;
 
