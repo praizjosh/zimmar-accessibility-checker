@@ -68,7 +68,7 @@ export default async function generateAltTextForLayer(message: {
       format: "PNG" as const,
       constraint: {
         type: "SCALE" as const,
-        value: 0.5, // Reduce to 25% size
+        value: 0.25, // Reduce to 25% size
       },
     };
 
