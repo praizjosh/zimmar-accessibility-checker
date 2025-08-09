@@ -1,22 +1,22 @@
-import { useEffect, useState } from "react";
-import useIssuesStore from "@/lib/useIssuesStore";
-import { Button } from "../ui/button";
-import Separator from "../ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronsUpDown, Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { IssueType, IssueX } from "@/lib/types";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
+import { IssueType, IssueX } from "@/lib/types";
+import useIssuesStore from "@/lib/useIssuesStore";
+import { ChevronLeft, ChevronRight, ChevronsUpDown, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import Separator from "../ui/separator";
 
 export default function IssuesWrapperOriginal({
   children,
@@ -141,7 +141,7 @@ export default function IssuesWrapperOriginal({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <Info className="ml-2 size-5 text-gray hover:text-accent" />
+                      <Info className="ml-2 size-5 text-grey hover:text-accent" />
                     </TooltipTrigger>
                     <TooltipContent
                       avoidCollisions
@@ -219,7 +219,7 @@ export default function IssuesWrapperOriginal({
       {issueGroupList.length > 0 ? (
         <>
           {description && (
-            <p className="px-3 font-open-sans font-medium text-gray">
+            <p className="px-3 font-open-sans font-medium text-grey">
               {description}
             </p>
           )}
@@ -262,7 +262,7 @@ export default function IssuesWrapperOriginal({
       ) : (
         <>
           {singleIssue?.description && (
-            <p className="px-3 font-open-sans font-medium text-gray">
+            <p className="px-3 font-open-sans font-medium text-grey">
               {singleIssue?.description}
             </p>
           )}

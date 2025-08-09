@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import useIssuesStore from "@/lib/useIssuesStore";
-import { Button } from "../ui/button";
-import Separator from "../ui/separator";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { IssueType, IssueX } from "@/lib/types";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
+import { IssueType, IssueX } from "@/lib/types";
+import useIssuesStore from "@/lib/useIssuesStore";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import Separator from "../ui/separator";
 import Recommendations from "./Recommendations";
 import TooltipInfo from "./TooltipInfo";
 
@@ -121,7 +121,7 @@ export default function IssuesWrapper({
   const renderWrapper = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <div className="flex w-full flex-col items-start text-gray">
+        <div className="flex w-full flex-col items-start text-grey">
           <p className="mb-1.5 font-open-sans text-lg font-medium">
             No {selectedType} issue detected
           </p>
@@ -146,7 +146,7 @@ export default function IssuesWrapper({
     return (
       <>
         {description && (
-          <p className="px-3 font-open-sans font-medium text-gray">
+          <p className="px-3 font-open-sans font-medium text-grey">
             {description}
           </p>
         )}
