@@ -46,8 +46,7 @@ figma.ui.onmessage = async (message) => {
         break;
 
       case MESSAGE_TYPES.GET_IMAGE_DATA:
-        // This message is sent to get the image data for generating alt text.
-        await generateAltTextForLayer(message);
+        await generateAltTextForLayer();
         break;
 
       default:
@@ -62,8 +61,8 @@ figma.ui.onmessage = async (message) => {
 };
 
 figma.on("selectionchange", async () => {
-  // const isQuickCheckModeActive = getIsQuickCheckModeActive();
-  // if (!isQuickCheckModeActive) return;
+  const isQuickCheckModeActive = getIsQuickCheckModeActive();
+  if (!isQuickCheckModeActive) return;
 
   const selection = figma.currentPage.selection;
 

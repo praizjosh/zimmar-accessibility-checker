@@ -1,31 +1,37 @@
-export default async function generateAltTextForLayer(message: {
-  type: string;
-  [key: string]: unknown;
-}) {
-  console.log("received message to generate alt text for layer:", message);
-
+/**
+ * Generates alt text for the selected layer in Figma.
+ */
+export default async function generateAltTextForLayer() {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
-    figma.notify("Please select a layer to generate alt text for.");
+    figma.notify("Please select a layer to generate alt text for");
     return;
   }
 
   if (selection.length > 1) {
-    figma.notify("Please select only one layer to generate alt text for.");
+    figma.notify("Please select only one layer to generate alt text for");
     return;
   }
 
   const selectedNode = selection[0];
 
-  console.log("selectedNode details:", {
-    name: selectedNode.name,
-    type: selectedNode.type,
-    id: selectedNode.id,
-    visible: selectedNode.visible,
-    width: "width" in selectedNode ? selectedNode.width : "N/A",
-    height: "height" in selectedNode ? selectedNode.height : "N/A",
-  });
+  // console.log("selectedNode details:", {
+  //   name: selectedNode.name,
+  //   type: selectedNode.type,
+  //   id: selectedNode.id,
+  //   visible: selectedNode.visible,
+  //   width: "width" in selectedNode ? selectedNode.width : "N/A",
+  //   height: "height" in selectedNode ? selectedNode.height : "N/A",
+  // });
+
+  // Check if the node is visible
+  if (!selectedNode.visible) {
+    figma.notify(
+      "Selected layer is hidden. Please make it visible before generating alt text.",
+    );
+    return;
+  }
 
   // Check if the selected node can be exported
   if (!("exportAsync" in selectedNode)) {
@@ -54,21 +60,13 @@ export default async function generateAltTextForLayer(message: {
     }
   }
 
-  // Check if the node is visible
-  if (!selectedNode.visible) {
-    figma.notify(
-      "Selected layer is hidden. Please make it visible before generating alt text.",
-    );
-    return;
-  }
-
   try {
     // Export with reduced size to avoid payload too large errors
     const exportSettings = {
       format: "PNG" as const,
       constraint: {
         type: "SCALE" as const,
-        value: 0.25, // Reduce to 25% size
+        value: 0.2, // Reduce to 20% size
       },
     };
 

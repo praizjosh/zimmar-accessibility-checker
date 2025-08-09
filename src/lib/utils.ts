@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { score, rgb, RGBColor } from "wcag-contrast";
+import { rgb, RGBColor, score } from "wcag-contrast";
+import { copyToClipboardProps } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -525,4 +526,21 @@ export function figmaRGBtoHex(rgb: [number, number, number]): string {
   };
 
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export async function copyToClipboard({
+  text,
+  onSuccess,
+  onError,
+}: copyToClipboardProps): Promise<void> {
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(text);
+      onSuccess();
+    } catch (err) {
+      onError(err instanceof Error ? err : new Error(String(err)));
+    }
+  } else {
+    onError(new Error("Clipboard API not supported"));
+  }
 }

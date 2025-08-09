@@ -5,88 +5,13 @@ import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { ChevronRight, Radar } from "lucide-react";
-import { useEffect } from "react";
+import { Bot, ChevronRight, Radar } from "lucide-react";
+import { useState } from "react";
+import AltTextGenerator from "./ai-assistant/AltTextGenerator";
 
 export default function AccessibilityValidator() {
   const { scanning, startScan, setSelectedType, navigateTo } = useIssuesStore();
-
-  // onmessage = (event: MessageEvent) => {
-  //   const { type, data } = event.data.pluginMessage || {};
-  //   console.log("Received message:", type, data);
-
-  //   if (type === "GENERATE_ALT_TEXT") {
-  //     console.log("Received GENERATE_ALT_TEXT message:", data);
-  //   }
-  // };
-
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      const { type, data } = event.data.pluginMessage || {};
-      // console.log("Received message:", type, data);
-
-      if (type === "GENERATE_ALT_TEXT") {
-        try {
-          // Update the UI to show loading state
-          const altTextArea = document.getElementById(
-            "altTextArea",
-          ) as HTMLTextAreaElement;
-
-          if (altTextArea) {
-            altTextArea.value = "Generating alt text...";
-          }
-
-          // Make API call to your endpoint
-          const response = await fetch(
-            "http://localhost:8005/generate-alt-text",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...data }),
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const result = await response.json();
-          const { altText } = result;
-
-          // Update the textarea with the generated alt text
-          if (altTextArea) {
-            altTextArea.value = altText || "No alt text generated";
-          }
-        } catch (error) {
-          console.error("Error generating alt text:", error);
-          const altTextArea = document.getElementById(
-            "altTextArea",
-          ) as HTMLTextAreaElement;
-          if (altTextArea) {
-            if (error instanceof Error && error.message.includes("413")) {
-              altTextArea.value =
-                "Image too large. Please use or select a smaller element and try again.";
-            } else if (
-              error instanceof Error &&
-              error.message.includes("Failed to fetch")
-            ) {
-              altTextArea.value =
-                "Network error. Please check your API server and try again.";
-            } else {
-              altTextArea.value =
-                "Error generating alt text. Please try again.";
-            }
-          }
-        }
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, []);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const handleIssuesListClick = (type: IssueType) => {
     postMessageToBackend("start-quickcheck");
@@ -97,10 +22,6 @@ export default function AccessibilityValidator() {
         : "ISSUE_LIST_VIEW",
     );
   };
-
-  function generateAltText() {
-    parent.postMessage({ pluginMessage: { type: "get-image-data" } }, "*");
-  }
 
   return (
     <div className="flex size-full flex-col space-y-5">
@@ -123,7 +44,7 @@ export default function AccessibilityValidator() {
           <span className="w-full border-t border-rose-50/10" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-dark px-5 text-sm text-gray">
+          <span className="bg-dark px-5 text-sm text-grey">
             or scan a layer for
           </span>
         </div>
@@ -138,9 +59,10 @@ export default function AccessibilityValidator() {
             <li
               key={issue.id}
               title={`Find ${issue.type} issues`}
-              className="group flex items-center justify-between rounded-xl bg-dark-shade text-gray transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
+              className="group flex items-center justify-between rounded-xl bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
             >
               <button
+                type="button"
                 className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left text-sm"
                 aria-label={issue.type}
                 onClick={() => handleIssuesListClick(issue.type as IssueType)}
@@ -163,41 +85,21 @@ export default function AccessibilityValidator() {
         })}
       </ul>
 
-      <hr />
-      <h3>🤖 AI Assistant Tools</h3>
-
-      {/* <!-- Alt Text Generator --> */}
-      <div className="flex flex-col items-center space-y-2">
-        <label htmlFor="altButton">📷 Alt Text Generator</label>
-        <br />
-        <button id="altButton" onClick={generateAltText}>
-          Generate Alt Text
-        </button>
-        <textarea
-          className="w-full rounded p-2 text-sm text-black/75"
-          aria-label="Generated alt text"
-          id="altTextArea"
-          rows={2}
-          placeholder="Generated alt text will appear here..."
-        ></textarea>
+      <div className="relative m-4">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-rose-50/10" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-dark px-5 text-sm text-grey">
+            <span className="inline-flex items-center gap-2">
+              <Bot className="size-4" />
+              <h3>AI Assistant Tools</h3>
+            </span>
+          </span>
+        </div>
       </div>
 
-      {/* <!-- Accessibility Q&A --> */}
-      <div className="mt-4 flex flex-col items-center space-y-2">
-        <label htmlFor="question">💬 Ask Accessibility AI</label>
-        <br />
-        <input
-          aria-label="Ask a question about accessibility"
-          type="text"
-          id="question"
-          placeholder="E.g. Is this button accessible?"
-        />
-        <button id="askAI">Send</button>
-        <div
-          id="aiResponse"
-          className="w-full whitespace-pre-wrap rounded bg-dark-shade p-2 text-sm text-gray"
-        ></div>
-      </div>
+      <AltTextGenerator isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
       <div className="mt-auto flex size-full flex-col items-center text-xs text-rose-50/40">
         <p className="mt-auto">
