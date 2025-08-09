@@ -63,7 +63,7 @@ export default function AccessibilityValidator() {
             >
               <button
                 type="button"
-                className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left text-sm"
+                className="flex w-full flex-col gap-y-2 rounded-xl px-4 py-3.5 text-left text-sm"
                 aria-label={issue.type}
                 onClick={() => handleIssuesListClick(issue.type as IssueType)}
               >
@@ -101,7 +101,7 @@ export default function AccessibilityValidator() {
 
       <AltTextGenerator isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
-      <div className="mt-auto flex size-full flex-col items-center text-xs text-rose-50/40">
+      <div className="mt-auto flex size-full flex-col items-center text-xs text-white/55">
         <p className="mt-auto">
           &copy; {new Date().getFullYear()} Zimmar Technologies. All rights
           reserved.

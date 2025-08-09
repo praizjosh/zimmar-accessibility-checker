@@ -99,8 +99,10 @@ export default function AltTextGenerator({
   }
 
   return (
-    <button
-      type="button"
+    <div
+      role={!isExpanded ? "button" : "presentation"}
+      aria-live={isExpanded ? "polite" : undefined}
+      tabIndex={0}
       aria-label="Alt Text Generator"
       className={cn(
         "flex items-center justify-between rounded-xl bg-dark-shade transition-all duration-200 ease-in-out ",
@@ -112,6 +114,14 @@ export default function AltTextGenerator({
       onClick={() => {
         if (setIsExpanded && !isExpanded) {
           setIsExpanded(!isExpanded);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (setIsExpanded && !isExpanded) {
+            setIsExpanded(!isExpanded);
+          }
         }
       }}
     >
@@ -184,6 +194,6 @@ export default function AltTextGenerator({
           </>
         )}
       </div>
-    </button>
+    </div>
   );
 }
