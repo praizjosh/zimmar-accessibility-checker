@@ -61,7 +61,7 @@ export default function AltTextGenerator({
               error.message.includes("Failed to fetch")
             ) {
               altTextArea.current.textContent =
-                "Network error. Please check your API server and try again.";
+                "Network error. Please try again.";
             } else {
               altTextArea.current.textContent =
                 "Error generating alt text. Please try again.";
