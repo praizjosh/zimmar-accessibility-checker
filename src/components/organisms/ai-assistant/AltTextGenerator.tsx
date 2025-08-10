@@ -112,7 +112,7 @@ export default function AltTextGenerator({
       tabIndex={0}
       aria-label="Alt Text Generator"
       className={cn(
-        "flex items-center justify-between rounded-xl bg-dark-shade transition-all duration-200 ease-in-out ",
+        "flex items-center justify-between rounded-xl bg-dark-shade transition-all duration-200 ease-in-out delay-1000",
         {
           "group text-grey hover:cursor-pointer hover:ring-1 hover:ring-accent":
             !isExpanded,
@@ -139,17 +139,20 @@ export default function AltTextGenerator({
             <span>Alt Text Generator</span>
           </div>
 
-          {isExpanded && (
-            <ChevronRight
-              strokeWidth={1.5}
-              className="size-5 shrink-0 -rotate-90 text-rose-50/55 transition-transform delay-100 ease-in-out hover:text-accent"
-              onClick={() => {
-                if (setIsExpanded && isExpanded) {
-                  setIsExpanded(!isExpanded);
-                }
-              }}
-            />
-          )}
+          <ChevronRight
+            strokeWidth={1.5}
+            className={cn(
+              "size-5 shrink-0 text-rose-50/55 transition-transform ease-in-out group-hover:translate-x-1 group-hover:text-accent",
+              {
+                "-rotate-90 hover:text-accent": isExpanded,
+              },
+            )}
+            onClick={() => {
+              if (setIsExpanded && isExpanded) {
+                setIsExpanded(!isExpanded);
+              }
+            }}
+          />
         </div>
 
         {isExpanded && (
