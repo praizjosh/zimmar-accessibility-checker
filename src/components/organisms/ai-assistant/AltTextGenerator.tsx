@@ -13,6 +13,8 @@ export default function AltTextGenerator({
   setIsExpanded,
 }: AltTextGeneratorProps) {
   const altTextArea = useRef<HTMLDivElement>(null);
+  const [hasResult, setHasResult] = useState<boolean>(false); // Add this state
+
   const [textIsCopied, setTextIsCopied] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -27,6 +29,9 @@ export default function AltTextGenerator({
             altTextArea.current.textContent = "Generating alt text...";
           }
           setLoading(true);
+          setError(false);
+          setHasResult(false); // Reset result state
+
           const response = await fetch(
             "http://localhost:8005/generate-alt-text",
             {
@@ -48,10 +53,12 @@ export default function AltTextGenerator({
           }
           setTextIsCopied(false);
           setLoading(false);
+          setHasResult(true);
         } catch (error) {
           console.error("Error generating alt text:", error);
           setError(true);
-
+          setHasResult(false); // No result on error
+          setLoading(false);
           if (altTextArea.current) {
             if (error instanceof Error && error.message.includes("413")) {
               altTextArea.current.textContent =
@@ -165,22 +172,24 @@ export default function AltTextGenerator({
                 Generated alt text will appear here...
               </div>
 
-              <span className="rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-dark">
-                {textIsCopied ? (
-                  <Check
-                    className=" text-green-500"
-                    aria-label="Text copied to clipboard"
-                    strokeWidth={1.5}
-                  />
-                ) : (
-                  <Copy
-                    className="cursor-pointer text-grey hover:text-accent"
-                    aria-label="Copy generated alt text to clipboard"
-                    onClick={handleCopyClick}
-                    strokeWidth={1.2}
-                  />
-                )}
-              </span>
+              {hasResult && (
+                <span className="rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-dark">
+                  {textIsCopied ? (
+                    <Check
+                      className=" text-green-500"
+                      aria-label="Text copied to clipboard"
+                      strokeWidth={1.5}
+                    />
+                  ) : (
+                    <Copy
+                      className="cursor-pointer text-grey hover:text-accent"
+                      aria-label="Copy generated alt text to clipboard"
+                      onClick={handleCopyClick}
+                      strokeWidth={1.2}
+                    />
+                  )}
+                </span>
+              )}
             </div>
 
             <Button
