@@ -13,8 +13,11 @@ export default function AltTextGenerator({
   setIsExpanded,
 }: AltTextGeneratorProps) {
   const altTextArea = useRef<HTMLDivElement>(null);
-  const [hasResult, setHasResult] = useState<boolean>(false); // Add this state
-
+  const [remainingQuotaValue, setRemainingQuotaValue] = useState<string | null>(
+    null,
+  );
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState<string | null>(null);
+  const [hasResult, setHasResult] = useState<boolean>(false);
   const [textIsCopied, setTextIsCopied] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -33,7 +36,7 @@ export default function AltTextGenerator({
           setHasResult(false); // Reset result state
 
           const response = await fetch(
-            "http://localhost:8005/generate-alt-text",
+            "http://localhost:8787/generate-alt-text",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -42,11 +45,18 @@ export default function AltTextGenerator({
           );
 
           if (!response.ok) {
+            const result = await response.json();
+
+            if (result.data.remaining === 0) {
+              setRemainingQuotaValue(result.data.remaining);
+            }
+            setIsQuotaExceeded(result.error);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const result = await response.json();
-          const { altText } = result;
+          const { altText, remaining } = result.data;
+          setRemainingQuotaValue(remaining);
 
           if (altTextArea.current) {
             altTextArea.current.textContent = altText;
@@ -59,6 +69,7 @@ export default function AltTextGenerator({
           setError(true);
           setHasResult(false); // No result on error
           setLoading(false);
+
           if (altTextArea.current) {
             if (error instanceof Error && error.message.includes("413")) {
               altTextArea.current.textContent =
@@ -70,8 +81,7 @@ export default function AltTextGenerator({
               altTextArea.current.textContent =
                 "Network error. Please try again.";
             } else {
-              altTextArea.current.textContent =
-                "Error generating alt text. Please try again.";
+              altTextArea.current.textContent = null;
             }
           }
         }
@@ -203,6 +213,30 @@ export default function AltTextGenerator({
             >
               Generate alt text
             </Button>
+
+            {remainingQuotaValue !== null &&
+              remainingQuotaValue !== undefined && (
+                <div className="text-xs text-grey">
+                  Remaining requests today:{" "}
+                  <span
+                    className={cn({
+                      "text-red-500": error,
+                    })}
+                  >
+                    {remainingQuotaValue}
+                  </span>
+                </div>
+              )}
+
+            {isQuotaExceeded && (
+              <div
+                className={cn("text-xs text-grey", {
+                  "text-red-500": error,
+                })}
+              >
+                {isQuotaExceeded}
+              </div>
+            )}
           </>
         )}
       </div>

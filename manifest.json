@@ -13,6 +13,10 @@
     "figma",
     "dev"
   ],
+  "permissions": [
+    "currentuser",
+    "activeusers"
+  ],
   "ui": "dist/index.html",
   "networkAccess": {
     "allowedDomains": [
@@ -20,7 +24,9 @@
       "https://fonts.gstatic.com"
     ],
     "devAllowedDomains": [
-      "http://localhost:8005"
+      "http://localhost:8005",
+      "http://localhost:8787",
+      "https://my-first-worker.praizjosh.workers.dev/generate-alt-text"
     ]
   }
 }

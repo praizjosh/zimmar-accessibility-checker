@@ -1,7 +1,10 @@
+import getUniqueUserId from "./getUniqueUserId";
+
 /**
  * Generates alt text for the selected layer in Figma.
  */
 export default async function generateAltTextForLayer() {
+  const userId = await getUniqueUserId();
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
@@ -15,15 +18,6 @@ export default async function generateAltTextForLayer() {
   }
 
   const selectedNode = selection[0];
-
-  // console.log("selectedNode details:", {
-  //   name: selectedNode.name,
-  //   type: selectedNode.type,
-  //   id: selectedNode.id,
-  //   visible: selectedNode.visible,
-  //   width: "width" in selectedNode ? selectedNode.width : "N/A",
-  //   height: "height" in selectedNode ? selectedNode.height : "N/A",
-  // });
 
   // Check if the node is visible
   if (!selectedNode.visible) {
@@ -92,6 +86,8 @@ export default async function generateAltTextForLayer() {
 
     const requestData = {
       imageDataUrl,
+      userId: userId,
+      feature: "generate-alt-text",
     };
 
     figma.ui.postMessage({
