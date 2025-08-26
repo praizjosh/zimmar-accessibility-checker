@@ -81,7 +81,7 @@ export default function AltTextGenerator({
               altTextArea.current.textContent =
                 "Network error. Please try again.";
             } else {
-              altTextArea.current.textContent = null;
+              altTextArea.current.textContent = "";
             }
           }
         }

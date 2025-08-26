@@ -5,7 +5,15 @@ import getUniqueUserId from "./getUniqueUserId";
  */
 export default async function generateAltTextForLayer() {
   const userId = await getUniqueUserId();
-  const selection = figma.currentPage.selection;
+  let selection;
+  try {
+    selection = figma.currentPage.selection;
+  } catch (_error) {
+    figma.notify(
+      "Unable to access the current selection. Please make sure a document is open and try again.",
+    );
+    return;
+  }
 
   if (selection.length === 0) {
     figma.notify("Please select a layer to generate alt text for");
