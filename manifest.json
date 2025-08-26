@@ -21,12 +21,13 @@
   "networkAccess": {
     "allowedDomains": [
       "https://fonts.googleapis.com",
-      "https://fonts.gstatic.com"
+      "https://fonts.gstatic.com",
+      "https://zimmar-d1.praizjosh.workers.dev/generate-alt-text"
     ],
     "devAllowedDomains": [
       "http://localhost:8005",
       "http://localhost:8787",
-      "https://my-first-worker.praizjosh.workers.dev/generate-alt-text"
+      "https://zimmar-d1.praizjosh.workers.dev/generate-alt-text"
     ]
   }
 }

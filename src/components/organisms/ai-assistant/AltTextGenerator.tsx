@@ -36,7 +36,7 @@ export default function AltTextGenerator({
           setHasResult(false); // Reset result state
 
           const response = await fetch(
-            "http://localhost:8787/generate-alt-text",
+            "https://zimmar-d1.praizjosh.workers.dev/generate-alt-text",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
