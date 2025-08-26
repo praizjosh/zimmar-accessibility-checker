@@ -1,4 +1,4 @@
-# Zimmar Accessibility Checker Figma Plugin
+# Zimmar Accessibility Checker [Figma Plugin]
 
 A Figma plugin to help designers and developers ensure their designs are accessible. This plugin provides automated checks for text contrast, typography, and generates alt text for selected layers using AI.
 
