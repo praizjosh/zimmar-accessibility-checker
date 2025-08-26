@@ -1,4 +1,4 @@
-import { TypeOutline, Contrast, Pointer, MoveHorizontal } from "lucide-react";
+import { Contrast, MoveHorizontal, Pointer, TypeOutline } from "lucide-react";
 import { ReactNode } from "react";
 import { MIN_FONT_SIZE } from "./constants";
 
@@ -25,7 +25,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <Contrast
         strokeWidth={1.5}
-        className="size-[1.1rem] text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
   },
@@ -38,7 +38,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <TypeOutline
         strokeWidth={1.5}
-        className="size-[1.1rem] text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
   },
@@ -62,7 +62,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <Pointer
         strokeWidth={1.5}
-        className="size-[1.1rem] text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
   },
@@ -87,7 +87,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <MoveHorizontal
         strokeWidth={1.5}
-        className="size-[1.1rem] text-gray group-hover:text-accent"
+        className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
   },
@@ -118,4 +118,4 @@ const ISSUE_RECOMMENDATIONS: IssueRecommendations[] = [
   },
 ];
 
-export { ISSUES_DATA_SCHEMA, ISSUE_RECOMMENDATIONS };
+export { ISSUE_RECOMMENDATIONS, ISSUES_DATA_SCHEMA };

@@ -24,7 +24,7 @@ export default function TooltipInfo({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Info className="ml-2 size-5 text-gray hover:text-accent" />
+          <Info className="ml-2 size-5 text-grey hover:text-accent" />
         </TooltipTrigger>
         <TooltipContent
           avoidCollisions

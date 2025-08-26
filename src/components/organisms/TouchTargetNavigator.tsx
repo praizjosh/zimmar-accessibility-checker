@@ -1,14 +1,14 @@
+import { MIN_TOUCH_TARGET_SIZE } from "@/lib/constants";
+import useIssuesStore from "@/lib/useIssuesStore";
+import { cn, getSeverityStyles } from "@/lib/utils";
 import {
-  Target,
   Check,
+  MoveHorizontal,
   OctagonAlert,
   Ruler,
-  MoveHorizontal,
+  Target,
   X,
 } from "lucide-react";
-import useIssuesStore from "@/lib/useIssuesStore";
-import { MIN_TOUCH_TARGET_SIZE } from "@/lib/constants";
-import { cn, getSeverityStyles } from "@/lib/utils";
 import IssueDetailRow from "./IssueDetailRow";
 import IssuesWrapper from "./IssuesWrapper";
 
@@ -22,7 +22,7 @@ export default function TouchTargetNavigator() {
   const renderIssueDetails = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <p className="px-3 font-open-sans text-lg font-medium text-gray">
+        <p className="px-3 font-open-sans text-lg font-medium text-grey">
           No {selectedType} issue detected.
         </p>
       );

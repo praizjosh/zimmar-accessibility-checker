@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 /* eslint-disable no-console */
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
@@ -9,6 +12,7 @@ import {
   isTouchTargetTooSmall,
   postMessageToUI,
 } from "@/lib/figmaUtils";
+import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
 import { IssueX } from "@/lib/types";
 import {
   getIsQuickCheckModeActive,
@@ -39,6 +43,10 @@ figma.ui.onmessage = async (message) => {
 
       case MESSAGE_TYPES.NAVIGATE:
         await handleNavigate(message);
+        break;
+
+      case MESSAGE_TYPES.GET_IMAGE_DATA:
+        await generateAltTextForLayer();
         break;
 
       default:

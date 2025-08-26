@@ -4,6 +4,8 @@ export const MESSAGE_TYPES = {
   SCAN: "scan",
   UPDATE_FONT_SIZE: "updateFontSize",
   NAVIGATE: "navigate",
+  GET_IMAGE_DATA: "get-image-data",
+  GENERATE_ALT_TEXT: "GENERATE_ALT_TEXT",
 };
 
 export const ISSUES_TYPES = [

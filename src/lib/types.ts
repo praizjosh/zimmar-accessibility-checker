@@ -66,3 +66,10 @@ export interface EnhancedIssuesStore extends IssuesStore {
   getIssueGroupList: () => IssueX[];
   rescanIssues: () => void; // Rescan the document for issues
 }
+
+export type copyToClipboardProps = {
+  text: string;
+  onSuccess: () => void;
+  // eslint-disable-next-line no-unused-vars
+  onError: (error: Error) => void;
+};

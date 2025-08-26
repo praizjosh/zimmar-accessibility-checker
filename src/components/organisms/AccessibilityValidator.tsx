@@ -1,13 +1,17 @@
-import { Card, CardContent } from "@/components/ui/card";
+/* eslint-disable no-console */
 import { Button } from "@/components/ui/button";
-import { Radar, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { postMessageToBackend } from "@/lib/figmaUtils";
+import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
-import { postMessageToBackend } from "@/lib/figmaUtils";
+import { Bot, ChevronRight, Radar } from "lucide-react";
+import { useState } from "react";
+import AltTextGenerator from "./ai-assistant/AltTextGenerator";
 
 export default function AccessibilityValidator() {
   const { scanning, startScan, setSelectedType, navigateTo } = useIssuesStore();
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const handleIssuesListClick = (type: IssueType) => {
     postMessageToBackend("start-quickcheck");
@@ -40,7 +44,7 @@ export default function AccessibilityValidator() {
           <span className="w-full border-t border-rose-50/10" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-dark px-5 text-sm text-gray">
+          <span className="bg-dark px-5 text-sm text-grey">
             or scan a layer for
           </span>
         </div>
@@ -55,10 +59,11 @@ export default function AccessibilityValidator() {
             <li
               key={issue.id}
               title={`Find ${issue.type} issues`}
-              className="group flex items-center justify-between rounded-xl bg-dark-shade text-gray transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
+              className="group flex items-center justify-between rounded-xl bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
             >
               <button
-                className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left text-sm"
+                type="button"
+                className="flex w-full flex-col gap-y-2 rounded-xl px-4 py-3.5 text-left text-sm"
                 aria-label={issue.type}
                 onClick={() => handleIssuesListClick(issue.type as IssueType)}
               >
@@ -80,7 +85,23 @@ export default function AccessibilityValidator() {
         })}
       </ul>
 
-      <div className="flex size-full flex-col items-center text-xs text-rose-50/40">
+      <div className="relative m-4">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-rose-50/10" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-dark px-5 text-sm text-grey">
+            <span className="inline-flex items-center gap-2">
+              <Bot className="size-4" />
+              <h3>AI Assistant Tools</h3>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <AltTextGenerator isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+
+      <div className="mt-auto flex size-full flex-col items-center text-xs text-white/55">
         <p className="mt-auto">
           &copy; {new Date().getFullYear()} Zimmar Technologies. All rights
           reserved.

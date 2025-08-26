@@ -1,12 +1,12 @@
-import useIssuesStore from "@/lib/useIssuesStore";
-import { CaseSensitive, X, Check, OctagonAlert } from "lucide-react";
-import IssueDetailRow from "./IssueDetailRow";
-import Input from "../ui/input";
 import { MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { cn, getSeverityStyles } from "@/lib/utils";
-import IssuesWrapper from "./IssuesWrapper";
 import { IssueX } from "@/lib/types";
+import useIssuesStore from "@/lib/useIssuesStore";
+import { cn, getSeverityStyles } from "@/lib/utils";
+import { CaseSensitive, Check, OctagonAlert, X } from "lucide-react";
+import Input from "../ui/input";
+import IssueDetailRow from "./IssueDetailRow";
+import IssuesWrapper from "./IssuesWrapper";
 
 export default function IssuesNavigator() {
   const {
@@ -48,7 +48,7 @@ export default function IssuesNavigator() {
   const renderIssueDetails = (issue: typeof singleIssue | null) => {
     if (!issue) {
       return (
-        <p className="px-3 font-open-sans text-lg font-medium text-gray">
+        <p className="px-3 font-open-sans text-lg font-medium text-grey">
           No {selectedType} issue detected.
         </p>
       );

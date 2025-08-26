@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
+import { ISSUES_TYPES } from "@/lib/constants";
+import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
 import { saveAs } from "file-saver";
+import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import Separator from "../ui/separator";
 import LoadingScreen from "./LoadingScreen";
-import { ISSUES_TYPES } from "@/lib/constants";
 
 export default function IssuesOverviewList() {
   const {
@@ -176,7 +176,7 @@ export default function IssuesOverviewList() {
 
             <TabsContent value="issues">
               <h3
-                className={`text-base font-medium tracking-wide text-gray ${issues.length > 0 ? "mb-1" : "mb-4"}`}
+                className={`text-base font-medium tracking-wide text-grey ${issues.length > 0 ? "mb-1" : "mb-4"}`}
               >
                 Identified Issues
               </h3>
@@ -202,7 +202,7 @@ export default function IssuesOverviewList() {
                       <li
                         key={issue.id}
                         title={`View all ${issue.type} issues`}
-                        className="group flex items-center justify-between rounded-xl bg-dark-shade text-gray transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
+                        className="group flex items-center justify-between rounded-xl bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
                       >
                         <button
                           className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
@@ -264,14 +264,14 @@ export default function IssuesOverviewList() {
                   })}
                 </ul>
               ) : (
-                <p className="w-full text-left font-semibold text-gray">
+                <p className="w-full text-left font-semibold text-grey">
                   No issues found
                 </p>
               )}
             </TabsContent>
 
             <TabsContent value="report">
-              <h3 className="mb-2 text-lg font-medium tracking-wide text-gray">
+              <h3 className="mb-2 text-lg font-medium tracking-wide text-grey">
                 Export Report
               </h3>
               <p className="mb-4 text-sm">
