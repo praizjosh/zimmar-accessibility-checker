@@ -56,7 +56,7 @@ export default async function generateAltTextForLayer() {
     // Figma supports PNG, JPEG, and GIF. Images can be up to 4096 pixels (4K) in width and height.
     if (selectedNode.width > 4000 || selectedNode.height > 4000) {
       figma.notify(
-        "Selected layer is too large to export. Please select a smaller layer.",
+        "Selected layer is too large to export. Please select a smaller layer or resize it to below 4000×4000 pixels.",
       );
       return;
     }
