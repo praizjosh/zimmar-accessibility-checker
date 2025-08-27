@@ -18,32 +18,10 @@ body {
   margin: 0;
 }
 
-/* @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-} */
-
 @layer base {
   :root {
     --radius: 0.5rem;
   }
-
-  /* @font-face {
-    font-family: "Open Sansz";
-    font-style: normal;
-    font-weight: 300 800;
-    font-display: swap;
-    src: url("https://fonts.gstatic.com/s/opensans/v18/mem8YaGs126MiZpBA-UFVZ0e.ttf")
-      format("truetype");
-  } */
 
   html {
     font-family: Inter, system-ui, Helvetica, Arial, sans-serif;

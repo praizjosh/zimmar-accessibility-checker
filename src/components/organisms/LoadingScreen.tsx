@@ -1,4 +1,4 @@
-import LoadingSpinner from "../ui/loadingSpinner";
+import LoadingSpinner from "@/components/ui/loadingSpinner";
 
 export default function LoadingScreen({ message }: { message?: string }) {
   return (

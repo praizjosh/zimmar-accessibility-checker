@@ -151,23 +151,6 @@ export const isBoldFont = (
   return fontWeight >= 700;
 };
 
-// export const isBoldFont = (fontWeight: number | symbol): boolean => {
-//   // Skip processing if fontWeight is figma.mixed
-//   if (fontWeight === figma.mixed) {
-//     console.warn("Skipping node with figma.mixed fontWeight.");
-//     return false;
-//   }
-
-//   // Validate fontWeight type
-//   if (typeof fontWeight !== "number") {
-//     console.warn("Invalid fontWeight type:", fontWeight);
-//     return false;
-//   }
-
-//   // Check if fontWeight is bold
-//   return fontWeight >= 700;
-// };
-
 export function extractForegroundColorX(fills: Paint[]): RGBColor | null {
   if (!fills || !Array.isArray(fills)) return null;
 

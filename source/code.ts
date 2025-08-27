@@ -1,7 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
-/* eslint-disable no-console */
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
   analyzeTextNodeForContrastIssue,

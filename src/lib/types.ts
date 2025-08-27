@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { RGBColor } from "wcag-contrast";
 
 export type Severity = "critical" | "major" | "minor";
@@ -7,6 +8,19 @@ export type IssueType =
   | "Contrast"
   | "Touch Target Size"
   | "Touch Target Spacing";
+
+export type Issue = {
+  id: number;
+  type: string;
+  description: string;
+  severity: "critical" | "major" | "minor";
+  nodeType: string | string[];
+  icon: ReactNode;
+};
+
+export type IssueRecommendations = {
+  [key: string]: string[];
+};
 
 export type contrastScore = {
   compliance: string;

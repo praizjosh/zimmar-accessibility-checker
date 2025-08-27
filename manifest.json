@@ -22,12 +22,12 @@
     "allowedDomains": [
       "https://fonts.googleapis.com",
       "https://fonts.gstatic.com",
-      "https://zimmar-d1.praizjosh.workers.dev/generate-alt-text"
+      "https://zimmar-d1.praizjosh.workers.dev"
     ],
     "devAllowedDomains": [
       "http://localhost:8005",
       "http://localhost:8787",
-      "https://zimmar-d1.praizjosh.workers.dev/generate-alt-text"
+      "https://zimmar-d1.praizjosh.workers.dev"
     ]
   }
 }

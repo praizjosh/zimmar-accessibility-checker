@@ -1,12 +1,12 @@
+import IssueDetailRow from "@/components/organisms/IssueDetailRow";
+import IssuesWrapper from "@/components/organisms/IssuesWrapper";
+import Input from "@/components/ui/input";
 import { MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getSeverityStyles } from "@/lib/utils";
 import { CaseSensitive, Check, OctagonAlert, X } from "lucide-react";
-import Input from "../ui/input";
-import IssueDetailRow from "./IssueDetailRow";
-import IssuesWrapper from "./IssuesWrapper";
 
 export default function IssuesNavigator() {
   const {
