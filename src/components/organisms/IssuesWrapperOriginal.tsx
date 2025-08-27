@@ -1,8 +1,10 @@
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import Separator from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -10,13 +12,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
+import { ISSUE_RECOMMENDATIONS } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { ChevronLeft, ChevronRight, ChevronsUpDown, Info } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
-import Separator from "../ui/separator";
 
 export default function IssuesWrapperOriginal({
   children,

@@ -1,13 +1,12 @@
-/* eslint-disable no-console */
+import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
+import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { Bot, ChevronRight, Radar } from "lucide-react";
 import { useState } from "react";
-import AltTextGenerator from "./ai-assistant/AltTextGenerator";
 
 export default function AccessibilityValidator() {
   const { scanning, startScan, setSelectedType, navigateTo } = useIssuesStore();
@@ -51,9 +50,6 @@ export default function AccessibilityValidator() {
       </div>
 
       <ul className="space-y-2">
-        {/* {ISSUES_DATA_SCHEMA.filter(
-          (issue) => issue.type !== "Touch Target Spacing",
-        ).map((issue) => { */}
         {ISSUES_DATA_SCHEMA.map((issue) => {
           return (
             <li

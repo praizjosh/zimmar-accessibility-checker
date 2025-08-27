@@ -1,13 +1,13 @@
+import Recommendations from "@/components/organisms/Recommendations";
+import TooltipInfo from "@/components/organisms/TooltipInfo";
+import { Button } from "@/components/ui/button";
+import Separator from "@/components/ui/separator";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { ISSUE_RECOMMENDATIONS } from "@/lib/schemas";
+import { ISSUE_RECOMMENDATIONS } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
-import Separator from "../ui/separator";
-import Recommendations from "./Recommendations";
-import TooltipInfo from "./TooltipInfo";
 
 type TooltipDataType = Record<string, { title: string; content: string }>;
 

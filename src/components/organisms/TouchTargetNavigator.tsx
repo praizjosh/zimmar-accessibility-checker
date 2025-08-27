@@ -1,3 +1,5 @@
+import IssueDetailRow from "@/components/organisms/IssueDetailRow";
+import IssuesWrapper from "@/components/organisms/IssuesWrapper";
 import { MIN_TOUCH_TARGET_SIZE } from "@/lib/constants";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getSeverityStyles } from "@/lib/utils";
@@ -9,8 +11,6 @@ import {
   Target,
   X,
 } from "lucide-react";
-import IssueDetailRow from "./IssueDetailRow";
-import IssuesWrapper from "./IssuesWrapper";
 
 export default function TouchTargetNavigator() {
   const { currentIndex, singleIssue, selectedType, getIssueGroupList } =

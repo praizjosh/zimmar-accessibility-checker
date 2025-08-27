@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES } from "@/lib/constants";
-import { ISSUES_DATA_SCHEMA } from "@/lib/schemas";
+import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { saveAs } from "file-saver";

@@ -1,19 +1,6 @@
 import { Contrast, MoveHorizontal, Pointer, TypeOutline } from "lucide-react";
-import { ReactNode } from "react";
 import { MIN_FONT_SIZE } from "./constants";
-
-type Issue = {
-  id: number;
-  type: string;
-  description: string;
-  severity: "critical" | "major" | "minor";
-  nodeType: string | string[];
-  icon: ReactNode;
-};
-
-type IssueRecommendations = {
-  [key: string]: string[];
-};
+import { Issue, IssueRecommendations } from "./types";
 
 const ISSUES_DATA_SCHEMA: Issue[] = [
   {
