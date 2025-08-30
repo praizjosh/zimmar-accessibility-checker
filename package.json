@@ -1,22 +1,25 @@
 {
   "name": "zimmar-accessibility-compliance-checker",
-  "description": "A Figma plugin that checks for accessibility compliance issues and helps you fix them.",
+  "description": "A Figma plugin that checks for accessibility compliance issues within designs and helps you fix them.",
   "author": {
     "name": "Josh Praise",
     "email": "praizjosh@outlook.com"
   },
+  "license": "MIT",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build && npm run build:main",
-    "build:main": "esbuild source/code.ts --bundle --outfile=dist/code.js",
+    "commit": "commit",
+    "dev": "npm run start",
+    "build": "tsc -b && vite build --emptyOutDir=false && npm run build:main",
+    "build:main": "esbuild plugin/code.ts --bundle --outfile=dist/code.js",
+    "build:main:watch": "esbuild plugin/code.ts --bundle --outfile=dist/code.js --watch",
     "lint": "eslint .",
     "lint:fix": "eslint --fix",
     "preview": "vite preview",
-    "watch": "vite build --watch",
-    "watcher": "npm run build --watch"
+    "start": "concurrently -n tsc,build,vite -c yellow,blue,green \"npm run tsc:watch\" \"npm run build:main:watch\" \"vite\"",
+    "tsc:watch": "tsc -b --watch --preserveWatchOutput"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.3",
@@ -36,6 +39,9 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/prompt-cli": "^19.8.1",
     "@eslint/js": "^9.19.0",
     "@figma/eslint-plugin-figma-plugins": "^0.15.0",
     "@figma/plugin-typings": "^1.107.0-beta.2",
@@ -49,6 +55,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
