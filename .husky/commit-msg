@@ -1,1 +1,1 @@
-npx --no -- commitlint --edit $1 commitlint.config.js
+npx lint-staged && npx --no -- commitlint --edit $1 --config config/commitlint.config.mjs
