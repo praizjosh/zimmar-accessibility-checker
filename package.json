@@ -21,8 +21,7 @@
     "prepare": "husky",
     "preview": "vite preview",
     "start": "concurrently -n tsc,build,vite -c yellow,blue,green \"npm run tsc:watch\" \"npm run build:main:watch\" \"vite\"",
-    "tsc:watch": "tsc -b --watch --preserveWatchOutput",
-    "commitlint": "commitlint --edit"
+    "tsc:watch": "tsc -b --watch --preserveWatchOutput"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.3",
