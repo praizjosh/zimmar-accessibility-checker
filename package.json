@@ -15,9 +15,9 @@
     "build": "tsc -b && vite build --emptyOutDir=false && npm run build:main",
     "build:main": "esbuild plugin/code.ts --bundle --outfile=dist/code.js",
     "build:main:watch": "esbuild plugin/code.ts --bundle --outfile=dist/code.js --watch",
-    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --max-warnings=0",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --max-warnings=0 --no-warn-ignored",
     "lint:debug": "eslint --ext .jsx,.js,.ts,.tsx ./src --debug --max-warnings=0",
-    "lint:fix": "npx eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix --max-warnings=0",
+    "lint:fix": "npx eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix --max-warnings=0 --no-warn-ignored",
     "prepare": "husky",
     "preview": "vite preview",
     "start": "concurrently -n tsc,build,vite -c yellow,blue,green \"npm run tsc:watch\" \"npm run build:main:watch\" \"vite\"",
@@ -78,6 +78,7 @@
     "typescript-eslint": "^8.18.2",
     "vite": "^6.1.0",
     "vite-plugin-singlefile": "^2.1.0",
+    "vite-plugin-svgr": "^4.5.0",
     "wcag-contrast": "^3.0.0"
   },
   "lint-staged": {
