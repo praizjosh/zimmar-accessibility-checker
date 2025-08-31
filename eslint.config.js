@@ -3,6 +3,7 @@ import eslintParser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import pluginReact from 'eslint-plugin-react';
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tailwind from "eslint-plugin-tailwindcss";
@@ -19,6 +20,7 @@ export default tseslint.config(
       ...tseslint.configs.recommended,
       ...tailwind.configs["flat/recommended"],
       eslintPluginPrettierRecommended,
+       pluginReact.configs.flat.recommended,
     ],
     files: ["**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
