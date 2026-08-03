@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 import { Camera, Check, ChevronRight, Copy } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
@@ -100,19 +100,19 @@ export default function AltTextGenerator({
   }
 
   function handleCopyClick() {
-    if (altTextArea.current) {
-      const range = document.createRange();
-      range.selectNodeContents(altTextArea.current);
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-      document.execCommand("copy");
-      selection?.removeAllRanges(); // Clear selection after copying
-      setTextIsCopied(true);
-      setTimeout(() => {
-        setTextIsCopied(false);
-      }, 1500);
-    }
+    const text = altTextArea.current?.textContent;
+    if (!text) return;
+
+    copyToClipboard({
+      text,
+      onSuccess: () => {
+        setTextIsCopied(true);
+        setTimeout(() => setTextIsCopied(false), 1500);
+      },
+      onError: (error) => {
+        console.error("Failed to copy alt text to clipboard:", error);
+      },
+    });
   }
 
   return (
