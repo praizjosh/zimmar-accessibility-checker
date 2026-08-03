@@ -2,6 +2,7 @@ import Recommendations from "@/components/organisms/Recommendations";
 import TooltipInfo from "@/components/organisms/TooltipInfo";
 import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
+import { MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
@@ -51,7 +52,7 @@ export default function IssuesWrapper({
   onmessage = (event: MessageEvent) => {
     const { type, data } = event.data.pluginMessage || {};
 
-    if (type === "detected-issue") {
+    if (type === MESSAGE_TYPES.DETECTED_ISSUE) {
       const matchingIssues = data.filter(
         (issue: IssueX) =>
           issue.type?.toLowerCase() === selectedType.toLowerCase(),
@@ -65,24 +66,24 @@ export default function IssuesWrapper({
       setSingleIssue(matchingIssues[0] || data[0] || null);
     }
 
-    if (type === "layer-selected" && data) {
+    if (type === MESSAGE_TYPES.LAYER_SELECTED && data) {
       setIsSelection(true);
     }
 
-    if (type === "no-selection" && data) {
+    if (type === MESSAGE_TYPES.NO_SELECTION && data) {
       setSingleIssue(null);
       setIsSelection(false);
     }
 
-    if (type === "quickcheck-active") {
+    if (type === MESSAGE_TYPES.QUICKCHECK_ACTIVE) {
       setIsQuickCheckActive(data);
     }
 
-    if (type === "no-background") {
+    if (type === MESSAGE_TYPES.NO_BACKGROUND) {
       setHasBackground(data);
     }
 
-    if (type === "no-foreground") {
+    if (type === MESSAGE_TYPES.NO_FOREGROUND) {
       setHasForeground(data);
     }
   };
@@ -95,7 +96,7 @@ export default function IssuesWrapper({
     if (isQuickCheckActive) {
       navigateTo("INDEX");
       setSingleIssue(null);
-      postMessageToBackend("cancel-quickcheck");
+      postMessageToBackend(MESSAGE_TYPES.CANCEL_QUICKCHECK);
     } else {
       navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
     }

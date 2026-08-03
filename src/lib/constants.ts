@@ -2,11 +2,18 @@ export const MESSAGE_TYPES = {
   START_QUICKCHECK: "start-quickcheck",
   CANCEL_QUICKCHECK: "cancel-quickcheck",
   SCAN: "scan",
-  UPDATE_FONT_SIZE: "updateFontSize",
+  UPDATE_FONT_SIZE: "update-font-size",
   NAVIGATE: "navigate",
   GET_IMAGE_DATA: "get-image-data",
-  GENERATE_ALT_TEXT: "GENERATE_ALT_TEXT",
+  GENERATE_ALT_TEXT: "generate-alt-text",
   NOTIFY: "notify",
+  DETECTED_ISSUE: "detected-issue",
+  LAYER_SELECTED: "layer-selected",
+  NO_SELECTION: "no-selection",
+  QUICKCHECK_ACTIVE: "quickcheck-active",
+  NO_BACKGROUND: "no-background",
+  NO_FOREGROUND: "no-foreground",
+  LOAD_ISSUES: "load-issues",
 };
 
 export const ISSUES_TYPES = [

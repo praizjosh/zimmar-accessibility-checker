@@ -1,6 +1,7 @@
 import { contrastScore, IssueX } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
 import {
+  MESSAGE_TYPES,
   MIN_TOUCH_TARGET_SIZE,
   MIN_TOUCH_TARGET_SPACING,
   TOUCH_TARGET_KEYWORDS,
@@ -269,7 +270,7 @@ export async function analyzeTextNodeForContrastIssue(
 
     if (!foregroundColor) {
       postMessageToUI(
-        "no-foreground",
+        MESSAGE_TYPES.NO_FOREGROUND,
         `No solid foreground color detected for the selected layer. Please check the layer's properties.`,
       );
       return;
@@ -277,7 +278,7 @@ export async function analyzeTextNodeForContrastIssue(
 
     if (!backgroundColor) {
       postMessageToUI(
-        "no-background",
+        MESSAGE_TYPES.NO_BACKGROUND,
         `No background elements detected for the selected layer. Please check the layer's properties.`,
       );
       return;

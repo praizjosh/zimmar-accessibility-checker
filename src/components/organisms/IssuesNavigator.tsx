@@ -1,7 +1,7 @@
 import IssueDetailRow from "@/components/organisms/IssueDetailRow";
 import IssuesWrapper from "@/components/organisms/IssuesWrapper";
 import Input from "@/components/ui/input";
-import { MIN_FONT_SIZE } from "@/lib/constants";
+import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
@@ -41,7 +41,7 @@ export default function IssuesNavigator() {
         });
       }
 
-      postMessageToBackend("updateFontSize", payload);
+      postMessageToBackend(MESSAGE_TYPES.UPDATE_FONT_SIZE, payload);
     }
   };
 

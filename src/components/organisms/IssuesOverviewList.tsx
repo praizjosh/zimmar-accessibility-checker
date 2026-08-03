@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ISSUES_TYPES } from "@/lib/constants";
+import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
@@ -42,7 +42,7 @@ export default function IssuesOverviewList() {
 
     const { type, data } = event.data.pluginMessage;
 
-    if (type === "loadIssues") {
+    if (type === MESSAGE_TYPES.LOAD_ISSUES) {
       setIssues(data);
       setScanning(false);
     }
