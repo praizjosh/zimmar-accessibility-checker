@@ -28,7 +28,7 @@ export default function AltTextGenerator({
     const handleMessage = async (event: MessageEvent) => {
       const { type, data } = event.data.pluginMessage || {};
 
-      if (type === "GENERATE_ALT_TEXT") {
+      if (type === MESSAGE_TYPES.GENERATE_ALT_TEXT) {
         try {
           if (altTextArea.current) {
             altTextArea.current.textContent = "Generating alt text...";
@@ -99,7 +99,7 @@ export default function AltTextGenerator({
   }, []);
 
   function generateAltText() {
-    parent.postMessage({ pluginMessage: { type: "get-image-data" } }, "*");
+    postMessageToBackend(MESSAGE_TYPES.GET_IMAGE_DATA);
   }
 
   function handleCopyClick() {

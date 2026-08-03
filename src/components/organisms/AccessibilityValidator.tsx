@@ -1,6 +1,7 @@
 import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
@@ -13,7 +14,7 @@ export default function AccessibilityValidator() {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const handleIssuesListClick = (type: IssueType) => {
-    postMessageToBackend("start-quickcheck");
+    postMessageToBackend(MESSAGE_TYPES.START_QUICKCHECK);
     setSelectedType(type);
     navigateTo(
       type === "Touch Target Size" || type === "Touch Target Spacing"
