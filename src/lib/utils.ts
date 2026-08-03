@@ -18,36 +18,6 @@ export const setIsQuickCheckModeActive = (value: boolean) => {
   state.IsQuickCheckModeActive = value;
 };
 
-export const getSeverityStylesa = (
-  severity: string | undefined,
-  isCritical: boolean = false,
-  isMajor: boolean = false,
-  isMinor: boolean = false,
-  isIcon: boolean = false,
-) =>
-  cn(
-    severity === "critical" && "text-rose-600",
-    isCritical && severity === "critical" && "text-rose-600 font-bold",
-    isIcon &&
-      isCritical &&
-      severity === "critical" &&
-      "mr-3 size-5 rounded-full bg-rose-600 p-1 text-dark-shade",
-
-    severity === "major" && "text-orange-500",
-    isMajor && severity === "major" && "text-orange-500 font-bold",
-    isIcon &&
-      isMajor &&
-      severity === "major" &&
-      "mr-3 size-5 rounded-full bg-orange-600 p-1 text-dark-shade",
-
-    severity === "minor" && "text-amber-500",
-    isMinor && severity === "minor" && "text-amber-500 font-bold",
-    isIcon &&
-      isMinor &&
-      severity === "minor" &&
-      "mr-3 size-5 rounded-full bg-amber-600 p-1 text-dark-shade",
-  );
-
 export const getSeverityStyles = (
   severity: string | undefined,
   {
@@ -151,23 +121,6 @@ export const isBoldFont = (
   return fontWeight >= 700;
 };
 
-export function extractForegroundColorX(fills: Paint[]): RGBColor | null {
-  if (!fills || !Array.isArray(fills)) return null;
-
-  // Iterate over the fills array to find a visible solid color
-  for (const fill of fills) {
-    if (fill.type === "SOLID" && fill.visible) {
-      const { r, g, b } = fill.color;
-
-      // Convert Figma color values (0-1 range) to RGB values (0-255 range)
-      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-    }
-  }
-
-  // Return null if no valid solid fill is found
-  return null;
-}
-
 /**
  * Evaluate the WCAG contrast score between two colors.
  * @param foreground - The foreground color in hex (e.g., "#FFFFFF").
@@ -238,128 +191,12 @@ export function getContrastCompliance(
 }
 
 /**
- * Recursively gets the background color of the nearest ancestor node with a valid background color.
- *
- * @param node The starting node (child node).
- * @returns {RGBColor | null} The background color in rgb format, or null if not found.
- */
-export function getNearestBackgroundColor(node: SceneNode): RGBColor | null {
-  let currentNode: BaseNode | null = node;
-
-  while (currentNode && currentNode.parent) {
-    currentNode = currentNode.parent;
-
-    // Skip nodes that cannot have background colors
-    if (
-      currentNode.type === "GROUP" ||
-      currentNode.type === "COMPONENT" ||
-      currentNode.type === "INSTANCE"
-    ) {
-      continue;
-    }
-
-    if ("fills" in currentNode && Array.isArray(currentNode.fills)) {
-      const fills = currentNode.fills as Paint[];
-      const solidPaint = fills.find(
-        (paint) => paint.type === "SOLID" && paint.visible !== false,
-      ) as SolidPaint | undefined;
-
-      if (solidPaint) {
-        const { r, g, b } = solidPaint.color;
-        const nearestBackgroundColor: RGBColor = [
-          Math.round(r * 255),
-          Math.round(g * 255),
-          Math.round(b * 255),
-        ];
-
-        return nearestBackgroundColor;
-      }
-    }
-  }
-
-  return null;
-}
-
-/**
- * Utility function to get the background color of the selected node in Figma.
- * It checks the parent FRAME's background or the sibling RECTANGLE directly below the node.
- * @param {SceneNode} node - The node to check the background for.
- * @returns {RGBColor | null} The background color in rgb format, or null if not found.
- */
-export function getBackgroundColorOfNode(node: SceneNode): RGBColor | null {
-  // Case 1: Parent FRAME's background
-  if (node.parent && node.parent.type === "FRAME") {
-    const frame = node.parent as FrameNode;
-    // console.log("isFrame: ", frame);
-
-    if (frame.backgrounds.length > 0) {
-      const background = frame.backgrounds[0];
-
-      if (background.type === "SOLID") {
-        const { r, g, b } = background.color;
-        const frameColor: RGBColor = [
-          Math.round(r * 255),
-          Math.round(g * 255),
-          Math.round(b * 255),
-        ];
-
-        // console.log(`Parent frame background: ${frameColor}`);
-        figma.notify(`Parent frame background: ${frameColor}`);
-        return frameColor;
-      }
-    }
-  }
-
-  // Case 2: Background from sibling RECTANGLE layer
-  const allNodes = figma.currentPage.children;
-  const nodeIndex = allNodes.indexOf(node);
-
-  if (nodeIndex > 0) {
-    const possibleBackgroundNode = allNodes[nodeIndex - 1];
-    // console.log("first possibleBackgroundNode:", possibleBackgroundNode);
-
-    if (possibleBackgroundNode.type === "RECTANGLE") {
-      const rect = possibleBackgroundNode as RectangleNode;
-      const rectFills = rect.fills as Paint[];
-      if (rectFills.length > 0 && rectFills[0].type === "SOLID") {
-        const { r, g, b } = rectFills[0].color;
-        const rectColor: RGBColor = [
-          Math.round(r * 255),
-          Math.round(g * 255),
-          Math.round(b * 255),
-        ];
-
-        figma.notify(`Background rectangle color: ${rectColor}`);
-        return rectColor;
-      }
-    }
-  }
-
-  figma.notify("No background color found for selection!");
-  return null;
-}
-
-/**
  * Determines if two Figma nodes visually overlap based on their bounding boxes.
  *
  * @param {SceneNode} nodeA - The first node to compare.
  * @param {SceneNode} nodeB - The second node to compare.
  * @returns {boolean} True if the nodes overlap, false otherwise.
-//  */
-// export function overlaps(nodeA: SceneNode, nodeB: SceneNode): boolean {
-//   const boundsA = nodeA.absoluteBoundingBox;
-//   const boundsB = nodeB.absoluteBoundingBox;
-
-//   if (!boundsA || !boundsB) return false;
-
-//   return !(
-//     boundsA.x > boundsB.x + boundsB.width ||
-//     boundsA.x + boundsA.width < boundsB.x ||
-//     boundsA.y > boundsB.y + boundsB.height ||
-//     boundsA.y + boundsA.height < boundsB.y
-//   );
-// }
-
+ */
 export function overlaps(nodeA: SceneNode, nodeB: SceneNode): boolean {
   if (!("absoluteBoundingBox" in nodeA) || !("absoluteBoundingBox" in nodeB)) {
     return false;
@@ -376,70 +213,6 @@ export function overlaps(nodeA: SceneNode, nodeB: SceneNode): boolean {
     boxA.y < boxB.y + boxB.height &&
     boxA.y + boxA.height > boxB.y
   );
-}
-
-export function getBackgroundColorForTextNode(
-  textNode: TextNode | undefined,
-): RGBColor | null {
-  if (!textNode) return null;
-  // Check if the text node has a parent
-  if (!textNode.parent) return null;
-
-  const parent = textNode.parent;
-
-  // Case 1: Parent has fills (most common case)
-  if ("fills" in parent && parent.fills && Array.isArray(parent.fills)) {
-    const nodeFills: Paint[] = parent.fills;
-    const solidFill = nodeFills.find(
-      (fill) => fill.type === "SOLID" && fill.visible,
-    );
-    if (solidFill && "color" in solidFill) {
-      // return solidFill.color;
-      const { r, g, b } = solidFill.color;
-      const rectColor: RGBColor = [
-        Math.round(r * 255),
-        Math.round(g * 255),
-        Math.round(b * 255),
-      ];
-      return rectColor;
-    }
-  }
-
-  // Case 2: Look for frame/rectangle siblings that might be positioned behind the text
-  if ("children" in parent) {
-    // Get the index of our text node
-    const textNodeIndex = parent.children.indexOf(textNode);
-
-    // Look at nodes before our text node (they would be behind the text in z-order)
-    for (let i = 0; i < textNodeIndex; i++) {
-      const sibling = parent.children[i];
-      if ("fills" in sibling && sibling.fills && Array.isArray(sibling.fills)) {
-        // Check if this sibling is positioned under our text node
-        if (overlaps(sibling, textNode)) {
-          const solidFill = sibling.fills.find(
-            (fill) => fill.type === "SOLID" && fill.visible,
-          );
-          if (solidFill && "color" in solidFill) {
-            const { r, g, b } = solidFill.color;
-            const rectColor: RGBColor = [
-              Math.round(r * 255),
-              Math.round(g * 255),
-              Math.round(b * 255),
-            ];
-            return rectColor;
-          }
-        }
-      }
-    }
-  }
-
-  // Case 3: Recursively check parent's parent
-  if (parent.parent) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return getBackgroundColorForTextNode(parent as any);
-  }
-
-  return null;
 }
 
 export function getBackgroundColorForNode(node: SceneNode): RGBColor | null {
