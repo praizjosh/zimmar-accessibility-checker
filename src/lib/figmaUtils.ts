@@ -38,18 +38,22 @@ export function postMessageToBackend(
 /**
  * Extracts the foreground color from the given Paint array.
  *
+ * Figma's fills array is ordered back-to-front — the last entry is
+ * rendered on top of the others — so this scans from the end to find
+ * the topmost visible SOLID fill, which is what's actually rendered.
+ *
  * @param {Paint[]} nodeFills - Array of Paint objects from a Figma node.
- * @returns {RGBColor} An RGB array representing the foreground color.
+ * @returns {RGBColor | null} The rendered foreground color, or null if
+ * no visible solid fill exists (e.g. gradient/image-only fills).
  */
-export const extractForegroundColor = (nodeFills: Paint[]): RGBColor => {
-  if (
-    nodeFills.length > 0 &&
-    nodeFills[0].type === "SOLID" &&
-    nodeFills[0].visible !== false
-  ) {
-    return figmaRGBtoRGBColor(nodeFills[0].color);
+export const extractForegroundColor = (nodeFills: Paint[]): RGBColor | null => {
+  for (let i = nodeFills.length - 1; i >= 0; i--) {
+    const fill = nodeFills[i];
+    if (fill.type === "SOLID" && fill.visible !== false) {
+      return figmaRGBtoRGBColor(fill.color);
+    }
   }
-  return [0, 0, 0]; // Default black
+  return null;
 };
 
 /**
@@ -262,6 +266,14 @@ export async function analyzeTextNodeForContrastIssue(
 
     // Skip nodes with mixed font sizes
     if (fontSize === figma.mixed) return;
+
+    if (!foregroundColor) {
+      postMessageToUI(
+        "no-foreground",
+        `No solid foreground color detected for the selected layer. Please check the layer's properties.`,
+      );
+      return;
+    }
 
     if (!backgroundColor) {
       postMessageToUI(
