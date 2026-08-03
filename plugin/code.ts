@@ -1,6 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
+import { isLocked, isVisible } from "@create-figma-plugin/utilities";
+
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
   analyzeTextNodeForContrastIssue,
@@ -110,14 +112,20 @@ function handleCancelQuickCheck() {
   setIsQuickCheckModeActive(false);
 }
 
+function isScannable(node: SceneNode): boolean {
+  return isVisible(node) && !isLocked(node);
+}
+
 async function handleScan() {
   const allTextNodes = figma.currentPage.findAll(
-    (node) => node.type === "TEXT",
+    (node) => node.type === "TEXT" && isScannable(node),
   ) as TextNode[];
   // const allVectorNodes = figma.currentPage.findAll(
   //   (node) => node.type === "VECTOR",
   // ) as VectorNode[];
-  const allPageNodes = figma.currentPage.findAll(() => true) as SceneNode[];
+  const allPageNodes = figma.currentPage.findAll((node) =>
+    isScannable(node),
+  ) as SceneNode[];
 
   const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
   postMessageToUI("loadIssues", issues);
