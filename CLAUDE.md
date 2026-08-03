@@ -8,9 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```sh
 npm install                    # install deps (also run: npm install --save-dev @figma/plugin-typings)
-npm run start                  # dev mode: runs tsc:watch + build:main:watch + vite concurrently (aliased by npm run dev)
+npm run start                  # dev mode: runs tsc:watch + build:main:watch + build:ui:watch concurrently (aliased by npm run dev)
 npm run build                  # tsc -b && vite build --emptyOutDir=false && npm run build:main
 npm run build:main             # esbuild-bundle plugin/code.ts -> dist/code.js (sandbox bundle only)
+npm run build:ui:watch         # vite build --watch --emptyOutDir=false -> dist/index.html (UI bundle, watch mode)
 npm run lint                   # eslint src/**/*.{js,jsx,ts,tsx}, --max-warnings=0
 npm run lint:fix               # eslint --fix, same scope
 npm run preview                # vite preview
@@ -25,7 +26,7 @@ Commits are enforced via Husky + commitlint (`config/commitlint.config.mjs`, ext
 This is a Figma plugin, which means the build produces **two separate JS runtimes that only talk via `postMessage`** — this split drives most of the structure:
 
 - **Plugin sandbox** (`plugin/code.ts` → bundled by esbuild to `dist/code.js`): runs in Figma's plugin sandbox. Has access to the `figma` global API (scene graph, node mutation, `figma.notify`, etc.) but no DOM and no `fetch`. Note it starts with `// @ts-nocheck` — this file is intentionally excluded from type checking.
-- **UI iframe** (`src/`, React + Vite → `dist/index.html`): a normal DOM environment (has `fetch`, `window`, `document`) but no access to the `figma` API. Built with `vite-plugin-singlefile` because Figma plugin UI must ship as one self-contained HTML file — check `vite.config.ts`'s `assetsInlineLimit`/`cssCodeSplit` settings before adding new asset-loading patterns.
+- **UI iframe** (`src/`, React + Vite → `dist/index.html`): a normal DOM environment (has `fetch`, `window`, `document`) but no access to the `figma` API. Built with `vite-plugin-singlefile` because Figma plugin UI must ship as one self-contained HTML file — check `vite.config.ts`'s `assetsInlineLimit`/`cssCodeSplit` settings before adding new asset-loading patterns. Figma reads `dist/index.html` straight off disk, so the UI must always be built via `vite build` (what `build:ui:watch` runs in watch mode) — the plain `vite` dev server serves from memory over HTTP and never writes `dist/index.html`, so it won't reflect in Figma.
 
 Communication between the two is one-directional message-passing, wrapped in helpers in `src/lib/figmaUtils.ts`:
 
