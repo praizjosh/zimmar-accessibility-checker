@@ -45,12 +45,12 @@ export default function AltTextGenerator({
           );
 
           if (!response.ok) {
-            const result = await response.json();
+            const result = await response.json().catch(() => null);
 
-            if (result.data.remaining === 0) {
+            if (result?.data?.remaining === 0) {
               setRemainingQuotaValue(result.data.remaining);
             }
-            setIsQuotaExceeded(result.error);
+            setIsQuotaExceeded(result?.error ?? null);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
@@ -81,7 +81,8 @@ export default function AltTextGenerator({
               altTextArea.current.textContent =
                 "Network error. Please try again.";
             } else {
-              altTextArea.current.textContent = "";
+              altTextArea.current.textContent =
+                "Something went wrong generating alt text. Please try again.";
             }
           }
         }
