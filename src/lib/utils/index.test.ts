@@ -1,0 +1,222 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { RGBColor, rgb } from "wcag-contrast";
+import solidFill from "@/lib/test-utils/solidFill";
+import {
+  copyToClipboard,
+  getBackgroundColorForNode,
+  getContrastCompliance,
+} from "./index";
+
+const WHITE: RGBColor = [255, 255, 255];
+const BLACK: RGBColor = [0, 0, 0];
+
+function expectedCompliance(
+  ratio: number,
+  isLargeText: boolean,
+): "AAA" | "AA" | "AAA Large" | "AA Large" | "Fail" {
+  if (isLargeText) {
+    if (ratio >= 4.5) return "AAA Large";
+    if (ratio >= 3) return "AA Large";
+    return "Fail";
+  }
+  if (ratio >= 7) return "AAA";
+  if (ratio >= 4.5) return "AA";
+  return "Fail";
+}
+
+function setClipboard(value: unknown) {
+  Object.defineProperty(navigator, "clipboard", { value, configurable: true });
+}
+
+async function invokeCopyToClipboard(text = "hello") {
+  const onSuccess = vi.fn();
+  const onError = vi.fn();
+  await copyToClipboard({ text, onSuccess, onError });
+  return { onSuccess, onError };
+}
+
+describe("copyToClipboard", () => {
+  const originalClipboard = navigator.clipboard;
+  const originalExecCommand = document.execCommand;
+
+  afterEach(() => {
+    setClipboard(originalClipboard);
+    document.execCommand = originalExecCommand;
+    vi.restoreAllMocks();
+  });
+
+  it("uses navigator.clipboard.writeText when available", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    setClipboard({ writeText });
+    document.execCommand = vi.fn();
+
+    const { onSuccess, onError } = await invokeCopyToClipboard();
+
+    expect(writeText).toHaveBeenCalledWith("hello");
+    expect(document.execCommand).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("falls back to document.execCommand when navigator.clipboard.writeText rejects", async () => {
+    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error("denied")) });
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    const { onSuccess, onError } = await invokeCopyToClipboard();
+
+    expect(document.execCommand).toHaveBeenCalledWith("copy");
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("falls back to document.execCommand when navigator.clipboard is unavailable (Figma plugin iframe)", async () => {
+    setClipboard(undefined);
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    const { onSuccess, onError } = await invokeCopyToClipboard();
+
+    expect(document.execCommand).toHaveBeenCalledWith("copy");
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("calls onError when document.execCommand fails", async () => {
+    setClipboard(undefined);
+    document.execCommand = vi.fn().mockReturnValue(false);
+
+    const { onSuccess, onError } = await invokeCopyToClipboard();
+
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
+  });
+});
+
+describe("getContrastCompliance", () => {
+  it("reports AAA for black-on-white normal text (max ratio)", () => {
+    const result = getContrastCompliance(BLACK, WHITE, 16, false);
+
+    expect(result.ratio).toBeCloseTo(21, 0);
+    expect(result.compliance).toBe("AAA");
+  });
+
+  it("reports AAA Large (not plain AAA) for large text at the same max ratio", () => {
+    const result = getContrastCompliance(BLACK, WHITE, 24, false);
+
+    expect(result.compliance).toBe("AAA Large");
+  });
+
+  it("treats fontSize >= 18 as large text", () => {
+    const large = getContrastCompliance(BLACK, WHITE, 18, false);
+    const normal = getContrastCompliance(BLACK, WHITE, 17, false);
+
+    expect(large.compliance).toBe("AAA Large");
+    expect(normal.compliance).toBe("AAA");
+  });
+
+  it("treats bold fontSize >= 14 as large text, but not bold fontSize 13", () => {
+    const boldLarge = getContrastCompliance(BLACK, WHITE, 14, true);
+    const boldNotLarge = getContrastCompliance(BLACK, WHITE, 13, true);
+
+    expect(boldLarge.compliance).toBe("AAA Large");
+    expect(boldNotLarge.compliance).toBe("AAA");
+  });
+
+  it("matches the WCAG threshold spec for a mid-contrast gray-on-white pair", () => {
+    const gray: RGBColor = [118, 118, 118];
+    const ratio = rgb(gray, WHITE);
+
+    const normalResult = getContrastCompliance(gray, WHITE, 16, false);
+    const largeResult = getContrastCompliance(gray, WHITE, 24, false);
+
+    expect(normalResult.ratio).toBeCloseTo(ratio);
+    expect(normalResult.compliance).toBe(expectedCompliance(ratio, false));
+    expect(largeResult.compliance).toBe(expectedCompliance(ratio, true));
+  });
+
+  it("reports Fail for near-identical low-contrast colors", () => {
+    const result = getContrastCompliance(
+      [128, 128, 128],
+      [140, 140, 140],
+      16,
+      false,
+    );
+
+    expect(result.compliance).toBe("Fail");
+    expect(result.ratio).toBeLessThan(3);
+  });
+
+  it("falls back to Fail/0 for an invalid fontSize", () => {
+    const nanResult = getContrastCompliance(BLACK, WHITE, NaN, false);
+    const mixedResult = getContrastCompliance(
+      BLACK,
+      WHITE,
+      Symbol("mixed"),
+      false,
+    );
+
+    expect(nanResult).toEqual({ compliance: "Fail", ratio: 0 });
+    expect(mixedResult).toEqual({ compliance: "Fail", ratio: 0 });
+  });
+});
+
+type Bounds = { x: number; y: number; width: number; height: number };
+
+function nodeWithEarlierSibling(
+  nodeBounds: Bounds,
+  siblingBounds: Bounds,
+  siblingFills: Paint[],
+): SceneNode {
+  const sibling = {
+    id: "sibling",
+    fills: siblingFills,
+    absoluteBoundingBox: siblingBounds,
+  };
+  const node: Record<string, unknown> = {
+    id: "node",
+    absoluteBoundingBox: nodeBounds,
+  };
+  node.parent = { fills: [], children: [sibling, node] };
+  return node as unknown as SceneNode;
+}
+
+describe("getBackgroundColorForNode", () => {
+  it("returns null when the node has no parent", () => {
+    const node = { parent: null } as unknown as SceneNode;
+
+    expect(getBackgroundColorForNode(node)).toBeNull();
+  });
+
+  it("returns the parent's solid fill color", () => {
+    const node = {
+      parent: { fills: [solidFill(1, 0, 0)] },
+    } as unknown as SceneNode;
+
+    expect(getBackgroundColorForNode(node)).toEqual([255, 0, 0]);
+  });
+
+  it("skips an invisible parent fill and returns null when no sibling covers it", () => {
+    const node = {
+      parent: { fills: [solidFill(1, 0, 0, false)], children: [] },
+    } as unknown as SceneNode;
+
+    expect(getBackgroundColorForNode(node)).toBeNull();
+  });
+
+  it("falls back to an overlapping earlier sibling's fill when the parent has no fill", () => {
+    const bounds = { x: 0, y: 0, width: 100, height: 100 };
+    const node = nodeWithEarlierSibling(bounds, bounds, [solidFill(0, 1, 0)]);
+
+    expect(getBackgroundColorForNode(node)).toEqual([0, 255, 0]);
+  });
+
+  it("ignores a non-overlapping earlier sibling and returns null", () => {
+    const node = nodeWithEarlierSibling(
+      { x: 0, y: 0, width: 100, height: 100 },
+      { x: 500, y: 500, width: 10, height: 10 },
+      [solidFill(0, 1, 0)],
+    );
+
+    expect(getBackgroundColorForNode(node)).toBeNull();
+  });
+});

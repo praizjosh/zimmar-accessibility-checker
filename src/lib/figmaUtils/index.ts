@@ -5,13 +5,13 @@ import {
   MIN_TOUCH_TARGET_SIZE,
   MIN_TOUCH_TARGET_SPACING,
   TOUCH_TARGET_KEYWORDS,
-} from "./constants";
+} from "../constants";
 import {
   figmaRGBtoRGBColor,
   getBackgroundColorForNode,
   getContrastCompliance,
   isBoldFont,
-} from "./utils";
+} from "../utils";
 
 /**
  * Sends a message to the Figma UI.

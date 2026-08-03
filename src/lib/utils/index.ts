@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { rgb, RGBColor, score } from "wcag-contrast";
-import { copyToClipboardProps } from "./types";
+import { copyToClipboardProps } from "../types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
