@@ -6,6 +6,7 @@ export const MESSAGE_TYPES = {
   NAVIGATE: "navigate",
   GET_IMAGE_DATA: "get-image-data",
   GENERATE_ALT_TEXT: "GENERATE_ALT_TEXT",
+  NOTIFY: "notify",
 };
 
 export const ISSUES_TYPES = [

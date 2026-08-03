@@ -51,6 +51,7 @@
 
 ## Testing
 
+- **Validate solutions with automated tests before calling them done.** `npm run build`/`lint`/`tsc` passing proves the code compiles, not that it behaves correctly — it is not a substitute for a test. For pure/testable logic (contrast math, background-color inference, touch-target heuristics, clipboard/message-passing helpers, etc.), write and run a `vitest` test (`npm run test`) covering the actual behavior, including the failure mode, before reporting the work as complete. For anything that only manifests inside Figma's plugin runtime (the `figma` global, `navigator.clipboard`, or other host quirks Figma's iframe restricts) and genuinely can't be unit tested, say explicitly that it still needs manual verification in Figma dev mode — never imply it's confirmed working just because it built and linted cleanly.
 - assertions should be based on the changes made or added
 - assertions test for visibility of relevant elements and not if they are present in the document
 - adhere to DRY principles

@@ -15,9 +15,11 @@ npm run build:ui:watch         # vite build --watch --emptyOutDir=false -> dist/
 npm run lint                   # eslint src/**/*.{js,jsx,ts,tsx}, --max-warnings=0
 npm run lint:fix               # eslint --fix, same scope
 npm run preview                # vite preview
+npm run test                   # vitest run (unit tests for pure logic, config in vitest.config.ts)
+npm run test:watch             # vitest, watch mode
 ```
 
-There is no automated test suite (no jest/vitest/mocha configured). `test.js` and `foundIssues.js` at the repo root are ad-hoc scratch scripts for manually exercising contrast math, not part of any run script.
+Vitest covers pure/testable logic (e.g. `src/lib/utils.test.ts`). It cannot exercise anything that only exists inside Figma's plugin runtime — the `figma` global, or host quirks like `navigator.clipboard` being unavailable in Figma's plugin UI iframe (see `copyToClipboard` in `src/lib/utils.ts`, which learned this the hard way and falls back to `document.execCommand("copy")`). Passing `build`/`lint`/`tsc` only proves the code compiles, not that it behaves correctly at runtime — do not report a fix as working without either a passing test for the logic involved, or explicit manual verification in Figma dev mode. `test.js` and `foundIssues.js` at the repo root are older ad-hoc scratch scripts for manually exercising contrast math, not part of any run script.
 
 Commits are enforced via Husky + commitlint (`config/commitlint.config.mjs`, extends `@commitlint/config-conventional`, 80-char header max) and `lint-staged` (runs `lint:fix` + prettier on staged files). Use Conventional Commit messages.
 

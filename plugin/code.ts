@@ -50,6 +50,10 @@ figma.ui.onmessage = async (message) => {
         await generateAltTextForLayer();
         break;
 
+      case MESSAGE_TYPES.NOTIFY:
+        handleNotify(message);
+        break;
+
       default:
         console.warn(
           `Unhandled request. Message type does not exist: ${message.type}`,
@@ -139,6 +143,10 @@ async function handleUpdateFontSize(message: { id: string; fontSize: number }) {
   } else {
     console.warn(`Failed to update font size for node ${message.id}`);
   }
+}
+
+function handleNotify(message: { message: string }) {
+  figma.notify(message.message);
 }
 
 async function handleNavigate(message: { id: string }) {
