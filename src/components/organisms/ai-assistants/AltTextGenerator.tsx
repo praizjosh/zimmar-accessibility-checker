@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { MESSAGE_TYPES } from "@/lib/constants";
+import { postMessageToBackend } from "@/lib/figmaUtils";
 import { cn, copyToClipboard } from "@/lib/utils";
 import { Camera, Check, ChevronRight, Copy } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
@@ -108,6 +110,9 @@ export default function AltTextGenerator({
       onSuccess: () => {
         setTextIsCopied(true);
         setTimeout(() => setTextIsCopied(false), 1500);
+        postMessageToBackend(MESSAGE_TYPES.NOTIFY, {
+          message: "Alt text copied to clipboard",
+        });
       },
       onError: (error) => {
         console.error("Failed to copy alt text to clipboard:", error);
