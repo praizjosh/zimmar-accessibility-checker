@@ -1,3 +1,5 @@
+import { MESSAGE_TYPES } from "../constants";
+import { postMessageToUI } from "../figmaUtils";
 import getUniqueUserId from "./getUniqueUserId";
 
 /**
@@ -98,10 +100,7 @@ export default async function generateAltTextForLayer() {
       feature: "generate-alt-text",
     };
 
-    figma.ui.postMessage({
-      type: "GENERATE_ALT_TEXT",
-      data: requestData,
-    });
+    postMessageToUI(MESSAGE_TYPES.GENERATE_ALT_TEXT, requestData);
   } catch (error) {
     console.error("Error generating alt text:", error);
   }
