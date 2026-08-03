@@ -37,6 +37,7 @@ export default function IssuesWrapper({
   const [isQuickCheckActive, setIsQuickCheckActive] = useState(false);
   const [isSelection, setIsSelection] = useState(true);
   const [hasBackground, setHasBackground] = useState("");
+  const [hasForeground, setHasForeground] = useState("");
   const {
     currentIndex,
     singleIssue,
@@ -79,6 +80,10 @@ export default function IssuesWrapper({
 
     if (type === "no-background") {
       setHasBackground(data);
+    }
+
+    if (type === "no-foreground") {
+      setHasForeground(data);
     }
   };
 
@@ -138,6 +143,10 @@ export default function IssuesWrapper({
 
           {isSelection && hasBackground && selectedType === "Contrast" && (
             <p className="text-sm">{hasBackground}</p>
+          )}
+
+          {isSelection && hasForeground && selectedType === "Contrast" && (
+            <p className="text-sm">{hasForeground}</p>
           )}
         </div>
       );
