@@ -72,18 +72,18 @@ figma.on("selectionchange", async () => {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
-    postMessageToUI("no-selection", true);
+    postMessageToUI(MESSAGE_TYPES.NO_SELECTION, true);
     return;
   }
 
   if (selection.length > 0) {
-    postMessageToUI("layer-selected", true);
+    postMessageToUI(MESSAGE_TYPES.LAYER_SELECTED, true);
   }
 
   try {
     const detectedIssues = await detectIssuesInSelection(selection);
     if (detectedIssues.length) {
-      postMessageToUI("detected-issue", detectedIssues);
+      postMessageToUI(MESSAGE_TYPES.DETECTED_ISSUE, detectedIssues);
     }
   } catch (error) {
     console.error("Error in selectionchange handler:", error);
@@ -93,19 +93,19 @@ figma.on("selectionchange", async () => {
 async function handleStartQuickCheck() {
   setIsQuickCheckModeActive(true);
 
-  postMessageToUI("quickcheck-active", getIsQuickCheckModeActive());
+  postMessageToUI(MESSAGE_TYPES.QUICKCHECK_ACTIVE, getIsQuickCheckModeActive());
 
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
-    postMessageToUI("no-selection", true);
+    postMessageToUI(MESSAGE_TYPES.NO_SELECTION, true);
     return;
   }
 
   try {
     const detectedIssues = await detectIssuesInSelection(selection);
     if (detectedIssues.length) {
-      postMessageToUI("detected-issue", detectedIssues);
+      postMessageToUI(MESSAGE_TYPES.DETECTED_ISSUE, detectedIssues);
     }
   } catch (error) {
     console.error("Error in selectionchange handler:", error);
@@ -132,7 +132,7 @@ async function handleScan() {
   ) as SceneNode[];
 
   const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
-  postMessageToUI("loadIssues", issues);
+  postMessageToUI(MESSAGE_TYPES.LOAD_ISSUES, issues);
 }
 
 async function handleUpdateFontSize(message: { id: string; fontSize: number }) {
