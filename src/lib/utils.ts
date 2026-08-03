@@ -511,6 +511,27 @@ export function figmaRGBtoHex(rgb: [number, number, number]): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
+function copyWithExecCommand(text: string): boolean {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  try {
+    return document.execCommand("copy");
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+/**
+ * Copies text to the clipboard, preferring the async Clipboard API and
+ * falling back to document.execCommand("copy") when it's unavailable
+ * (e.g. Figma's plugin UI iframe doesn't expose navigator.clipboard).
+ */
 export async function copyToClipboard({
   text,
   onSuccess,
@@ -520,10 +541,19 @@ export async function copyToClipboard({
     try {
       await navigator.clipboard.writeText(text);
       onSuccess();
-    } catch (err) {
-      onError(err instanceof Error ? err : new Error(String(err)));
+      return;
+    } catch {
+      // Fall through to the execCommand fallback below.
     }
-  } else {
-    onError(new Error("Clipboard API not supported"));
+  }
+
+  try {
+    if (copyWithExecCommand(text)) {
+      onSuccess();
+    } else {
+      onError(new Error("Clipboard copy command was unsuccessful"));
+    }
+  } catch (err) {
+    onError(err instanceof Error ? err : new Error(String(err)));
   }
 }
