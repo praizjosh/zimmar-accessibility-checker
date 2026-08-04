@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { cn, copyToClipboard } from "@/lib/utils";
-import { Camera, Check, ChevronRight, Copy } from "lucide-react";
+import { Camera, Check, ChevronRight, Copy, Sparkles } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
 type AltTextGeneratorProps = {
@@ -212,12 +212,13 @@ export default function AltTextGenerator({
             </div>
 
             <Button
-              className="w-full bg-dark-alt text-white"
+              className="group w-full bg-dark-alt text-white"
               title="Generate alt text for selected images"
               onClick={generateAltText}
               disabled={loading}
             >
-              Generate alt text
+              <Sparkles className="text-pink-300 group-hover:text-white" />
+              <span>Generate alt text</span>
             </Button>
 
             {remainingQuotaValue !== null &&
