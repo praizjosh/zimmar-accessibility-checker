@@ -59,15 +59,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     const issueGroupList = getIssueGroupList();
 
     if (index >= 0 && index < issueGroupList.length) {
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: "navigate",
-            id: issueGroupList[index].nodeData.id,
-          },
-        },
-        "*",
-      );
+      postMessageToBackend(MESSAGE_TYPES.NAVIGATE, {
+        id: issueGroupList[index].nodeData.id,
+      });
       set({ currentIndex: index });
     }
   },
