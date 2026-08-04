@@ -1,4 +1,7 @@
+import ISSUE_TYPE_LABELS from "./issueTypeLabels";
 import { IssueType } from "./types";
+
+export { ISSUE_TYPE_LABELS };
 
 export const MESSAGE_TYPES = {
   START_QUICKCHECK: "start-quickcheck",
@@ -16,18 +19,6 @@ export const MESSAGE_TYPES = {
   NO_BACKGROUND: "no-background",
   NO_FOREGROUND: "no-foreground",
   LOAD_ISSUES: "load-issues",
-};
-
-/**
- * Human-readable label for each machine-readable IssueType key. The single
- * source of truth for display text - anywhere an issue type is shown to
- * the user should resolve through this, not render the key directly.
- */
-export const ISSUE_TYPE_LABELS: Record<IssueType, string> = {
-  TYPOGRAPHY: "Typography",
-  CONTRAST: "Contrast",
-  TOUCH_TARGET_SIZE: "Touch Target Size",
-  TOUCH_TARGET_SPACING: "Touch Target Spacing",
 };
 
 export const ISSUES_TYPES = Object.keys(ISSUE_TYPE_LABELS) as IssueType[];
