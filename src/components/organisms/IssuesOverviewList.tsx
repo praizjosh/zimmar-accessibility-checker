@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
+import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
@@ -25,12 +26,12 @@ export default function IssuesOverviewList() {
   const issuesGroupListRecords = issues.filter((issue) => {
     if (issue.type && ISSUES_TYPES.includes(issue.type)) {
       if (
-        issue.type === "Contrast" &&
+        issue.type === "CONTRAST" &&
         issue.nodeData.contrastScore?.compliance === "Fail"
       ) {
         return true;
       }
-      return issue.type !== "Contrast";
+      return issue.type !== "CONTRAST";
     }
     return false;
   });
@@ -78,7 +79,7 @@ export default function IssuesOverviewList() {
         elementName: elementName || "N/A",
         description: issue.description,
         severity: issue.severity,
-        type: issue.type,
+        type: (issue.type && ISSUE_TYPE_LABELS[issue.type]) || issue.type,
         wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
         contrastRatio: issue.nodeData?.contrastScore?.ratio.toFixed(2) || "N/A",
         fontSize: issue.nodeData?.fontSize || "N/A",
@@ -203,15 +204,17 @@ export default function IssuesOverviewList() {
                     // Skip rendering if the issueCount is zero
                     if (issueCount === 0) return null;
 
+                    const label = ISSUE_TYPE_LABELS[issue.type as IssueType];
+
                     return (
                       <li
                         key={issue.id}
-                        title={`View all ${issue.type} issues`}
+                        title={`View all ${label} issues`}
                         className="group flex items-center justify-between rounded-xl bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
                       >
                         <button
                           className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
-                          aria-label={issue.type}
+                          aria-label={label}
                           onClick={() =>
                             handleIssuesListClick(issue.type as IssueType)
                           }
@@ -221,7 +224,7 @@ export default function IssuesOverviewList() {
                               {issue.icon}
 
                               <span className="group-hover:text-accent">
-                                {issue.type}
+                                {label}
                               </span>
                             </div>
 

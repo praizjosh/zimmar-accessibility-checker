@@ -29,17 +29,14 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     const { issues, selectedType } = get();
 
     const response = issues.filter((issue) => {
-      if (
-        issue.type &&
-        issue.type.toLowerCase() === selectedType.toLowerCase()
-      ) {
+      if (issue.type && issue.type === selectedType) {
         if (
-          issue.type === "Contrast" &&
+          issue.type === "CONTRAST" &&
           issue.nodeData.contrastScore?.compliance === "Fail"
         ) {
           return true;
         }
-        return issue.type !== "Contrast";
+        return issue.type !== "CONTRAST";
       }
       return false;
     });

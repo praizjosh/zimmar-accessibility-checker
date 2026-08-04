@@ -5,7 +5,7 @@ import { Issue, IssueRecommendations } from "./types";
 const ISSUES_DATA_SCHEMA: Issue[] = [
   {
     id: 1,
-    type: "Contrast",
+    type: "CONTRAST",
     description: "Text contrast is below WCAG AA standard.",
     severity: "critical",
     nodeType: "TEXT",
@@ -18,7 +18,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
   },
   {
     id: 2,
-    type: "Typography",
+    type: "TYPOGRAPHY",
     description: "Text size is too small for readability.",
     severity: "major",
     nodeType: "TEXT",
@@ -31,7 +31,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
   },
   {
     id: 3,
-    type: "Touch Target Size",
+    type: "TOUCH_TARGET_SIZE",
     description: "Touch target element is smaller than 44px.",
     severity: "minor",
     nodeType: [
@@ -56,7 +56,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
 
   {
     id: 4,
-    type: "Touch Target Spacing",
+    type: "TOUCH_TARGET_SPACING",
     description: "Touch target elements are too close.",
     severity: "minor",
     nodeType: [

@@ -12,12 +12,12 @@ import useIssuesStore from "./index";
 
 const issues: IssueX[] = [
   {
-    type: "Typography",
+    type: "TYPOGRAPHY",
     severity: "major",
     nodeData: { id: "node-1", name: "Label A", nodeType: "TEXT" },
   },
   {
-    type: "Typography",
+    type: "TYPOGRAPHY",
     severity: "major",
     nodeData: { id: "node-2", name: "Label B", nodeType: "TEXT" },
   },
@@ -28,7 +28,7 @@ describe("useIssuesStore.navigateToIssue", () => {
     postMessageToBackend.mockClear();
     useIssuesStore.setState({
       issues,
-      selectedType: "Typography",
+      selectedType: "TYPOGRAPHY",
       currentIndex: 0,
     });
   });
