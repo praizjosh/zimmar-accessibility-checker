@@ -12,7 +12,7 @@ export type Issue = {
   type: IssueType;
   description: string;
   severity: Severity;
-  nodeType: string | string[];
+  nodeType: NodeType | NodeType[];
   icon: ReactNode;
 };
 
@@ -44,7 +44,7 @@ export type NodeDataType = {
   name: string;
   foregroundColor?: RGBColor;
   backgroundColor?: RGBColor;
-  nodeType: string | string[];
+  nodeType: NodeType | NodeType[];
   requiredSize?: string;
 };
 
