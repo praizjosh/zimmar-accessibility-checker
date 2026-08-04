@@ -2,7 +2,7 @@ import InfoPopover from "@/components/organisms/InfoPopover";
 import Recommendations from "@/components/organisms/Recommendations";
 import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
-import { MESSAGE_TYPES } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS, MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUE_RECOMMENDATIONS, ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
@@ -14,17 +14,17 @@ import { useEffect, useState } from "react";
 type TooltipDataType = Record<string, { title: string; content: string }>;
 
 const tooltipData: TooltipDataType = {
-  "Touch Target Size": {
+  TOUCH_TARGET_SIZE: {
     title: "About Touch Target Detection",
     content:
       "Our touch target analysis helps identify potential accessibility issues. This is an experimental feature and should be verified manually.",
   },
-  "Touch Target Spacing": {
+  TOUCH_TARGET_SPACING: {
     title: "About Touch Target Detection",
     content:
       "Our touch target analysis helps identify potential accessibility issues. This is an experimental feature and should be verified manually.",
   },
-  Contrast: {
+  CONTRAST: {
     title: "About Contrast Detection",
     content:
       "Our contrast analysis is designed to help identify potential accessibility issues. While this experimental feature generally provides accurate results, it requires manual verification. In cases involving complex layer structures (e.g., overlapping elements) or intricate color configurations (e.g., multiple colors or gradients), the calculations may sometimes be inaccurate or infeasible. If this happens, we recommend duplicating and isolating the foreground and background elements onto a clean area of the canvas before performing the evaluation again.",
@@ -58,8 +58,7 @@ export default function IssuesWrapper({
 
     if (type === MESSAGE_TYPES.DETECTED_ISSUE) {
       const matchingIssues = data.filter(
-        (issue: IssueX) =>
-          issue.type?.toLowerCase() === selectedType.toLowerCase(),
+        (issue: IssueX) => issue.type === selectedType,
       );
 
       if (matchingIssues.length === 0) {
@@ -129,12 +128,19 @@ export default function IssuesWrapper({
   const availableTypes = ISSUES_DATA_SCHEMA.filter((issue) =>
     issues.some((i) => i.type === issue.type),
   );
+  const selectedTypeLabel = selectedType ? ISSUE_TYPE_LABELS[selectedType] : "";
+  const currentOrSelectedType = type ?? selectedType;
+  const headerLabel = currentOrSelectedType
+    ? ISSUE_TYPE_LABELS[currentOrSelectedType]
+    : "";
 
-  const getIssueRecommendations = (issueType: IssueType | string) => {
+  const getIssueRecommendations = (issueType: IssueType | "") => {
+    if (!issueType) return null;
+    const label = ISSUE_TYPE_LABELS[issueType].toLowerCase();
     const entry = ISSUE_RECOMMENDATIONS.find(
-      (item) => item[issueType.toLowerCase()] !== undefined,
+      (item) => item[label] !== undefined,
     );
-    return entry ? entry[issueType.toLowerCase()] : null;
+    return entry ? entry[label] : null;
   };
 
   const suggestions = getIssueRecommendations(selectedType);
@@ -144,24 +150,24 @@ export default function IssuesWrapper({
       return (
         <div className="flex w-full flex-col items-start text-grey">
           <p className="mb-1.5 font-open-sans text-lg font-medium">
-            No {selectedType} issue detected
+            No {selectedTypeLabel} issue detected
           </p>
 
           {!isSelection && (
             <p className="text-sm">
               Select a{" "}
-              {selectedType === "Typography" || selectedType === "Contrast"
+              {selectedType === "TYPOGRAPHY" || selectedType === "CONTRAST"
                 ? "Text"
                 : "Touch Target"}{" "}
-              layer to check for {selectedType} issues.
+              layer to check for {selectedTypeLabel} issues.
             </p>
           )}
 
-          {isSelection && hasBackground && selectedType === "Contrast" && (
+          {isSelection && hasBackground && selectedType === "CONTRAST" && (
             <p className="text-sm">{hasBackground}</p>
           )}
 
-          {isSelection && hasForeground && selectedType === "Contrast" && (
+          {isSelection && hasForeground && selectedType === "CONTRAST" && (
             <p className="text-sm">{hasForeground}</p>
           )}
         </div>
@@ -203,7 +209,7 @@ export default function IssuesWrapper({
 
           <div className="inline-flex items-center gap-x-1">
             <span className="font-medium capitalize tracking-wide">
-              {type ?? selectedType}
+              {headerLabel}
             </span>
             {tooltipData[selectedType] && (
               <InfoPopover
@@ -223,7 +229,7 @@ export default function IssuesWrapper({
             {availableTypes.map((issue) => (
               <Button
                 key={issue.id}
-                title={`Switch to ${issue.type} issues`}
+                title={`Switch to ${ISSUE_TYPE_LABELS[issue.type as IssueType]} issues`}
                 role="tab"
                 aria-selected={selectedType === issue.type}
                 variant="ghost"

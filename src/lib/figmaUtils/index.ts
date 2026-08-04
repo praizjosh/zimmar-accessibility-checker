@@ -66,7 +66,7 @@ export const extractForegroundColor = (nodeFills: Paint[]): RGBColor | null => {
 export const createTypographyIssue = (node: TextNode): IssueX => ({
   description: "Text size is too small for readability.",
   severity: "major",
-  type: "Typography",
+  type: "TYPOGRAPHY",
   nodeData: {
     id: node.id,
     characters: node.characters,
@@ -209,7 +209,7 @@ export const createTouchTargetIssue = (
         ? "Touch target size is too small for accessibility. Should be at least 44x44 pixels."
         : "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
     severity: "minor",
-    type: issueType === "Size" ? "Touch Target Size" : "Touch Target Spacing",
+    type: issueType === "Size" ? "TOUCH_TARGET_SIZE" : "TOUCH_TARGET_SPACING",
     nodeData: {
       id: node.id,
       name: node.name,
@@ -238,7 +238,7 @@ export const createContrastIssue = (
 ): IssueX => ({
   description: "Text contrast is below WCAG AA standard.",
   severity: "critical",
-  type: "Contrast",
+  type: "CONTRAST",
   nodeData: {
     id: node.id,
     contrastScore,

@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
  * else shares another (IssuesNavigator).
  */
 export function getRouteForIssueType(type: IssueType): Routes {
-  return type === "Touch Target Size" || type === "Touch Target Spacing"
+  return type === "TOUCH_TARGET_SIZE" || type === "TOUCH_TARGET_SPACING"
     ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
     : "ISSUE_LIST_VIEW";
 }

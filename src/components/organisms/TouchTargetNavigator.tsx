@@ -65,7 +65,7 @@ export default function TouchTargetNavigator() {
             <span
               className={cn(
                 "text-sm",
-                type === "Touch Target Size" &&
+                type === "TOUCH_TARGET_SIZE" &&
                   getSeverityStyles(severity, {
                     isBold: isWidthFail || isHeightFail,
                   }),
@@ -107,7 +107,7 @@ export default function TouchTargetNavigator() {
           value={<span className="text-base">{requiredSize}</span>}
         />
 
-        {selectedType === "Touch Target Spacing" && (
+        {selectedType === "TOUCH_TARGET_SPACING" && (
           <IssueDetailRow
             icon={
               <MoveHorizontal

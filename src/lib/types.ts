@@ -3,11 +3,17 @@ import { RGBColor } from "wcag-contrast";
 
 export type Severity = "critical" | "major" | "minor";
 
+/**
+ * Machine-readable issue type key. Deliberately not the display label -
+ * see ISSUE_TYPE_LABELS (src/lib/constants.ts) for that - so copy changes
+ * never touch routing/filtering/detection logic that switches on this
+ * value.
+ */
 export type IssueType =
-  | "Typography"
-  | "Contrast"
-  | "Touch Target Size"
-  | "Touch Target Spacing";
+  | "TYPOGRAPHY"
+  | "CONTRAST"
+  | "TOUCH_TARGET_SIZE"
+  | "TOUCH_TARGET_SPACING";
 
 export type Issue = {
   id: number;

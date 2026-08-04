@@ -267,16 +267,16 @@ describe("getSeverityStyles", () => {
 
 describe("getRouteForIssueType", () => {
   it("routes touch target issues to TOUCH_TARGET_ISSUE_LIST_VIEW", () => {
-    expect(getRouteForIssueType("Touch Target Size")).toBe(
+    expect(getRouteForIssueType("TOUCH_TARGET_SIZE")).toBe(
       "TOUCH_TARGET_ISSUE_LIST_VIEW",
     );
-    expect(getRouteForIssueType("Touch Target Spacing")).toBe(
+    expect(getRouteForIssueType("TOUCH_TARGET_SPACING")).toBe(
       "TOUCH_TARGET_ISSUE_LIST_VIEW",
     );
   });
 
   it("routes everything else to ISSUE_LIST_VIEW", () => {
-    expect(getRouteForIssueType("Contrast")).toBe("ISSUE_LIST_VIEW");
-    expect(getRouteForIssueType("Typography")).toBe("ISSUE_LIST_VIEW");
+    expect(getRouteForIssueType("CONTRAST")).toBe("ISSUE_LIST_VIEW");
+    expect(getRouteForIssueType("TYPOGRAPHY")).toBe("ISSUE_LIST_VIEW");
   });
 });

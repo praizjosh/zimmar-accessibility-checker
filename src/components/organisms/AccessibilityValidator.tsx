@@ -1,7 +1,7 @@
 import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MESSAGE_TYPES } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS, MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
@@ -49,23 +49,25 @@ export default function AccessibilityValidator() {
 
       <ul className="space-y-2">
         {ISSUES_DATA_SCHEMA.map((issue) => {
+          const label = ISSUE_TYPE_LABELS[issue.type as IssueType];
+
           return (
             <li
               key={issue.id}
-              title={`Find ${issue.type} issues`}
+              title={`Find ${label} issues`}
               className="group flex items-center justify-between rounded-xl bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
             >
               <button
                 type="button"
                 className="flex w-full flex-col gap-y-2 rounded-xl px-4 py-3.5 text-left text-sm"
-                aria-label={issue.type}
+                aria-label={label}
                 onClick={() => handleIssuesListClick(issue.type as IssueType)}
               >
                 <div className="flex w-full items-center justify-between gap-3">
                   <div className="flex w-full items-center justify-start space-x-2.5">
                     {issue.icon}
                     <span className="group-hover:text-accent">
-                      {issue.type} issues
+                      {label} issues
                     </span>
                   </div>
                   <ChevronRight

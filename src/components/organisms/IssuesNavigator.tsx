@@ -102,10 +102,10 @@ export default function IssuesNavigator() {
               className={cn(
                 "text-sm",
                 !fontSizeIsValid &&
-                  type === "Contrast" &&
+                  type === "CONTRAST" &&
                   getSeverityStyles("major", { isBold: true }),
                 !fontSizeIsValid &&
-                  type === "Typography" &&
+                  type === "TYPOGRAPHY" &&
                   getSeverityStyles(severity, { isBold: true }),
               )}
             >
@@ -140,7 +140,7 @@ export default function IssuesNavigator() {
           }
         />
 
-        {type === "Contrast" && (
+        {type === "CONTRAST" && (
           <>
             {foregroundColor && (
               <IssueDetailRow
