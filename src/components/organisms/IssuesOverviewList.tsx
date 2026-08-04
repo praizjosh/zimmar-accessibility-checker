@@ -8,6 +8,7 @@ import { cn, getRouteForIssueType, getSeverityStyles } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import Separator from "../ui/separator";
+import IssueBreakdownChart from "./IssueBreakdownChart";
 import LoadingScreen from "./LoadingScreen";
 
 export default function IssuesOverviewList() {
@@ -57,6 +58,13 @@ export default function IssuesOverviewList() {
   const issuesGroup = ISSUES_DATA_SCHEMA.filter((issue) =>
     issues?.some((i: IssueX) => i.type === issue.type),
   );
+
+  const breakdownItems = issuesGroup
+    .map((issue) => ({
+      type: issue.type as IssueType,
+      count: issuesGroupListRecords.filter((i) => i.type === issue.type).length,
+    }))
+    .filter((item) => item.count > 0);
 
   // Convert issues to structured data for reporting
   const formatIssuesForReport = () => {
@@ -269,6 +277,16 @@ export default function IssuesOverviewList() {
                 Generate a detailed report of all identified issues and
                 suggestions.
               </p>
+
+              {breakdownItems.length > 0 && (
+                <div className="mb-5 rounded-xl bg-dark-shade p-4">
+                  <h4 className="mb-3 text-sm font-medium text-grey">
+                    Issues by category
+                  </h4>
+                  <IssueBreakdownChart items={breakdownItems} />
+                </div>
+              )}
+
               <div className="space-x-3">
                 <Button
                   title="Download CSV Report"
