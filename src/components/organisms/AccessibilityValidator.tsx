@@ -6,6 +6,7 @@ import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
+import { getRouteForIssueType } from "@/lib/utils";
 import { Bot, ChevronRight, Radar } from "lucide-react";
 import { useState } from "react";
 
@@ -16,11 +17,7 @@ export default function AccessibilityValidator() {
   const handleIssuesListClick = (type: IssueType) => {
     postMessageToBackend(MESSAGE_TYPES.START_QUICKCHECK);
     setSelectedType(type);
-    navigateTo(
-      type === "Touch Target Size" || type === "Touch Target Spacing"
-        ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
-        : "ISSUE_LIST_VIEW",
-    );
+    navigateTo(getRouteForIssueType(type));
   };
 
   return (
