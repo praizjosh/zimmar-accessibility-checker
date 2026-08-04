@@ -2,6 +2,23 @@ import { Contrast, MoveHorizontal, Pointer, TypeOutline } from "lucide-react";
 import { MIN_FONT_SIZE } from "./constants";
 import { Issue, IssueRecommendations } from "./types";
 
+/**
+ * Node types a touch-target issue (size or spacing) can apply to. Shared
+ * by both ISSUES_DATA_SCHEMA entries below instead of repeating the list.
+ */
+const TOUCH_TARGET_NODE_TYPES: NodeType[] = [
+  "COMPONENT",
+  "COMPONENT_SET",
+  "ELLIPSE",
+  "FRAME",
+  "GROUP",
+  "INSTANCE",
+  "POLYGON",
+  "RECTANGLE",
+  "VECTOR",
+  "WIDGET",
+];
+
 const ISSUES_DATA_SCHEMA: Issue[] = [
   {
     id: 1,
@@ -34,18 +51,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     type: "TOUCH_TARGET_SIZE",
     description: "Touch target element is smaller than 44px.",
     severity: "minor",
-    nodeType: [
-      "COMPONENT",
-      "COMPONENT_SET",
-      "ELLIPSE",
-      "FRAME",
-      "GROUP",
-      "INSTANCE",
-      "POLYGON",
-      "RECTANGLE",
-      "VECTOR",
-      "WIDGET",
-    ],
+    nodeType: TOUCH_TARGET_NODE_TYPES,
     icon: (
       <Pointer
         strokeWidth={1.5}
@@ -59,18 +65,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     type: "TOUCH_TARGET_SPACING",
     description: "Touch target elements are too close.",
     severity: "minor",
-    nodeType: [
-      "COMPONENT",
-      "COMPONENT_SET",
-      "ELLIPSE",
-      "FRAME",
-      "GROUP",
-      "INSTANCE",
-      "POLYGON",
-      "RECTANGLE",
-      "VECTOR",
-      "WIDGET",
-    ],
+    nodeType: TOUCH_TARGET_NODE_TYPES,
     icon: (
       <MoveHorizontal
         strokeWidth={1.5}
