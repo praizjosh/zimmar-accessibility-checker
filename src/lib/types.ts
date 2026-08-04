@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { RGBColor } from "wcag-contrast";
 import ISSUE_TYPE_LABELS from "./issueTypeLabels";
 
+// issueTypeLabels.ts must stay import-free - importing from it here would create a cycle otherwise.
 export type IssueType = keyof typeof ISSUE_TYPE_LABELS;
 
 export type Severity = "critical" | "major" | "minor";
