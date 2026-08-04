@@ -70,7 +70,7 @@ export interface IssuesStore {
 export interface EnhancedIssuesStore extends IssuesStore {
   singleIssue: IssueX | null; // An issue instance
   scanning: boolean;
-  selectedType: string; // Selected issue type
+  selectedType: IssueType | ""; // Selected issue type; "" means no scan has run yet
   currentRoute: Routes;
   setScanning: (isScanning: boolean) => void; // Setter for scanning state
   setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
