@@ -8,9 +8,9 @@ export type Severity = "critical" | "major" | "minor";
 
 export type Issue = {
   id: number;
-  type: string;
+  type: IssueType;
   description: string;
-  severity: "critical" | "major" | "minor";
+  severity: Severity;
   nodeType: string | string[];
   icon: ReactNode;
 };
