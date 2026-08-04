@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { MESSAGE_TYPES } from "./constants";
-import { postMessageToBackend } from "./figmaUtils";
-import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "./types";
+import { MESSAGE_TYPES } from "../constants";
+import { postMessageToBackend } from "../figmaUtils";
+import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "../types";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   issues: [],
