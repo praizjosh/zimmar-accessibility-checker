@@ -1,4 +1,5 @@
 import Progress from "@/components/ui/progress";
+import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { IssueType } from "@/lib/types";
 
 /**
@@ -9,10 +10,10 @@ import { IssueType } from "@/lib/types";
  * Assigned by identity, never cycled/reordered.
  */
 const ISSUE_TYPE_CHART_COLORS: Record<IssueType, string> = {
-  Contrast: "#3987e5",
-  Typography: "#d95926",
-  "Touch Target Size": "#199e70",
-  "Touch Target Spacing": "#c98500",
+  CONTRAST: "#3987e5",
+  TYPOGRAPHY: "#d95926",
+  TOUCH_TARGET_SIZE: "#199e70",
+  TOUCH_TARGET_SPACING: "#c98500",
 };
 
 export type IssueBreakdownChartItem = {
@@ -28,7 +29,9 @@ export default function IssueBreakdownChart({
   items,
 }: IssueBreakdownChartProps) {
   const maxCount = Math.max(...items.map((item) => item.count), 1);
-  const summary = items.map((item) => `${item.type}: ${item.count}`).join(", ");
+  const summary = items
+    .map((item) => `${ISSUE_TYPE_LABELS[item.type]}: ${item.count}`)
+    .join(", ");
 
   return (
     <div
@@ -47,7 +50,9 @@ export default function IssueBreakdownChart({
                   className="size-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-grey">{item.type}</span>
+                <span className="text-grey">
+                  {ISSUE_TYPE_LABELS[item.type]}
+                </span>
               </span>
               <span className="font-medium">{item.count}</span>
             </div>
