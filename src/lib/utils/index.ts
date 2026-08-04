@@ -23,7 +23,8 @@ export const getSeverityStyles = (
   {
     isIcon = false,
     isBold = false,
-  }: { isIcon?: boolean; isBold?: boolean } = {},
+    isBadge = false,
+  }: { isIcon?: boolean; isBold?: boolean; isBadge?: boolean } = {},
 ) => {
   const baseStyles = {
     critical: "text-rose-500",
@@ -43,10 +44,17 @@ export const getSeverityStyles = (
     minor: "mr-3 size-5 rounded-full bg-amber-500 p-1 text-dark-shade",
   };
 
+  const badgeStyles = {
+    critical: "bg-rose-500 text-dark-shade",
+    major: "bg-orange-500 text-dark-shade",
+    minor: "bg-amber-500 text-dark-shade",
+  };
+
   return cn(
     baseStyles[(severity as keyof typeof baseStyles) ?? ""] || "",
     isBold && boldStyles[(severity as keyof typeof baseStyles) ?? ""],
     isIcon && iconStyles[(severity as keyof typeof baseStyles) ?? ""],
+    isBadge && badgeStyles[(severity as keyof typeof baseStyles) ?? ""],
   );
 };
 

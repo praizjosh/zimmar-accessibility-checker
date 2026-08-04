@@ -5,6 +5,7 @@ import {
   copyToClipboard,
   getBackgroundColorForNode,
   getContrastCompliance,
+  getSeverityStyles,
 } from "./index";
 
 const WHITE: RGBColor = [255, 255, 255];
@@ -218,5 +219,47 @@ describe("getBackgroundColorForNode", () => {
     );
 
     expect(getBackgroundColorForNode(node)).toBeNull();
+  });
+});
+
+describe("getSeverityStyles", () => {
+  it("returns the base text colour for each severity", () => {
+    expect(getSeverityStyles("critical")).toBe("text-rose-500");
+    expect(getSeverityStyles("major")).toBe("text-orange-500");
+    expect(getSeverityStyles("minor")).toBe("text-amber-500");
+  });
+
+  it("returns an empty string for an unrecognised or missing severity", () => {
+    expect(getSeverityStyles(undefined)).toBe("");
+    expect(getSeverityStyles("not-a-severity")).toBe("");
+  });
+
+  it("adds font-bold when isBold is set", () => {
+    expect(getSeverityStyles("critical", { isBold: true })).toBe(
+      "text-rose-500 font-bold",
+    );
+  });
+
+  it("returns the filled circular icon treatment when isIcon is set, overriding the base text colour", () => {
+    expect(getSeverityStyles("major", { isIcon: true })).toBe(
+      "mr-3 size-5 rounded-full bg-orange-600 p-1 text-dark-shade",
+    );
+  });
+
+  it("returns a solid badge (background colour, dark text) when isBadge is set, overriding the base text colour", () => {
+    // Regression guard for the bug this replaced: IssuesOverviewList.tsx used
+    // to hardcode its own bg-{severity}-500 classes inline, independently of
+    // this helper, which is exactly the kind of drift a single source of
+    // truth is meant to prevent (it had drifted to a different red for
+    // "critical": bg-red-500 here vs text-rose-500 in this helper).
+    expect(getSeverityStyles("critical", { isBadge: true })).toBe(
+      "bg-rose-500 text-dark-shade",
+    );
+    expect(getSeverityStyles("major", { isBadge: true })).toBe(
+      "bg-orange-500 text-dark-shade",
+    );
+    expect(getSeverityStyles("minor", { isBadge: true })).toBe(
+      "bg-amber-500 text-dark-shade",
+    );
   });
 });

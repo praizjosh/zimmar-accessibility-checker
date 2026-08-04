@@ -139,11 +139,10 @@ export default function TouchTargetNavigator() {
           label="Severity:"
           value={
             <span
-              className={cn("font-bold capitalize text-base", {
-                "text-rose-600": severity === "critical",
-                "text-orange-500": severity === "major",
-                "text-amber-500": severity === "minor",
-              })}
+              className={cn(
+                "capitalize text-base",
+                getSeverityStyles(severity, { isBold: true }),
+              )}
             >
               {severity}
             </span>

@@ -4,6 +4,7 @@ import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
+import { cn, getSeverityStyles } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import Separator from "../ui/separator";
@@ -222,26 +223,20 @@ export default function IssuesOverviewList() {
 
                             <div className="flex w-auto items-center justify-end space-x-2">
                               <span
-                                className={`rounded px-1.5 py-0.5 text-xs tracking-wide text-dark-shade
-                           ${
-                             issue.severity === "critical"
-                               ? "bg-red-500"
-                               : issue.severity === "major"
-                                 ? "bg-orange-500"
-                                 : "bg-amber-500"
-                           }
-                            `}
+                                className={cn(
+                                  "rounded px-1.5 py-0.5 text-xs tracking-wide",
+                                  getSeverityStyles(issue.severity, {
+                                    isBadge: true,
+                                  }),
+                                )}
                               >
                                 {issueCount}
                               </span>
                               <span
-                                className={`text-xs !capitalize ${
-                                  issue.severity === "critical"
-                                    ? "text-red-500"
-                                    : issue.severity === "major"
-                                      ? "text-orange-500"
-                                      : "text-amber-500"
-                                }`}
+                                className={cn(
+                                  "text-xs !capitalize",
+                                  getSeverityStyles(issue.severity),
+                                )}
                               >
                                 {issue.severity}
                               </span>
