@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
+/// <reference types="@figma/plugin-typings" />
 
 import { isLocked, isVisible } from "@create-figma-plugin/utilities";
 
