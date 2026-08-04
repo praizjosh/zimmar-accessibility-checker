@@ -1,5 +1,5 @@
+import InfoPopover from "@/components/organisms/InfoPopover";
 import Recommendations from "@/components/organisms/Recommendations";
-import TooltipInfo from "@/components/organisms/TooltipInfo";
 import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
 import { MESSAGE_TYPES } from "@/lib/constants";
@@ -191,7 +191,7 @@ export default function IssuesWrapper({
               {type ?? selectedType}
             </span>
             {tooltipData[selectedType] && (
-              <TooltipInfo
+              <InfoPopover
                 title={tooltipData[selectedType].title}
                 content={tooltipData[selectedType].content}
               />
