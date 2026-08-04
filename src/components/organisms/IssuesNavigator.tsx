@@ -5,8 +5,8 @@ import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { cn, getSeverityStyles } from "@/lib/utils";
-import { CaseSensitive, Check, OctagonAlert, X } from "lucide-react";
+import { cn, figmaRGBtoHex, getSeverityStyles } from "@/lib/utils";
+import { CaseSensitive, Check, OctagonAlert, Palette, X } from "lucide-react";
 
 export default function IssuesNavigator() {
   const {
@@ -55,7 +55,14 @@ export default function IssuesNavigator() {
     }
 
     const { type, severity } = issue;
-    const { characters, fontSize, contrastScore, id } = issue.nodeData ?? {};
+    const {
+      characters,
+      fontSize,
+      contrastScore,
+      id,
+      foregroundColor,
+      backgroundColor,
+    } = issue.nodeData ?? {};
     const getFontSize = () => fontSize ?? singleIssue?.nodeData?.fontSize ?? 0;
     const fontSizeIsValid = getFontSize() >= MIN_FONT_SIZE;
 
@@ -65,7 +72,10 @@ export default function IssuesNavigator() {
           icon={<CaseSensitive className="mr-3 size-5" />}
           label="Text:"
           value={
-            <span className="line-clamp-1 w-full max-w-[10.938rem] text-right font-mono">
+            <span
+              title={characters}
+              className="line-clamp-1 w-full max-w-[10.938rem] text-right font-mono"
+            >
               {characters}
             </span>
           }
@@ -132,6 +142,42 @@ export default function IssuesNavigator() {
 
         {type === "Contrast" && (
           <>
+            {foregroundColor && (
+              <IssueDetailRow
+                icon={<Palette className="mr-3 size-5" />}
+                label={<span className="text-sm">Text colour:</span>}
+                value={
+                  <span className="ml-2.5 inline-flex items-center gap-x-2 font-mono text-sm">
+                    <span
+                      className="size-4 shrink-0 rounded border border-white/20"
+                      style={{
+                        backgroundColor: figmaRGBtoHex(foregroundColor),
+                      }}
+                    />
+                    {figmaRGBtoHex(foregroundColor)}
+                  </span>
+                }
+              />
+            )}
+
+            {backgroundColor && (
+              <IssueDetailRow
+                icon={<Palette className="mr-3 size-5" />}
+                label={<span className="text-sm">Background colour:</span>}
+                value={
+                  <span className="ml-2.5 inline-flex items-center gap-x-2 font-mono text-sm">
+                    <span
+                      className="size-4 shrink-0 rounded border border-white/20"
+                      style={{
+                        backgroundColor: figmaRGBtoHex(backgroundColor),
+                      }}
+                    />
+                    {figmaRGBtoHex(backgroundColor)}
+                  </span>
+                }
+              />
+            )}
+
             <IssueDetailRow
               icon={
                 contrastScore?.compliance === "Fail" ? (

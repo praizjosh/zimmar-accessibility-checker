@@ -40,7 +40,10 @@ export default function TouchTargetNavigator() {
           icon={<Target className="mr-3 size-5" />}
           label="Element:"
           value={
-            <span className="w-full max-w-44 truncate text-right font-mono text-sm">
+            <span
+              title={characters ?? name}
+              className="w-full max-w-44 truncate text-right font-mono text-sm"
+            >
               {characters ?? name}
             </span>
           }
