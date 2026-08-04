@@ -2,18 +2,9 @@ import { ReactNode } from "react";
 import { RGBColor } from "wcag-contrast";
 import ISSUE_TYPE_LABELS from "./issueTypeLabels";
 
-export type Severity = "critical" | "major" | "minor";
-
-/**
- * Machine-readable issue type key, derived from ISSUE_TYPE_LABELS
- * (src/lib/issueTypeLabels.ts) rather than hand-written - adding a new
- * issue type means adding one entry there, and this (plus everywhere
- * that switches on it) picks it up automatically. Deliberately not the
- * display label itself, so copy changes never touch routing/filtering/
- * detection logic that switches on this value - see ISSUE_TYPE_LABELS
- * for that.
- */
 export type IssueType = keyof typeof ISSUE_TYPE_LABELS;
+
+export type Severity = "critical" | "major" | "minor";
 
 export type Issue = {
   id: number;

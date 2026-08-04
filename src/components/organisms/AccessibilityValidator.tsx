@@ -1,7 +1,8 @@
 import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ISSUE_TYPE_LABELS, MESSAGE_TYPES } from "@/lib/constants";
+import { MESSAGE_TYPES } from "@/lib/constants";
+import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
