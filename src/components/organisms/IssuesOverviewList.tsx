@@ -4,7 +4,7 @@ import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { cn, getSeverityStyles } from "@/lib/utils";
+import { cn, getRouteForIssueType, getSeverityStyles } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import Separator from "../ui/separator";
@@ -51,11 +51,7 @@ export default function IssuesOverviewList() {
 
   const handleIssuesListClick = (type: IssueType) => {
     setSelectedType(type);
-    navigateTo(
-      type === "Touch Target Size" || type === "Touch Target Spacing"
-        ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
-        : "ISSUE_LIST_VIEW",
-    );
+    navigateTo(getRouteForIssueType(type));
   };
 
   const issuesGroup = ISSUES_DATA_SCHEMA.filter((issue) =>

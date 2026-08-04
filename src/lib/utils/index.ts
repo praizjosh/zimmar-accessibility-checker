@@ -1,10 +1,21 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { rgb, RGBColor, score } from "wcag-contrast";
-import { copyToClipboardProps } from "../types";
+import { copyToClipboardProps, IssueType, Routes } from "../types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Maps an issue type to the route that displays its issue-detail pager.
+ * Touch target issues share one pager (TouchTargetNavigator); everything
+ * else shares another (IssuesNavigator).
+ */
+export function getRouteForIssueType(type: IssueType): Routes {
+  return type === "Touch Target Size" || type === "Touch Target Spacing"
+    ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
+    : "ISSUE_LIST_VIEW";
 }
 
 // Global state

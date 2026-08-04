@@ -5,6 +5,7 @@ import {
   copyToClipboard,
   getBackgroundColorForNode,
   getContrastCompliance,
+  getRouteForIssueType,
   getSeverityStyles,
 } from "./index";
 
@@ -261,5 +262,21 @@ describe("getSeverityStyles", () => {
     expect(getSeverityStyles("minor", { isBadge: true })).toBe(
       "bg-amber-500 text-dark-shade",
     );
+  });
+});
+
+describe("getRouteForIssueType", () => {
+  it("routes touch target issues to TOUCH_TARGET_ISSUE_LIST_VIEW", () => {
+    expect(getRouteForIssueType("Touch Target Size")).toBe(
+      "TOUCH_TARGET_ISSUE_LIST_VIEW",
+    );
+    expect(getRouteForIssueType("Touch Target Spacing")).toBe(
+      "TOUCH_TARGET_ISSUE_LIST_VIEW",
+    );
+  });
+
+  it("routes everything else to ISSUE_LIST_VIEW", () => {
+    expect(getRouteForIssueType("Contrast")).toBe("ISSUE_LIST_VIEW");
+    expect(getRouteForIssueType("Typography")).toBe("ISSUE_LIST_VIEW");
   });
 });

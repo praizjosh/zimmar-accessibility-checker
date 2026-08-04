@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
 import { MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { ISSUE_RECOMMENDATIONS } from "@/lib/issuesData";
+import { ISSUE_RECOMMENDATIONS, ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
+import { cn, getRouteForIssueType } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -41,9 +42,12 @@ export default function IssuesWrapper({
   const [hasForeground, setHasForeground] = useState("");
   const {
     currentIndex,
+    issues,
     singleIssue,
     selectedType,
     navigateTo,
+    setCurrentIndex,
+    setSelectedType,
     setSingleIssue,
     navigateToIssue,
     getIssueGroupList,
@@ -111,9 +115,20 @@ export default function IssuesWrapper({
     }
   };
 
+  const handleSwitchType = (nextType: IssueType) => {
+    if (nextType === selectedType) return;
+    setSelectedType(nextType);
+    setCurrentIndex(0);
+    navigateTo(getRouteForIssueType(nextType));
+    navigateToIssue(0);
+  };
+
   const issueGroupList = getIssueGroupList();
   const currentIssue = issueGroupList[currentIndex];
   const { type, description } = currentIssue || {};
+  const availableTypes = ISSUES_DATA_SCHEMA.filter((issue) =>
+    issues.some((i) => i.type === issue.type),
+  );
 
   const getIssueRecommendations = (issueType: IssueType | string) => {
     const entry = ISSUE_RECOMMENDATIONS.find(
@@ -198,6 +213,33 @@ export default function IssuesWrapper({
             )}
           </div>
         </div>
+
+        {availableTypes.length > 1 && (
+          <div
+            role="tablist"
+            aria-label="Switch issue type"
+            className="flex w-full items-center justify-center gap-x-1 pb-1"
+          >
+            {availableTypes.map((issue) => (
+              <Button
+                key={issue.id}
+                title={`Switch to ${issue.type} issues`}
+                role="tab"
+                aria-selected={selectedType === issue.type}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "!size-8",
+                  selectedType === issue.type &&
+                    "bg-dark-shade text-accent ring-1 ring-accent",
+                )}
+                onClick={() => handleSwitchType(issue.type as IssueType)}
+              >
+                {issue.icon}
+              </Button>
+            ))}
+          </div>
+        )}
 
         <Separator className="my-1 h-px !bg-rose-50/10" />
 
