@@ -29,6 +29,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <Contrast
         strokeWidth={1.5}
+        aria-hidden="true"
         className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
@@ -42,6 +43,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <TypeOutline
         strokeWidth={1.5}
+        aria-hidden="true"
         className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
@@ -55,6 +57,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <Pointer
         strokeWidth={1.5}
+        aria-hidden="true"
         className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
@@ -69,6 +72,7 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
     icon: (
       <MoveHorizontal
         strokeWidth={1.5}
+        aria-hidden="true"
         className="size-[1.1rem] text-grey group-hover:text-accent"
       />
     ),
