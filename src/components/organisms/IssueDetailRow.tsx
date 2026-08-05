@@ -1,13 +1,7 @@
 import { ReactNode } from "react";
-import { CircleAlert } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import InfoPopover from "@/components/organisms/InfoPopover";
 
-type IssueDetailRowType = {
+export type IssueDetailRowProps = {
   icon?: ReactNode;
   label: ReactNode;
   value?: ReactNode;
@@ -19,7 +13,7 @@ export default function IssueDetailRow({
   value,
   icon,
   tooltip,
-}: IssueDetailRowType) {
+}: IssueDetailRowProps) {
   return (
     <div className="flex items-center justify-between py-1.5">
       <div className="flex items-center text-sm">
@@ -27,21 +21,8 @@ export default function IssueDetailRow({
         {label}
       </div>
       <div className="flex items-center text-sm">
-        {tooltip && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <CircleAlert className="ml-2 size-4" />
-              </TooltipTrigger>
-              <TooltipContent
-                avoidCollisions
-                align="end"
-                className="w-full max-w-52 text-pretty"
-              >
-                <p className="text-xs">{tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        {typeof tooltip === "string" && (
+          <InfoPopover content={tooltip} align="center" />
         )}
         {value}
       </div>
