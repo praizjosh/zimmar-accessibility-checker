@@ -37,7 +37,7 @@ export default function TouchTargetNavigator() {
     return (
       <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
         <IssueDetailRow
-          icon={<Target className="mr-3 size-5" />}
+          icon={<Target aria-hidden="true" className="mr-3 size-5" />}
           label="Element:"
           value={
             <span
@@ -53,9 +53,13 @@ export default function TouchTargetNavigator() {
           icon={
             (width ?? 0) >= MIN_TOUCH_TARGET_SIZE &&
             (height ?? 0) >= MIN_TOUCH_TARGET_SIZE ? (
-              <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
+              <Check
+                aria-hidden="true"
+                className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
+              />
             ) : (
               <X
+                aria-hidden="true"
                 className={cn(getSeverityStyles(severity, { isIcon: true }))}
               />
             )
@@ -102,7 +106,7 @@ export default function TouchTargetNavigator() {
         />
 
         <IssueDetailRow
-          icon={<Ruler className="mr-3 size-5" />}
+          icon={<Ruler aria-hidden="true" className="mr-3 size-5" />}
           label="Required size:"
           value={<span className="text-base">{requiredSize}</span>}
         />
@@ -111,6 +115,7 @@ export default function TouchTargetNavigator() {
           <IssueDetailRow
             icon={
               <MoveHorizontal
+                aria-hidden="true"
                 className={cn(getSeverityStyles(severity, { isIcon: true }))}
               />
             }
@@ -135,7 +140,7 @@ export default function TouchTargetNavigator() {
         )}
 
         <IssueDetailRow
-          icon={<OctagonAlert className="mr-3 size-5" />}
+          icon={<OctagonAlert aria-hidden="true" className="mr-3 size-5" />}
           label="Severity:"
           value={
             <span
