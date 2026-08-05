@@ -39,6 +39,7 @@
 ## File Structure Rules
 
 - **Utility, hook, and context modules live in their own folder with an `index.ts`/`index.tsx` entry point** — e.g. `src/lib/util/exportUtils/index.ts`, not `src/lib/util/exportUtils.ts`. Co-locate the unit test as `index.test.ts` in the same folder — e.g. `src/lib/util/exportUtils/index.test.ts`. Applies to new modules and whenever an existing flat-file module is touched significantly.
+- **Components follow the same folder + `index.tsx` convention** — e.g. `src/components/organisms/AltTextGenerator/index.tsx`, not `src/components/organisms/AltTextGenerator.tsx`. Co-locate the test as `index.test.tsx` in the same folder. Import paths are unaffected (`@/components/organisms/AltTextGenerator` resolves to the folder's `index.tsx` either way). Applies to new components and whenever an existing flat-file component is touched significantly.
 - **Shared test helpers/mocks live under `src/lib/test-utils/<helperName>/index.ts`**, one folder per helper (e.g. `src/lib/test-utils/createMockQueryResult/index.ts`, `src/lib/test-utils/createReactQueryMock/index.ts`) — same folder + `index.ts` + co-located `index.test.ts` convention as other util modules. Do not add a flat `src/lib/test-utils/index.ts` barrel; each helper gets its own named folder.
 
 ---
