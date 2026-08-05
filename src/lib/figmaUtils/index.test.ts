@@ -22,6 +22,19 @@ function fakeNode(
   } as unknown as SceneNode;
 }
 
+function fakeTextNode(overrides: Partial<TextNode> = {}): TextNode {
+  return {
+    id: "text-1",
+    characters: "Hello",
+    fontSize: 10,
+    height: 12,
+    lineHeight: { unit: "AUTO" },
+    name: "Label",
+    type: "TEXT",
+    ...overrides,
+  } as unknown as TextNode;
+}
+
 describe("extractForegroundColor", () => {
   it("returns the color of a single visible solid fill", () => {
     const fills = [solidFill(1, 0, 0)];
@@ -191,15 +204,7 @@ describe("isTouchTarget", () => {
 
 describe("createTypographyIssue", () => {
   it("builds a TYPOGRAPHY issue from a TextNode", () => {
-    const node = {
-      id: "text-1",
-      characters: "Hello",
-      fontSize: 10,
-      height: 12,
-      lineHeight: { unit: "AUTO" },
-      name: "Label",
-      type: "TEXT",
-    } as unknown as TextNode;
+    const node = fakeTextNode();
 
     expect(createTypographyIssue(node)).toEqual({
       description: "Text size is too small for readability.",
@@ -219,28 +224,12 @@ describe("createTypographyIssue", () => {
 });
 
 describe("createContrastIssue", () => {
-  function fakeTextNode(): TextNode {
-    return {
-      id: "text-2",
-      characters: "Hi",
-      fontSize: 16,
-      height: 20,
-      lineHeight: { unit: "AUTO" },
-      name: "Body",
-      type: "TEXT",
-    } as unknown as TextNode;
-  }
-
   it("builds a CONTRAST issue with the given colours and score", () => {
+    const node = fakeTextNode({ id: "text-2", characters: "Hi", name: "Body" });
     const contrastScore = { compliance: "Fail" as const, ratio: 2.1 };
 
     expect(
-      createContrastIssue(
-        fakeTextNode(),
-        contrastScore,
-        [0, 0, 0],
-        [255, 255, 255],
-      ),
+      createContrastIssue(node, contrastScore, [0, 0, 0], [255, 255, 255]),
     ).toEqual({
       description: "Text contrast is below WCAG AA standard.",
       severity: "critical",
@@ -249,8 +238,8 @@ describe("createContrastIssue", () => {
         id: "text-2",
         contrastScore,
         characters: "Hi",
-        fontSize: 16,
-        height: 20,
+        fontSize: 10,
+        height: 12,
         lineHeight: { unit: "AUTO" },
         name: "Body",
         nodeType: "TEXT",
@@ -273,6 +262,19 @@ describe("createContrastIssue", () => {
 });
 
 describe("createTouchTargetIssue", () => {
+  function fakeTouchTargetNode(
+    id: string,
+    type: SceneNode["type"],
+    dimensions?: { width: number; height: number },
+  ): SceneNode {
+    return {
+      id,
+      name: "Icon button",
+      type,
+      ...dimensions,
+    } as unknown as SceneNode;
+  }
+
   it("returns null and logs an error for an invalid node", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -280,19 +282,22 @@ describe("createTouchTargetIssue", () => {
       createTouchTargetIssue(null as unknown as SceneNode, "Size"),
     ).toBeNull();
     expect(createTouchTargetIssue({} as SceneNode, "Size")).toBeNull();
-    expect(errorSpy).toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenNthCalledWith(
+      1,
+      "Invalid node passed to createTouchTargetIssue:",
+      null,
+    );
+    expect(errorSpy).toHaveBeenNthCalledWith(
+      2,
+      "Invalid node passed to createTouchTargetIssue:",
+      {},
+    );
 
     errorSpy.mockRestore();
   });
 
   it("builds a TOUCH_TARGET_SIZE issue with dimensions when the node has them", () => {
-    const node = {
-      id: "n1",
-      name: "Icon button",
-      type: "FRAME",
-      width: 20,
-      height: 20,
-    } as unknown as SceneNode;
+    const node = fakeTouchTargetNode("n1", "FRAME", { width: 20, height: 20 });
 
     expect(createTouchTargetIssue(node, "Size")).toEqual({
       description:
@@ -311,13 +316,7 @@ describe("createTouchTargetIssue", () => {
   });
 
   it("builds a TOUCH_TARGET_SPACING issue", () => {
-    const node = {
-      id: "n2",
-      name: "Icon button",
-      type: "FRAME",
-      width: 44,
-      height: 44,
-    } as unknown as SceneNode;
+    const node = fakeTouchTargetNode("n2", "FRAME", { width: 44, height: 44 });
 
     const issue = createTouchTargetIssue(node, "Spacing");
 
@@ -328,11 +327,7 @@ describe("createTouchTargetIssue", () => {
   });
 
   it("omits width/height when the node doesn't support them", () => {
-    const node = {
-      id: "n3",
-      name: "Group",
-      type: "GROUP",
-    } as unknown as SceneNode;
+    const node = fakeTouchTargetNode("n3", "GROUP");
 
     const issue = createTouchTargetIssue(node, "Size");
 

@@ -57,6 +57,19 @@ describe("useIssuesStore.navigateToIssue", () => {
   });
 });
 
+function fakeContrastIssue(id: string, compliance: string): IssueX {
+  return {
+    type: "CONTRAST",
+    severity: "critical",
+    nodeData: {
+      id,
+      name: id,
+      nodeType: "TEXT",
+      contrastScore: { compliance, ratio: compliance === "Fail" ? 2 : 5 },
+    },
+  };
+}
+
 describe("useIssuesStore.getIssueGroupList", () => {
   it("returns only issues matching the selected type", () => {
     useIssuesStore.setState({
@@ -83,26 +96,8 @@ describe("useIssuesStore.getIssueGroupList", () => {
   it("includes a CONTRAST issue only when its compliance is Fail", () => {
     useIssuesStore.setState({
       issues: [
-        {
-          type: "CONTRAST",
-          severity: "critical",
-          nodeData: {
-            id: "fail",
-            name: "A",
-            nodeType: "TEXT",
-            contrastScore: { compliance: "Fail", ratio: 2 },
-          },
-        },
-        {
-          type: "CONTRAST",
-          severity: "critical",
-          nodeData: {
-            id: "pass",
-            name: "B",
-            nodeType: "TEXT",
-            contrastScore: { compliance: "AA", ratio: 5 },
-          },
-        },
+        fakeContrastIssue("fail", "Fail"),
+        fakeContrastIssue("pass", "AA"),
       ],
       selectedType: "CONTRAST",
     });
