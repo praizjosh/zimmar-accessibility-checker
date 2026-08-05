@@ -26,7 +26,10 @@ export default function InfoPopover({
   return (
     <Popover>
       <PopoverTrigger aria-label={title ? `About ${title}` : "More info"}>
-        <Info className="ml-2 size-5 text-grey hover:text-accent" />
+        <Info
+          aria-hidden="true"
+          className="ml-2 size-5 text-grey hover:text-accent"
+        />
       </PopoverTrigger>
       <PopoverContent align={align} className="w-64 text-pretty">
         <div className="space-y-2">

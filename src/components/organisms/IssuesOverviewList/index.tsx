@@ -8,9 +8,10 @@ import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getRouteForIssueType, getSeverityStyles } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
-import Separator from "../ui/separator";
-import IssueBreakdownChart from "./IssueBreakdownChart";
-import LoadingScreen from "./LoadingScreen";
+import { useEffect } from "react";
+import Separator from "@/components/ui/separator";
+import IssueBreakdownChart from "@/components/organisms/IssueBreakdownChart";
+import LoadingScreen from "@/components/organisms/LoadingScreen";
 
 export default function IssuesOverviewList() {
   const {
@@ -37,19 +38,27 @@ export default function IssuesOverviewList() {
   });
 
   // Listen for messages from the backend
-  onmessage = (event) => {
-    if (!event.data || !event.data.pluginMessage) {
-      console.error("Invalid message format:", event.data);
-      return;
-    }
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.data || !event.data.pluginMessage) {
+        console.error("Invalid message format:", event.data);
+        return;
+      }
 
-    const { type, data } = event.data.pluginMessage;
+      const { type, data } = event.data.pluginMessage;
 
-    if (type === MESSAGE_TYPES.LOAD_ISSUES) {
-      setIssues(data);
-      setScanning(false);
-    }
-  };
+      if (type === MESSAGE_TYPES.LOAD_ISSUES) {
+        setIssues(data);
+        setScanning(false);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [setIssues, setScanning]);
 
   const handleIssuesListClick = (type: IssueType) => {
     setSelectedType(type);
@@ -141,6 +150,7 @@ export default function IssuesOverviewList() {
             >
               <ChevronLeft
                 strokeWidth={1.5}
+                aria-hidden="true"
                 className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5"
               />
               <span className="text-base">Back</span>
@@ -158,6 +168,7 @@ export default function IssuesOverviewList() {
               >
                 <RefreshCcw
                   strokeWidth={1.5}
+                  aria-hidden="true"
                   className="!size-5 cursor-pointer text-green-500 transition-transform duration-300 ease-in-out group-hover:-rotate-180"
                 />
               </Button>
@@ -257,6 +268,7 @@ export default function IssuesOverviewList() {
 
                             <ChevronRight
                               strokeWidth={1.5}
+                              aria-hidden="true"
                               className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
                             />
                           </div>

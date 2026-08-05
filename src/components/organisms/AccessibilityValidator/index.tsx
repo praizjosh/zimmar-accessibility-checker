@@ -7,7 +7,7 @@ import { postMessageToBackend } from "@/lib/figmaUtils";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { getRouteForIssueType } from "@/lib/utils";
+import { cn, getRouteForIssueType } from "@/lib/utils";
 import { Bot, ChevronRight, Radar } from "lucide-react";
 import { useState } from "react";
 
@@ -31,7 +31,7 @@ export default function AccessibilityValidator() {
             onClick={startScan}
             disabled={scanning}
           >
-            <Radar className="mr-2" />
+            <Radar aria-hidden="true" className="mr-2" />
             <span>Scan entire page</span>
           </Button>
         </CardContent>
@@ -73,6 +73,7 @@ export default function AccessibilityValidator() {
                   </div>
                   <ChevronRight
                     strokeWidth={1.5}
+                    aria-hidden="true"
                     className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
                   />
                 </div>
@@ -89,7 +90,7 @@ export default function AccessibilityValidator() {
         <div className="relative flex justify-center">
           <span className="bg-dark px-5 text-sm text-grey">
             <span className="inline-flex items-center gap-2">
-              <Bot className="size-4" />
+              <Bot aria-hidden="true" className="size-4" />
               <h3>AI Assistant Tools</h3>
             </span>
           </span>
@@ -98,8 +99,8 @@ export default function AccessibilityValidator() {
 
       <AltTextGenerator isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
-      <div className="mt-auto flex size-full flex-col items-center text-xs text-white/55">
-        <p className="mt-auto">
+      <div className="flex size-full flex-col items-center justify-end text-xs text-white/55">
+        <p className={cn({ "mb-2.5": isExpanded })}>
           &copy; {new Date().getFullYear()} Zimmar Technologies. All rights
           reserved.
         </p>

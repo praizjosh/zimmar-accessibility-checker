@@ -16,17 +16,17 @@ type TooltipDataType = Record<string, { title: string; content: string }>;
 
 const tooltipData: TooltipDataType = {
   TOUCH_TARGET_SIZE: {
-    title: "About Touch Target Detection",
+    title: "Touch Target Detection",
     content:
       "Our touch target analysis helps identify potential accessibility issues. This is an experimental feature and should be verified manually.",
   },
   TOUCH_TARGET_SPACING: {
-    title: "About Touch Target Detection",
+    title: "Touch Target Detection",
     content:
       "Our touch target analysis helps identify potential accessibility issues. This is an experimental feature and should be verified manually.",
   },
   CONTRAST: {
-    title: "About Contrast Detection",
+    title: "Contrast Detection",
     content:
       "Our contrast analysis is designed to help identify potential accessibility issues. While this experimental feature generally provides accurate results, it requires manual verification. In cases involving complex layer structures (e.g., overlapping elements) or intricate color configurations (e.g., multiple colors or gradients), the calculations may sometimes be inaccurate or infeasible. If this happens, we recommend duplicating and isolating the foreground and background elements onto a clean area of the canvas before performing the evaluation again.",
   },
@@ -54,43 +54,51 @@ export default function IssuesWrapper({
     getIssueGroupList,
   } = useIssuesStore();
 
-  onmessage = (event: MessageEvent) => {
-    const { type, data } = event.data.pluginMessage || {};
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { type, data } = event.data.pluginMessage || {};
 
-    if (type === MESSAGE_TYPES.DETECTED_ISSUE) {
-      const matchingIssues = data.filter(
-        (issue: IssueX) => issue.type === selectedType,
-      );
+      if (type === MESSAGE_TYPES.DETECTED_ISSUE) {
+        const matchingIssues = data.filter(
+          (issue: IssueX) => issue.type === selectedType,
+        );
 
-      if (matchingIssues.length === 0) {
-        setSingleIssue(null);
-        return;
+        if (matchingIssues.length === 0) {
+          setSingleIssue(null);
+          return;
+        }
+
+        setSingleIssue(matchingIssues[0] || data[0] || null);
       }
 
-      setSingleIssue(matchingIssues[0] || data[0] || null);
-    }
+      if (type === MESSAGE_TYPES.LAYER_SELECTED && data) {
+        setIsSelection(true);
+      }
 
-    if (type === MESSAGE_TYPES.LAYER_SELECTED && data) {
-      setIsSelection(true);
-    }
+      if (type === MESSAGE_TYPES.NO_SELECTION && data) {
+        setSingleIssue(null);
+        setIsSelection(false);
+      }
 
-    if (type === MESSAGE_TYPES.NO_SELECTION && data) {
-      setSingleIssue(null);
-      setIsSelection(false);
-    }
+      if (type === MESSAGE_TYPES.QUICKCHECK_ACTIVE) {
+        setIsQuickCheckActive(data);
+      }
 
-    if (type === MESSAGE_TYPES.QUICKCHECK_ACTIVE) {
-      setIsQuickCheckActive(data);
-    }
+      if (type === MESSAGE_TYPES.NO_BACKGROUND) {
+        setHasBackground(data);
+      }
 
-    if (type === MESSAGE_TYPES.NO_BACKGROUND) {
-      setHasBackground(data);
-    }
+      if (type === MESSAGE_TYPES.NO_FOREGROUND) {
+        setHasForeground(data);
+      }
+    };
 
-    if (type === MESSAGE_TYPES.NO_FOREGROUND) {
-      setHasForeground(data);
-    }
-  };
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [selectedType, setSingleIssue]);
 
   useEffect(() => {
     navigateToIssue(0);
@@ -203,6 +211,7 @@ export default function IssuesWrapper({
           >
             <ChevronLeft
               strokeWidth={1.5}
+              aria-hidden="true"
               className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5"
             />
             <span className="text-base">Back</span>
@@ -260,7 +269,11 @@ export default function IssuesWrapper({
               disabled={currentIndex === 0}
               className="p-2.5"
             >
-              <ChevronLeft strokeWidth={1.5} className="!size-6" />
+              <ChevronLeft
+                strokeWidth={1.5}
+                aria-hidden="true"
+                className="!size-6"
+              />
             </Button>
             <span className="text-sm text-slate-200">
               Issue {currentIndex + 1} of {issueGroupList.length}
@@ -273,7 +286,11 @@ export default function IssuesWrapper({
               disabled={currentIndex === issueGroupList.length - 1}
               className="p-2.5"
             >
-              <ChevronRight strokeWidth={1.5} className="!size-6" />
+              <ChevronRight
+                strokeWidth={1.5}
+                aria-hidden="true"
+                className="!size-6"
+              />
             </Button>
           </div>
         )}

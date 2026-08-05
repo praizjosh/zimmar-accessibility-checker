@@ -69,7 +69,7 @@ export default function IssuesNavigator() {
     return (
       <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
         <IssueDetailRow
-          icon={<CaseSensitive className="mr-3 size-5" />}
+          icon={<CaseSensitive aria-hidden="true" className="mr-3 size-5" />}
           label="Text:"
           value={
             <span
@@ -84,9 +84,13 @@ export default function IssuesNavigator() {
         <IssueDetailRow
           icon={
             fontSizeIsValid ? (
-              <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
+              <Check
+                aria-hidden="true"
+                className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
+              />
             ) : (
               <X
+                aria-hidden="true"
                 className={cn(
                   "mr-3 size-5 rounded-full p-1",
                   (!fontSizeIsValid && severity === "major") ||
@@ -144,7 +148,7 @@ export default function IssuesNavigator() {
           <>
             {foregroundColor && (
               <IssueDetailRow
-                icon={<Palette className="mr-3 size-5" />}
+                icon={<Palette aria-hidden="true" className="mr-3 size-5" />}
                 label={<span className="text-sm">Text colour:</span>}
                 value={
                   <span className="ml-2.5 inline-flex items-center gap-x-2 font-mono text-sm">
@@ -162,7 +166,7 @@ export default function IssuesNavigator() {
 
             {backgroundColor && (
               <IssueDetailRow
-                icon={<Palette className="mr-3 size-5" />}
+                icon={<Palette aria-hidden="true" className="mr-3 size-5" />}
                 label={<span className="text-sm">Background colour:</span>}
                 value={
                   <span className="ml-2.5 inline-flex items-center gap-x-2 font-mono text-sm">
@@ -182,12 +186,16 @@ export default function IssuesNavigator() {
               icon={
                 contrastScore?.compliance === "Fail" ? (
                   <X
+                    aria-hidden="true"
                     className={cn(
                       getSeverityStyles(severity, { isIcon: true }),
                     )}
                   />
                 ) : (
-                  <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
+                  <Check
+                    aria-hidden="true"
+                    className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
+                  />
                 )
               }
               label={
@@ -222,12 +230,16 @@ export default function IssuesNavigator() {
               icon={
                 contrastScore?.compliance === "Fail" ? (
                   <X
+                    aria-hidden="true"
                     className={cn(
                       getSeverityStyles(severity, { isIcon: true }),
                     )}
                   />
                 ) : (
-                  <Check className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade" />
+                  <Check
+                    aria-hidden="true"
+                    className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
+                  />
                 )
               }
               label={
@@ -269,7 +281,7 @@ export default function IssuesNavigator() {
               {severity}
             </span>
           }
-          icon={<OctagonAlert className="mr-3 size-5" />}
+          icon={<OctagonAlert aria-hidden="true" className="mr-3 size-5" />}
         />
       </div>
     );
