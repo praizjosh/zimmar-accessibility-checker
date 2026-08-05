@@ -56,3 +56,89 @@ describe("useIssuesStore.navigateToIssue", () => {
     expect(useIssuesStore.getState().currentIndex).toBe(0);
   });
 });
+
+describe("useIssuesStore.getIssueGroupList", () => {
+  it("returns only issues matching the selected type", () => {
+    useIssuesStore.setState({
+      issues: [
+        {
+          type: "TYPOGRAPHY",
+          severity: "major",
+          nodeData: { id: "1", name: "A", nodeType: "TEXT" },
+        },
+        {
+          type: "TOUCH_TARGET_SIZE",
+          severity: "minor",
+          nodeData: { id: "2", name: "B", nodeType: "FRAME" },
+        },
+      ],
+      selectedType: "TYPOGRAPHY",
+    });
+
+    const result = useIssuesStore.getState().getIssueGroupList();
+
+    expect(result.map((issue) => issue.nodeData.id)).toEqual(["1"]);
+  });
+
+  it("includes a CONTRAST issue only when its compliance is Fail", () => {
+    useIssuesStore.setState({
+      issues: [
+        {
+          type: "CONTRAST",
+          severity: "critical",
+          nodeData: {
+            id: "fail",
+            name: "A",
+            nodeType: "TEXT",
+            contrastScore: { compliance: "Fail", ratio: 2 },
+          },
+        },
+        {
+          type: "CONTRAST",
+          severity: "critical",
+          nodeData: {
+            id: "pass",
+            name: "B",
+            nodeType: "TEXT",
+            contrastScore: { compliance: "AA", ratio: 5 },
+          },
+        },
+      ],
+      selectedType: "CONTRAST",
+    });
+
+    const result = useIssuesStore.getState().getIssueGroupList();
+
+    expect(result.map((issue) => issue.nodeData.id)).toEqual(["fail"]);
+  });
+
+  it("excludes a CONTRAST issue with no contrastScore at all", () => {
+    useIssuesStore.setState({
+      issues: [
+        {
+          type: "CONTRAST",
+          severity: "critical",
+          nodeData: { id: "no-score", name: "A", nodeType: "TEXT" },
+        },
+      ],
+      selectedType: "CONTRAST",
+    });
+
+    expect(useIssuesStore.getState().getIssueGroupList()).toEqual([]);
+  });
+
+  it("returns an empty list when no scan has run yet (selectedType is empty)", () => {
+    useIssuesStore.setState({
+      issues: [
+        {
+          type: "TYPOGRAPHY",
+          severity: "major",
+          nodeData: { id: "1", name: "A", nodeType: "TEXT" },
+        },
+      ],
+      selectedType: "",
+    });
+
+    expect(useIssuesStore.getState().getIssueGroupList()).toEqual([]);
+  });
+});
