@@ -151,24 +151,31 @@ export default function AltTextGenerator({
       <div className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left">
         <div className="flex w-full items-center justify-between space-x-2.5 ">
           <div className="flex w-full items-center justify-start space-x-2.5 text-sm group-hover:text-accent">
-            <Camera className="size-[1.1rem]" />
+            <Camera aria-hidden="true" className="size-[1.1rem]" />
             <span>Alt Text Generator</span>
           </div>
 
-          <ChevronRight
-            strokeWidth={1.5}
-            className={cn(
-              "size-5 shrink-0 text-rose-50/55 transition-transform ease-in-out group-hover:translate-x-1 group-hover:text-accent",
-              {
-                "-rotate-90 hover:text-accent": isExpanded,
-              },
-            )}
-            onClick={() => {
-              if (setIsExpanded && isExpanded) {
-                setIsExpanded(!isExpanded);
-              }
-            }}
-          />
+          {isExpanded ? (
+            <Button
+              title="Collapse Alt Text Generator"
+              variant="ghost"
+              size="icon"
+              className="!size-5 !w-fit shrink-0 p-0 hover:bg-transparent hover:text-accent"
+              onClick={() => setIsExpanded?.(false)}
+            >
+              <ChevronRight
+                strokeWidth={1.5}
+                aria-hidden="true"
+                className="size-5 shrink-0 -rotate-90 text-rose-50/55"
+              />
+            </Button>
+          ) : (
+            <ChevronRight
+              strokeWidth={1.5}
+              aria-hidden="true"
+              className="size-5 shrink-0 text-rose-50/55 transition-transform ease-in-out group-hover:translate-x-1 group-hover:text-accent"
+            />
+          )}
         </div>
 
         {isExpanded && (
@@ -217,7 +224,10 @@ export default function AltTextGenerator({
               onClick={generateAltText}
               disabled={loading}
             >
-              <Sparkles className="text-pink-300 group-hover:text-white" />
+              <Sparkles
+                aria-hidden="true"
+                className="text-pink-300 group-hover:text-white"
+              />
               <span>Generate alt text</span>
             </Button>
 
