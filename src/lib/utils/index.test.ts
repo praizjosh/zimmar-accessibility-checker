@@ -1,4 +1,12 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { RGBColor, rgb } from "wcag-contrast";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
@@ -7,6 +15,7 @@ import {
   getContrastCompliance,
   getRouteForIssueType,
   getSeverityStyles,
+  isBoldFont,
 } from "./index";
 
 const WHITE: RGBColor = [255, 255, 255];
@@ -278,5 +287,105 @@ describe("getRouteForIssueType", () => {
   it("routes everything else to ISSUE_LIST_VIEW", () => {
     expect(getRouteForIssueType("CONTRAST")).toBe("ISSUE_LIST_VIEW");
     expect(getRouteForIssueType("TYPOGRAPHY")).toBe("ISSUE_LIST_VIEW");
+  });
+});
+
+describe("isBoldFont", () => {
+  // isBoldFont reads figma.mixed unconditionally (even for the plain-number
+  // path), so it needs a minimal figma global — real code gets this from
+  // Figma's plugin sandbox at runtime, which isn't present under vitest.
+  const FIGMA_MIXED = Symbol("figma.mixed");
+
+  beforeAll(() => {
+    vi.stubGlobal("figma", { mixed: FIGMA_MIXED });
+  });
+
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function fakeTextNode(
+    characters: string,
+    rangeWeights: (number | typeof FIGMA_MIXED)[],
+  ): TextNode {
+    return {
+      characters,
+      getRangeFontWeight: vi.fn((start: number) => rangeWeights[start]),
+    } as unknown as TextNode;
+  }
+
+  it("returns false for a falsy fontWeight", () => {
+    expect(isBoldFont(0, {} as TextNode)).toBe(false);
+  });
+
+  it("returns false for a fontWeight below 700", () => {
+    expect(isBoldFont(699, {} as TextNode)).toBe(false);
+  });
+
+  it("returns true for a fontWeight of 700 or more", () => {
+    expect(isBoldFont(700, {} as TextNode)).toBe(true);
+  });
+
+  it("returns false and warns for a non-numeric, non-mixed fontWeight", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(isBoldFont("garbage" as unknown as number, {} as TextNode)).toBe(
+      false,
+    );
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
+  it("returns false and warns when fontWeight is mixed but no start/end range is given", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(isBoldFont(FIGMA_MIXED, fakeTextNode("ab", []))).toBe(false);
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
+  it("returns false and warns for an invalid range (start >= end)", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const node = fakeTextNode("hello", [400, 400, 400, 400, 400]);
+
+    expect(isBoldFont(FIGMA_MIXED, node, 3, 1)).toBe(false);
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
+  it("returns true when any character in a mixed-weight range is bold", () => {
+    const node = fakeTextNode("hello", [400, 400, 700, 400, 400]);
+
+    expect(isBoldFont(FIGMA_MIXED, node, 0, 5)).toBe(true);
+  });
+
+  it("returns false when no character in a mixed-weight range is bold", () => {
+    const node = fakeTextNode("hello", [400, 400, 400, 400, 400]);
+
+    expect(isBoldFont(FIGMA_MIXED, node, 0, 5)).toBe(false);
+  });
+
+  it("skips a mixed (non-numeric) per-character weight and keeps scanning the range", () => {
+    const node = fakeTextNode("hi", [FIGMA_MIXED, 700]);
+
+    expect(isBoldFont(FIGMA_MIXED, node, 0, 2)).toBe(true);
+  });
+
+  it("returns false and logs an error when getRangeFontWeight throws", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const node = {
+      characters: "hi",
+      getRangeFontWeight: vi.fn(() => {
+        throw new Error("boom");
+      }),
+    } as unknown as TextNode;
+
+    expect(isBoldFont(FIGMA_MIXED, node, 0, 2)).toBe(false);
+    expect(errorSpy).toHaveBeenCalled();
+
+    errorSpy.mockRestore();
   });
 });

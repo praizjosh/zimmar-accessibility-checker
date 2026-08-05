@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
+  createContrastIssue,
+  createTouchTargetIssue,
+  createTypographyIssue,
   extractForegroundColor,
+  isTouchTarget,
   isTouchTargetTooClose,
   isTouchTargetTooSmall,
 } from "./index";
@@ -16,6 +20,19 @@ function fakeNode(
     height: bounds.height,
     absoluteBoundingBox: bounds,
   } as unknown as SceneNode;
+}
+
+function fakeTextNode(overrides: Partial<TextNode> = {}): TextNode {
+  return {
+    id: "text-1",
+    characters: "Hello",
+    fontSize: 10,
+    height: 12,
+    lineHeight: { unit: "AUTO" },
+    name: "Label",
+    type: "TEXT",
+    ...overrides,
+  } as unknown as TextNode;
 }
 
 describe("extractForegroundColor", () => {
@@ -117,5 +134,204 @@ describe("isTouchTargetTooClose", () => {
     const other = fakeNode("b", { x: 52, y: 0, width: 44, height: 44 });
 
     expect(isTouchTargetTooClose(node, [node, other])).toBe(false);
+  });
+});
+
+describe("isTouchTarget", () => {
+  function fakeSceneNode(
+    name: string,
+    type: SceneNode["type"] = "FRAME",
+  ): SceneNode {
+    return { id: "n", name, type } as unknown as SceneNode;
+  }
+
+  function fakeInstanceNode(
+    name: string,
+    mainComponentName: string | null,
+  ): SceneNode {
+    return {
+      id: "n",
+      name,
+      type: "INSTANCE",
+      getMainComponentAsync: vi.fn(() =>
+        Promise.resolve(mainComponentName ? { name: mainComponentName } : null),
+      ),
+    } as unknown as SceneNode;
+  }
+
+  it("returns false for a falsy node", async () => {
+    expect(await isTouchTarget(null as unknown as SceneNode)).toBe(false);
+  });
+
+  it("returns true when the node's own name matches a touch-target keyword", async () => {
+    expect(await isTouchTarget(fakeSceneNode("Primary Button"))).toBe(true);
+  });
+
+  it("matches keywords case-insensitively", async () => {
+    expect(await isTouchTarget(fakeSceneNode("PRIMARY BTN"))).toBe(true);
+  });
+
+  it("returns false when the name matches a keyword but the node is a TEXT node", async () => {
+    expect(await isTouchTarget(fakeSceneNode("Button label", "TEXT"))).toBe(
+      false,
+    );
+  });
+
+  it("returns false when neither the name nor the type matches anything", async () => {
+    expect(
+      await isTouchTarget(fakeSceneNode("Background rectangle", "RECTANGLE")),
+    ).toBe(false);
+  });
+
+  it("falls back to the main component's name for an INSTANCE whose own name doesn't match", async () => {
+    const node = fakeInstanceNode("Icon 24", "Button/Primary");
+
+    expect(await isTouchTarget(node)).toBe(true);
+  });
+
+  it("returns false for an INSTANCE when neither its name nor its main component's name matches", async () => {
+    const node = fakeInstanceNode("Icon 24", "Icon/Chevron");
+
+    expect(await isTouchTarget(node)).toBe(false);
+  });
+
+  it("returns false for an INSTANCE with no resolvable main component", async () => {
+    const node = fakeInstanceNode("Icon 24", null);
+
+    expect(await isTouchTarget(node)).toBe(false);
+  });
+});
+
+describe("createTypographyIssue", () => {
+  it("builds a TYPOGRAPHY issue from a TextNode", () => {
+    const node = fakeTextNode();
+
+    expect(createTypographyIssue(node)).toEqual({
+      description: "Text size is too small for readability.",
+      severity: "major",
+      type: "TYPOGRAPHY",
+      nodeData: {
+        id: "text-1",
+        characters: "Hello",
+        fontSize: 10,
+        height: 12,
+        lineHeight: { unit: "AUTO" },
+        name: "Label",
+        nodeType: "TEXT",
+      },
+    });
+  });
+});
+
+describe("createContrastIssue", () => {
+  it("builds a CONTRAST issue with the given colours and score", () => {
+    const node = fakeTextNode({ id: "text-2", characters: "Hi", name: "Body" });
+    const contrastScore = { compliance: "Fail" as const, ratio: 2.1 };
+
+    expect(
+      createContrastIssue(node, contrastScore, [0, 0, 0], [255, 255, 255]),
+    ).toEqual({
+      description: "Text contrast is below WCAG AA standard.",
+      severity: "critical",
+      type: "CONTRAST",
+      nodeData: {
+        id: "text-2",
+        contrastScore,
+        characters: "Hi",
+        fontSize: 10,
+        height: 12,
+        lineHeight: { unit: "AUTO" },
+        name: "Body",
+        nodeType: "TEXT",
+        foregroundColor: [0, 0, 0],
+        backgroundColor: [255, 255, 255],
+      },
+    });
+  });
+
+  it("leaves backgroundColor undefined instead of defaulting to white when none was detected", () => {
+    const issue = createContrastIssue(
+      fakeTextNode(),
+      { compliance: "Fail", ratio: 2.1 },
+      [0, 0, 0],
+      undefined,
+    );
+
+    expect(issue.nodeData.backgroundColor).toBeUndefined();
+  });
+});
+
+describe("createTouchTargetIssue", () => {
+  function fakeTouchTargetNode(
+    id: string,
+    type: SceneNode["type"],
+    dimensions?: { width: number; height: number },
+  ): SceneNode {
+    return {
+      id,
+      name: "Icon button",
+      type,
+      ...dimensions,
+    } as unknown as SceneNode;
+  }
+
+  it("returns null and logs an error for an invalid node", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(
+      createTouchTargetIssue(null as unknown as SceneNode, "Size"),
+    ).toBeNull();
+    expect(createTouchTargetIssue({} as SceneNode, "Size")).toBeNull();
+    expect(errorSpy).toHaveBeenNthCalledWith(
+      1,
+      "Invalid node passed to createTouchTargetIssue:",
+      null,
+    );
+    expect(errorSpy).toHaveBeenNthCalledWith(
+      2,
+      "Invalid node passed to createTouchTargetIssue:",
+      {},
+    );
+
+    errorSpy.mockRestore();
+  });
+
+  it("builds a TOUCH_TARGET_SIZE issue with dimensions when the node has them", () => {
+    const node = fakeTouchTargetNode("n1", "FRAME", { width: 20, height: 20 });
+
+    expect(createTouchTargetIssue(node, "Size")).toEqual({
+      description:
+        "Touch target size is too small for accessibility. Should be at least 44x44 pixels.",
+      severity: "minor",
+      type: "TOUCH_TARGET_SIZE",
+      nodeData: {
+        id: "n1",
+        name: "Icon button",
+        width: 20,
+        height: 20,
+        nodeType: "FRAME",
+        requiredSize: "44 x 44px",
+      },
+    });
+  });
+
+  it("builds a TOUCH_TARGET_SPACING issue", () => {
+    const node = fakeTouchTargetNode("n2", "FRAME", { width: 44, height: 44 });
+
+    const issue = createTouchTargetIssue(node, "Spacing");
+
+    expect(issue?.type).toBe("TOUCH_TARGET_SPACING");
+    expect(issue?.description).toBe(
+      "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
+    );
+  });
+
+  it("omits width/height when the node doesn't support them", () => {
+    const node = fakeTouchTargetNode("n3", "GROUP");
+
+    const issue = createTouchTargetIssue(node, "Size");
+
+    expect(issue?.nodeData.width).toBeUndefined();
+    expect(issue?.nodeData.height).toBeUndefined();
   });
 });
