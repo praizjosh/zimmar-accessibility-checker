@@ -24,6 +24,7 @@ export default function Recommendations({
           </h4>
           <Button title="View recommendations" variant="nude" size="sm">
             <ChevronDown
+              aria-hidden="true"
               className={`size-4 transition-all duration-75 ease-in-out ${open ? "rotate-180" : ""} `}
             />
             <span className="sr-only">Toggle Recommendations</span>
