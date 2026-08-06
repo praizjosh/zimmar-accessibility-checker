@@ -21,9 +21,23 @@ describe("RadioToggle", () => {
     );
 
     expect(screen.getByText("Example")).toBeVisible();
+    expect(screen.getByRole("radiogroup", { name: "Example" })).toBeVisible();
+  });
+
+  it("uses the visible label as the accessible name (SC 2.5.3), not the ariaLabel fallback, when a label is given", () => {
+    render(
+      <RadioToggle
+        value="one"
+        onChange={vi.fn()}
+        options={options}
+        ariaLabel="Example group"
+        label={<span>Example</span>}
+      />,
+    );
+
     expect(
-      screen.getByRole("radiogroup", { name: "Example group" }),
-    ).toBeVisible();
+      screen.queryByRole("radiogroup", { name: "Example group" }),
+    ).toBeNull();
   });
 
   it("marks the current value's radio as checked and the other as unchecked", () => {

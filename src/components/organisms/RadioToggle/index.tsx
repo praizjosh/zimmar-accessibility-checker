@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { KeyboardEvent, ReactNode, useRef } from "react";
+import { KeyboardEvent, ReactNode, useId, useRef } from "react";
 
 export type RadioToggleOption<TValue extends string> = {
   value: TValue;
@@ -24,6 +24,7 @@ export default function RadioToggle<TValue extends string>({
   label,
 }: RadioToggleProps<TValue>) {
   const radioRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const labelId = useId();
 
   function focusAndSelect(index: number) {
     const nextIndex = (index + options.length) % options.length;
@@ -53,10 +54,11 @@ export default function RadioToggle<TValue extends string>({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      {label}
+      {label && <span id={labelId}>{label}</span>}
       <div
         role="radiogroup"
-        aria-label={ariaLabel}
+        aria-label={label ? undefined : ariaLabel}
+        aria-labelledby={label ? labelId : undefined}
         className="inline-flex items-center gap-x-1.5"
       >
         {options.map((option, index) => (
