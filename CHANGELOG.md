@@ -4,10 +4,10 @@ All notable changes to this plugin are documented here.
 
 Two version numbers appear in this project and they are **not** the same thing:
 
-- `package.json`'s semver (e.g. `1.1.0`) tracks the codebase/npm tooling and bumps with each dev release cut from this repo.
-- Figma's own **"Version N"** (visible on the plugin's Community page under "Version history") auto-increments once per publish and is entirely Figma-managed — it has no relationship to semver. Entries below reference both where known, so either can be used to look up the same release.
+- `package.json`'s semver (e.g. `1.1.0`) tracks the codebase/npm tooling and only bumps when this repo cuts a dev release.
+- Figma's own **"Version N"** (visible on the plugin's Community page under "Version history") auto-increments once per publish and is entirely Figma-managed — it has no relationship to semver, and doesn't bump 1:1 with every semver change (there was no semver bump between the initial release and today, despite ten Figma publishes in between). Entries below reference both where a semver exists, and Figma's own version number always, since that's the authoritative full record and what users actually see.
 
-Versions prior to Figma's Version 11 are not itemized here — this changelog was only introduced retroactively (06/08/2026) and earlier release-to-version mapping isn't available.
+Versions 2-10's descriptions are transcribed as originally published on Figma - full commit-level detail for that period isn't available since this changelog was only introduced retroactively (06/08/2026).
 
 ## [1.1.0] - Figma Version 12 - 06/08/2026
 
@@ -43,6 +43,42 @@ Versions prior to Figma's Version 11 are not itemized here — this changelog wa
 - Contrast checks occasionally read the wrong text colour on layers with multiple fills; contrast is now measured against the actual topmost visible colour, matching what's rendered on screen. (#17)
 - "Copy to clipboard" in the Alt Text Generator wasn't working reliably inside Figma's plugin panel; it now falls back automatically when the browser Clipboard API isn't available. (#13)
 
-## [1.0.0] - Initial release
+## Figma Version 10 - 27/08/2025
 
-- First public release: full-page and quick-check accessibility scans for contrast, typography, and touch-target issues, AI-assisted alt text generation, and issue navigation/reporting.
+- Updated the backend handshake.
+
+## Figma Version 9 - 27/08/2025
+
+- Updated the plugin's Community page description.
+
+## Figma Version 8 - 26/08/2025
+
+- Added AI Assistant tools (AI-generated alt text for images, via a Cloudflare Worker backend).
+
+## Figma Version 7 - 29/03/2025
+
+- Improved contrast UX.
+
+## Figma Version 6 - 21/03/2025
+
+- Improved user experience.
+
+## Figma Version 5 - 16/03/2025
+
+- Improved UI and added a re-scan option.
+
+## Figma Version 4 - 25/02/2025
+
+- Minor bug fixes.
+
+## Figma Version 3 - 25/02/2025
+
+- UI updates.
+
+## Figma Version 2 - 24/02/2025
+
+- Minor bug fixes.
+
+## [1.0.0] - Figma Version 1 - 23/02/2025
+
+- Initial release: full-page and quick-check accessibility scans for contrast, typography, and touch-target issues, and issue navigation/reporting.
