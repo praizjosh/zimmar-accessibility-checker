@@ -52,6 +52,8 @@ Detection logic lives in `plugin/code.ts` (orchestration: `handleScan` for a ful
 
 `handleScan` filters candidate nodes through `isScannable` (`isVisible(node) && !isLocked(node)`, from `@create-figma-plugin/utilities`) so hidden/locked layers are skipped during a full-page scan. `extractForegroundColor` (`src/lib/figmaUtils/index.ts`) scans a node's `fills` array back-to-front to find the topmost visible `SOLID` fill — Figma's fills array is ordered back-to-front, so the last visible solid entry is what's actually rendered, not the first.
 
+**Before hand-rolling any new `plugin/code.ts` logic that walks/filters/inspects the scene graph, check whether `@create-figma-plugin/utilities` (already a dependency, already used for `isScannable`) has it first.** It covers a lot of the fiddly Figma-API surface this plugin otherwise reimplements by hand — node traversal, visibility/lock checks, colour conversions, and more. Cheaper to depend on a maintained helper than to add another bespoke node-walking function to this codebase.
+
 All detected issues are shaped as `IssueX` (`src/lib/types.ts`), tagged with an `IssueType` and `Severity`, and carry a `NodeDataType` payload (the node id, name, and whatever fields are relevant to that issue type) used later for navigation and display.
 
 ### AI alt-text generation (separate network path)
