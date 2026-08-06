@@ -1,7 +1,14 @@
 import { create } from "zustand";
 import { MESSAGE_TYPES } from "../constants";
 import { postMessageToBackend } from "../figmaUtils";
-import { EnhancedIssuesStore, IssueType, IssueX, Routes } from "../types";
+import {
+  EnhancedIssuesStore,
+  IssueType,
+  IssueX,
+  Routes,
+  TargetLevel,
+} from "../types";
+import { contrastFailsTargetLevel } from "../utils";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   issues: [],
@@ -10,6 +17,7 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   currentRoute: "INDEX", // Default route
   selectedType: "",
   scanning: false,
+  targetLevel: "AA",
   setScanning: (isScanning) =>
     set({
       scanning: isScanning,
@@ -25,18 +33,19 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     set({ issues: newIssues });
   },
   setSelectedType: (type: IssueType) => set({ selectedType: type }),
+  setTargetLevel: (level: TargetLevel) => set({ targetLevel: level }),
   getIssueGroupList: () => {
-    const { issues, selectedType } = get();
+    const { issues, selectedType, targetLevel } = get();
 
     const response = issues.filter((issue) => {
       if (issue.type && issue.type === selectedType) {
-        if (
-          issue.type === "CONTRAST" &&
-          issue.nodeData.contrastScore?.compliance === "Fail"
-        ) {
-          return true;
+        if (issue.type === "CONTRAST") {
+          return contrastFailsTargetLevel(
+            issue.nodeData.contrastScore?.compliance,
+            targetLevel,
+          );
         }
-        return issue.type !== "CONTRAST";
+        return true;
       }
       return false;
     });

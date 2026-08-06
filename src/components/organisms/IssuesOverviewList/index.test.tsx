@@ -60,6 +60,7 @@ const defaultState = {
   scanning: false,
   currentRoute: "INDEX" as const,
   selectedType: "" as const,
+  targetLevel: "AA" as const,
 };
 
 describe("IssuesOverviewList", () => {
@@ -148,6 +149,45 @@ describe("IssuesOverviewList", () => {
 
     expect(useIssuesStore.getState().selectedType).toBe("TYPOGRAPHY");
     expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_LIST_VIEW");
+  });
+
+  it("does not show the WCAG target toggle when there are no contrast issues", () => {
+    useIssuesStore.setState({ issues: [typographyIssue] });
+    render(<IssuesOverviewList />);
+
+    expect(screen.queryByText("WCAG target")).toBeNull();
+  });
+
+  it("shows the WCAG target toggle when there are contrast issues, defaulting to AA", () => {
+    useIssuesStore.setState({
+      issues: [contrastFailIssue, contrastPassIssue],
+    });
+    render(<IssuesOverviewList />);
+
+    expect(screen.getByText("WCAG target")).toBeVisible();
+    expect(screen.getByRole("radio", { name: "AA" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
+  it("counts an AA-passing contrast issue as failing once the target level is switched to AAA", async () => {
+    const user = userEvent.setup();
+    useIssuesStore.setState({
+      issues: [contrastFailIssue, contrastPassIssue],
+    });
+    render(<IssuesOverviewList />);
+
+    expect(
+      screen.getByText("There are 1 issues detected on this screen."),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("radio", { name: "AAA" }));
+
+    expect(useIssuesStore.getState().targetLevel).toBe("AAA");
+    expect(
+      screen.getByText("There are 2 issues detected on this screen."),
+    ).toBeVisible();
   });
 
   it("shows the category breakdown chart on the Report tab only when there are counted issues", async () => {

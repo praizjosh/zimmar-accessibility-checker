@@ -1,6 +1,4 @@
-import ContrastFixSuggester, {
-  TargetLevel,
-} from "@/components/organisms/ContrastFixSuggester";
+import ContrastFixSuggester from "@/components/organisms/ContrastFixSuggester";
 import IssueDetailRow from "@/components/organisms/IssueDetailRow";
 import IssuesWrapper from "@/components/organisms/IssuesWrapper";
 import Input from "@/components/ui/input";
@@ -11,7 +9,7 @@ import {
 } from "@/lib/colorFix";
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { IssueX } from "@/lib/types";
+import { IssueX, TargetLevel } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
   cn,

@@ -25,6 +25,13 @@ export type contrastScore = {
   ratio: number;
 };
 
+/**
+ * Which WCAG conformance level detection/remediation is being held to.
+ * Global app state (see EnhancedIssuesStore.targetLevel) as well as the
+ * contrast fix suggester's own local target for a single suggestion.
+ */
+export type TargetLevel = "AA" | "AAA";
+
 export type Routes =
   | "INDEX"
   | "ISSUE_OVERVIEW_LIST_VIEW"
@@ -87,10 +94,13 @@ export interface EnhancedIssuesStore extends IssuesStore {
   scanning: boolean;
   selectedType: IssueType | ""; // Selected issue type; "" means no scan has run yet
   currentRoute: Routes;
+  /** Which WCAG level CONTRAST detection is held to across the whole scan - defaults to AA. */
+  targetLevel: TargetLevel;
   setScanning: (isScanning: boolean) => void; // Setter for scanning state
   setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
   navigateTo: (route: Routes) => void;
   setSelectedType: (type: IssueType) => void;
+  setTargetLevel: (level: TargetLevel) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];
   rescanIssues: () => void; // Rescan the document for issues
