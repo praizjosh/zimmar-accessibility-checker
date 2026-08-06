@@ -1,3 +1,4 @@
+import { defineConfig } from "eslint/config";
 import js from "@eslint/js";
 import eslintParser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
@@ -10,7 +11,7 @@ import tailwind from "eslint-plugin-tailwindcss";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-export default tseslint.config(
+export default defineConfig(
   { ignores: ["dist", "*.config.js"] },
   {
     extends: [
@@ -18,7 +19,7 @@ export default tseslint.config(
       jsxA11y.flatConfigs.recommended,
       importPlugin.flatConfigs.recommended,
       ...tseslint.configs.recommended,
-      ...tailwind.configs["flat/recommended"],
+      tailwind.configs.recommended,
       eslintPluginPrettierRecommended,
        pluginReact.configs.flat.recommended,
     ],
@@ -31,6 +32,11 @@ export default tseslint.config(
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+    },
+    settings: {
+      tailwindcss: {
+        cssConfigPath: "./src/index.css",
+      },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -71,6 +77,12 @@ export default tseslint.config(
       "import/extensions": 0,
       "import/no-extraneous-dependencies": "off",
       "import/no-unresolved": 0,
+      // wcag-contrast ships no bundled types - RGBColor comes from the
+      // separate @types/wcag-contrast package, which this resolver doesn't
+      // reliably follow (surfaced by the eslint-plugin-import 2.32 bump).
+      // tsc is the authoritative check for whether an import actually
+      // exists, same rationale as import/no-unresolved above.
+      "import/named": 0,
       "import/no-anonymous-default-export": 0,
       "import/prefer-default-export": "warn",
     },
