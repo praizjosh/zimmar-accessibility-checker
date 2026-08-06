@@ -6,12 +6,7 @@ import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import {
-  cn,
-  contrastFailsTargetLevel,
-  getRouteForIssueType,
-  getSeverityStyles,
-} from "@/lib/utils";
+import { cn, contrastFailsTargetLevel, getRouteForIssueType, getSeverityStyles } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import { useEffect } from "react";
@@ -20,330 +15,329 @@ import IssueBreakdownChart from "@/components/organisms/IssueBreakdownChart";
 import LoadingScreen from "@/components/organisms/LoadingScreen";
 
 export default function IssuesOverviewList() {
-  const {
-    scanning,
-    issues,
-    setIssues,
-    setScanning,
-    setSelectedType,
-    navigateTo,
-    rescanIssues,
-    targetLevel,
-    setTargetLevel,
-  } = useIssuesStore();
+	const {
+		scanning,
+		issues,
+		setIssues,
+		setScanning,
+		setSelectedType,
+		navigateTo,
+		rescanIssues,
+		targetLevel,
+		setTargetLevel,
+	} = useIssuesStore();
 
-  const issuesGroupListRecords = issues.filter((issue) => {
-    if (!issue.type || !ISSUES_TYPES.includes(issue.type)) return false;
-    if (issue.type === "CONTRAST") {
-      return contrastFailsTargetLevel(
-        issue.nodeData.contrastScore?.compliance,
-        targetLevel,
-      );
-    }
-    return true;
-  });
+	const issuesGroupListRecords = issues.filter((issue) => {
+		if (!issue.type || !ISSUES_TYPES.includes(issue.type)) return false;
+		if (issue.type === "CONTRAST") {
+			return contrastFailsTargetLevel(issue.nodeData.contrastScore?.compliance, targetLevel);
+		}
+		return true;
+	});
 
-  const hasContrastIssues = issues.some((issue) => issue.type === "CONTRAST");
+	const hasContrastIssues = issues.some((issue) => issue.type === "CONTRAST");
 
-  // Listen for messages from the backend
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (!event.data || !event.data.pluginMessage) {
-        console.error("Invalid message format:", event.data);
-        return;
-      }
+	// Listen for messages from the backend
+	useEffect(() => {
+		const handleMessage = (event: MessageEvent) => {
+			if (!event.data || !event.data.pluginMessage) {
+				console.error("Invalid message format:", event.data);
+				return;
+			}
 
-      const { type, data } = event.data.pluginMessage;
+			const { type, data } = event.data.pluginMessage;
 
-      if (type === MESSAGE_TYPES.LOAD_ISSUES) {
-        setIssues(data);
-        setScanning(false);
-      }
-    };
+			if (type === MESSAGE_TYPES.LOAD_ISSUES) {
+				setIssues(data);
+				setScanning(false);
+			}
+		};
 
-    window.addEventListener("message", handleMessage);
+		window.addEventListener("message", handleMessage);
 
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [setIssues, setScanning]);
+		return () => {
+			window.removeEventListener("message", handleMessage);
+		};
+	}, [setIssues, setScanning]);
 
-  const handleIssuesListClick = (type: IssueType) => {
-    setSelectedType(type);
-    navigateTo(getRouteForIssueType(type));
-  };
+	const handleIssuesListClick = (type: IssueType) => {
+		setSelectedType(type);
+		navigateTo(getRouteForIssueType(type));
+	};
 
-  const issuesGroup = ISSUES_DATA_SCHEMA.filter((issue) =>
-    issues?.some((i: IssueX) => i.type === issue.type),
-  );
+	const issuesGroup = ISSUES_DATA_SCHEMA.filter((issue) =>
+		issues?.some((i: IssueX) => i.type === issue.type),
+	);
 
-  const breakdownItems = issuesGroup
-    .map((issue) => ({
-      type: issue.type as IssueType,
-      count: issuesGroupListRecords.filter((i) => i.type === issue.type).length,
-    }))
-    .filter((item) => item.count > 0);
+	const breakdownItems = issuesGroup
+		.map((issue) => ({
+			type: issue.type as IssueType,
+			count: issuesGroupListRecords.filter((i) => i.type === issue.type).length,
+		}))
+		.filter((item) => item.count > 0);
 
-  // Convert issues to structured data for reporting
-  const formatIssuesForReport = () => {
-    return issuesGroupListRecords.map((issue) => {
-      const elementName =
-        issue.nodeData?.nodeType === "TEXT"
-          ? issue.nodeData?.characters
-          : issue.nodeData?.name;
-      return {
-        elementType: issue.nodeData?.nodeType || "N/A",
-        elementName: elementName || "N/A",
-        description: issue.description,
-        severity: issue.severity,
-        type: (issue.type && ISSUE_TYPE_LABELS[issue.type]) || issue.type,
-        wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
-        contrastRatio: issue.nodeData?.contrastScore?.ratio.toFixed(2) || "N/A",
-        fontSize: issue.nodeData?.fontSize || "N/A",
-      };
-    });
-  };
+	// Convert issues to structured data for reporting
+	const formatIssuesForReport = () => {
+		return issuesGroupListRecords.map((issue) => {
+			const elementName =
+				issue.nodeData?.nodeType === "TEXT"
+					? issue.nodeData?.characters
+					: issue.nodeData?.name;
+			return {
+				elementType: issue.nodeData?.nodeType || "N/A",
+				elementName: elementName || "N/A",
+				description: issue.description,
+				severity: issue.severity,
+				type: (issue.type && ISSUE_TYPE_LABELS[issue.type]) || issue.type,
+				wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
+				contrastRatio: issue.nodeData?.contrastScore?.ratio.toFixed(2) || "N/A",
+				fontSize: issue.nodeData?.fontSize || "N/A",
+			};
+		});
+	};
 
-  // Generate CSV report
-  const generateCSV = () => {
-    const formattedIssues = formatIssuesForReport();
-    const csvHeader =
-      "Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,Font Size";
+	// Generate CSV report
+	const generateCSV = () => {
+		const formattedIssues = formatIssuesForReport();
+		const csvHeader =
+			"Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,Font Size";
 
-    const csvRows = formattedIssues.map((issue) => {
-      return [
-        `"${issue.elementType || "N/A"}"`, // Element Type
-        `"${issue.elementName}"`, // Element Name
-        `"${issue.type || "N/A"}"`, // Issue Type
-        `"${issue.description || ""}"`, // Description
-        `"${issue.severity || "N/A"}"`, // Severity
-        `"${issue.wcagContrastScore || "N/A"}"`, // WCAG Score
-        `"${issue.contrastRatio || "N/A"}"`, // Contrast ratio
-        `"${issue.fontSize || "N/A"}"`, // Font Size
-      ].join(",");
-    });
+		const csvRows = formattedIssues.map((issue) => {
+			return [
+				`"${issue.elementType || "N/A"}"`, // Element Type
+				`"${issue.elementName}"`, // Element Name
+				`"${issue.type || "N/A"}"`, // Issue Type
+				`"${issue.description || ""}"`, // Description
+				`"${issue.severity || "N/A"}"`, // Severity
+				`"${issue.wcagContrastScore || "N/A"}"`, // WCAG Score
+				`"${issue.contrastRatio || "N/A"}"`, // Contrast ratio
+				`"${issue.fontSize || "N/A"}"`, // Font Size
+			].join(",");
+		});
 
-    // Join the header and rows to form the CSV content
-    const csvContent = [csvHeader, ...csvRows].join("\n");
+		// Join the header and rows to form the CSV content
+		const csvContent = [csvHeader, ...csvRows].join("\n");
 
-    // Create a Blob for the CSV content
-    const csvBlob = new Blob([csvContent], { type: "text/csv" });
+		// Create a Blob for the CSV content
+		const csvBlob = new Blob([csvContent], { type: "text/csv" });
 
-    saveAs(csvBlob, "accessibility-issues-report.csv");
-  };
+		saveAs(csvBlob, "accessibility-issues-report.csv");
+	};
 
-  // Generate JSON report
-  const generateJSON = () => {
-    const formattedIssues = formatIssuesForReport();
-    const jsonBlob = new Blob([JSON.stringify(formattedIssues, null, 2)], {
-      type: "application/json",
-    });
-    saveAs(jsonBlob, "accessibility-issues-report.json");
-  };
+	// Generate JSON report
+	const generateJSON = () => {
+		const formattedIssues = formatIssuesForReport();
+		const jsonBlob = new Blob([JSON.stringify(formattedIssues, null, 2)], {
+			type: "application/json",
+		});
+		saveAs(jsonBlob, "accessibility-issues-report.json");
+	};
 
-  return (
-    <div className="flex size-full flex-col">
-      <div className="grid">
-        <div className="flex w-full items-center justify-between gap-x-0.5">
-          <div className="group inline-flex items-center justify-start gap-x-0.5">
-            <Button
-              title="Go back"
-              variant="nude"
-              size={"icon"}
-              className="!w-fit gap-0.5 group-hover:text-accent"
-              onClick={() => {
-                navigateTo("INDEX");
-                setIssues([]);
-              }}
-            >
-              <ChevronLeft
-                strokeWidth={1.5}
-                aria-hidden="true"
-                className="!size-6 transition-transform delay-100 ease-in-out group-hover:!-translate-x-0.5"
-              />
-              <span className="text-base">Back</span>
-            </Button>
-          </div>
+	return (
+		<div className="flex size-full flex-col">
+			<div className="grid">
+				<div className="flex w-full items-center justify-between gap-x-0.5">
+					<div className="group inline-flex items-center justify-start gap-x-0.5">
+						<Button
+							title="Go back"
+							variant="nude"
+							size={"icon"}
+							className="w-fit! gap-0.5 group-hover:text-accent"
+							onClick={() => {
+								navigateTo("INDEX");
+								setIssues([]);
+							}}
+						>
+							<ChevronLeft
+								strokeWidth={1.5}
+								aria-hidden="true"
+								className="size-6! transition-transform delay-100 ease-in-out group-hover:-translate-x-0.5!"
+							/>
+							<span className="text-base">Back</span>
+						</Button>
+					</div>
 
-          <div className="inline-flex items-center">
-            {!scanning && (
-              <Button
-                title="Rescan for issues"
-                variant="nude"
-                size={"icon"}
-                className="group me-2 !w-fit"
-                onClick={() => rescanIssues()}
-              >
-                <RefreshCcw
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                  className="!size-5 cursor-pointer text-green-500 transition-transform duration-300 ease-in-out group-hover:-rotate-180"
-                />
-              </Button>
-            )}
+					<div className="inline-flex items-center">
+						{!scanning && (
+							<Button
+								title="Rescan for issues"
+								variant="nude"
+								size={"icon"}
+								className="group me-2 w-fit!"
+								onClick={() => rescanIssues()}
+							>
+								<RefreshCcw
+									strokeWidth={1.5}
+									aria-hidden="true"
+									className="size-5! cursor-pointer text-green-500 transition-transform duration-300 ease-in-out group-hover:-rotate-180"
+								/>
+							</Button>
+						)}
 
-            <span className="font-medium capitalize tracking-wide">
-              Scan Results
-            </span>
-          </div>
-        </div>
+						<span className="font-medium tracking-wide capitalize">Scan Results</span>
+					</div>
+				</div>
 
-        <Separator className="my-2 h-px !bg-rose-50/10" />
-      </div>
+				<Separator className="my-2 h-px bg-rose-50/10!" />
+			</div>
 
-      {!scanning ? (
-        <div className="flex size-full flex-col">
-          {hasContrastIssues && (
-            <TargetLevelToggle
-              value={targetLevel}
-              onChange={setTargetLevel}
-              label={
-                <span className="text-sm font-medium text-grey">
-                  WCAG target
-                </span>
-              }
-            />
-          )}
+			{!scanning ? (
+				<div className="flex size-full flex-col">
+					{hasContrastIssues && (
+						<TargetLevelToggle
+							value={targetLevel}
+							onChange={setTargetLevel}
+							label={
+								<span className="text-sm font-medium text-grey">WCAG target</span>
+							}
+						/>
+					)}
 
-          <Tabs defaultValue="issues">
-            <TabsList className="mb-4 mt-2 flex space-x-4 bg-dark-shade !py-6">
-              <TabsTrigger value="issues">Issues</TabsTrigger>
-              <TabsTrigger value="report">Report</TabsTrigger>
-            </TabsList>
+					<Tabs defaultValue="issues">
+						<TabsList className="mt-2 mb-4 flex space-x-4 bg-dark-shade py-6!">
+							<TabsTrigger value="issues">Issues</TabsTrigger>
+							<TabsTrigger value="report">Report</TabsTrigger>
+						</TabsList>
 
-            <TabsContent value="issues">
-              <h3
-                className={`text-base font-medium tracking-wide text-grey ${issues.length > 0 ? "mb-1" : "mb-4"}`}
-              >
-                Identified Issues
-              </h3>
+						<TabsContent value="issues">
+							<h3
+								className={`text-base font-medium tracking-wide text-grey ${issues.length > 0 ? "mb-1" : "mb-4"}`}
+							>
+								Identified Issues
+							</h3>
 
-              {issuesGroupListRecords.length > 0 && (
-                <p className="mb-4 font-open-sans text-sm">
-                  There are {issuesGroupListRecords.length} issues detected on
-                  this screen.
-                </p>
-              )}
+							{issuesGroupListRecords.length > 0 && (
+								<p className="mb-4 font-open-sans text-sm">
+									There are {issuesGroupListRecords.length} issues detected on
+									this screen.
+								</p>
+							)}
 
-              {issuesGroup.length > 0 ? (
-                <ul className="space-y-2 last:!mb-5">
-                  {issuesGroup.map((issue) => {
-                    const issueCount = issuesGroupListRecords.filter(
-                      (i: IssueX) => i.type === issue.type,
-                    ).length;
+							{issuesGroup.length > 0 ? (
+								<ul className="space-y-2 last:mb-5!">
+									{issuesGroup.map((issue) => {
+										const issueCount = issuesGroupListRecords.filter(
+											(i: IssueX) => i.type === issue.type,
+										).length;
 
-                    // Skip rendering if the issueCount is zero
-                    if (issueCount === 0) return null;
+										// Skip rendering if the issueCount is zero
+										if (issueCount === 0) return null;
 
-                    const label = ISSUE_TYPE_LABELS[issue.type as IssueType];
+										const label = ISSUE_TYPE_LABELS[issue.type as IssueType];
 
-                    return (
-                      <li
-                        key={issue.id}
-                        title={`View all ${label} issues`}
-                        className="group flex items-center justify-between rounded-xl border border-rose-50/10 bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
-                      >
-                        <button
-                          className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
-                          aria-label={label}
-                          onClick={() =>
-                            handleIssuesListClick(issue.type as IssueType)
-                          }
-                        >
-                          <div className="flex w-full items-center justify-between gap-x-2">
-                            <div className="flex w-full items-center justify-start space-x-2.5 text-xs">
-                              {issue.icon}
+										return (
+											<li
+												key={issue.id}
+												title={`View all ${label} issues`}
+												className="group flex items-center justify-between rounded-xl border border-rose-50/10 bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
+											>
+												<button
+													className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
+													aria-label={label}
+													onClick={() =>
+														handleIssuesListClick(
+															issue.type as IssueType,
+														)
+													}
+												>
+													<div className="flex w-full items-center justify-between gap-x-2">
+														<div className="flex w-full items-center justify-start space-x-2.5 text-xs">
+															{issue.icon}
 
-                              <span className="group-hover:text-accent">
-                                {label}
-                              </span>
-                            </div>
+															<span className="group-hover:text-accent">
+																{label}
+															</span>
+														</div>
 
-                            <div className="flex w-auto items-center justify-end space-x-2">
-                              <span
-                                className={cn(
-                                  "rounded px-1.5 py-0.5 text-xs tracking-wide",
-                                  getSeverityStyles(issue.severity, {
-                                    isBadge: true,
-                                  }),
-                                )}
-                              >
-                                {issueCount}
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-xs !capitalize",
-                                  getSeverityStyles(issue.severity),
-                                )}
-                              >
-                                {issue.severity}
-                              </span>
-                            </div>
-                          </div>
+														<div className="flex w-auto items-center justify-end space-x-2">
+															<span
+																className={cn(
+																	"rounded px-1.5 py-0.5 text-xs tracking-wide",
+																	getSeverityStyles(
+																		issue.severity,
+																		{
+																			isBadge: true,
+																		},
+																	),
+																)}
+															>
+																{issueCount}
+															</span>
+															<span
+																className={cn(
+																	"text-xs capitalize!",
+																	getSeverityStyles(
+																		issue.severity,
+																	),
+																)}
+															>
+																{issue.severity}
+															</span>
+														</div>
+													</div>
 
-                          <div className="flex w-full items-center justify-between gap-3">
-                            <span className="w-full max-w-[15.625rem] text-pretty text-sm font-medium group-hover:text-white">
-                              {issue.description}
-                            </span>
+													<div className="flex w-full items-center justify-between gap-3">
+														<span className="w-full max-w-62.5 text-sm font-medium text-pretty group-hover:text-white">
+															{issue.description}
+														</span>
 
-                            <ChevronRight
-                              strokeWidth={1.5}
-                              aria-hidden="true"
-                              className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
-                            />
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="w-full text-left font-semibold text-grey">
-                  No issues found
-                </p>
-              )}
-            </TabsContent>
+														<ChevronRight
+															strokeWidth={1.5}
+															aria-hidden="true"
+															className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
+														/>
+													</div>
+												</button>
+											</li>
+										);
+									})}
+								</ul>
+							) : (
+								<p className="w-full text-left font-semibold text-grey">
+									No issues found
+								</p>
+							)}
+						</TabsContent>
 
-            <TabsContent value="report">
-              <h3 className="mb-2 text-lg font-medium tracking-wide text-grey">
-                Export Report
-              </h3>
-              <p className="mb-4 text-sm">
-                Generate a detailed report of all identified issues and
-                suggestions.
-              </p>
+						<TabsContent value="report">
+							<h3 className="mb-2 text-lg font-medium tracking-wide text-grey">
+								Export Report
+							</h3>
+							<p className="mb-4 text-sm">
+								Generate a detailed report of all identified issues and suggestions.
+							</p>
 
-              {breakdownItems.length > 0 && (
-                <div className="mb-5 rounded-xl bg-dark-shade p-4">
-                  <h4 className="mb-3 text-sm font-medium text-grey">
-                    Issues by category
-                  </h4>
-                  <IssueBreakdownChart items={breakdownItems} />
-                </div>
-              )}
+							{breakdownItems.length > 0 && (
+								<div className="mb-5 rounded-xl bg-dark-shade p-4">
+									<h4 className="mb-3 text-sm font-medium text-grey">
+										Issues by category
+									</h4>
+									<IssueBreakdownChart items={breakdownItems} />
+								</div>
+							)}
 
-              <div className="space-x-3">
-                <Button
-                  title="Download CSV Report"
-                  variant="default"
-                  onClick={generateCSV}
-                >
-                  Download CSV
-                </Button>
-                <Button
-                  title="Download JSON Report"
-                  variant="default"
-                  onClick={generateJSON}
-                >
-                  Download JSON
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      ) : (
-        <LoadingScreen message="Scanning for issues..." />
-      )}
-    </div>
-  );
+							<div className="space-x-3">
+								<Button
+									title="Download CSV Report"
+									variant="default"
+									onClick={generateCSV}
+								>
+									Download CSV
+								</Button>
+								<Button
+									title="Download JSON Report"
+									variant="default"
+									onClick={generateJSON}
+								>
+									Download JSON
+								</Button>
+							</div>
+						</TabsContent>
+					</Tabs>
+				</div>
+			) : (
+				<LoadingScreen message="Scanning for issues..." />
+			)}
+		</div>
+	);
 }
