@@ -57,7 +57,7 @@ export default function RadioToggle<TValue extends string>({
       <div
         role="radiogroup"
         aria-label={ariaLabel}
-        className="inline-flex items-center gap-x-1"
+        className="inline-flex items-center gap-x-1.5"
       >
         {options.map((option, index) => (
           <Button
