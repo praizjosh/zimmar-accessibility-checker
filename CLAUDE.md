@@ -27,6 +27,10 @@ There is no CI workflow (no `.github/workflows`) — lint/typecheck/build/test a
 
 Commits are enforced via Husky + commitlint (`config/commitlint.config.mjs`, extends `@commitlint/config-conventional`, 80-char header max) and `lint-staged` (runs `lint:fix` + prettier on staged files), split into separate `.husky/pre-commit` and `.husky/commit-msg` hooks. Use Conventional Commit messages.
 
+## Code Review
+
+Any code or PR review in this repo automatically includes an accessibility pass via the `web-accessibility` agent (WCAG 2.1/2.2 AA), alongside the usual correctness/logic review — do this by default, without waiting for the user to say "a11y" or ask for it separately. This repo's whole purpose is accessibility checking, so UI/UX regressions here are especially costly to ship unnoticed.
+
 ## Architecture
 
 This is a Figma plugin, which means the build produces **two separate JS runtimes that only talk via `postMessage`** — this split drives most of the structure:
