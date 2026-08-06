@@ -4,167 +4,151 @@ import { describe, expect, it, vi } from "vitest";
 import RadioToggle from "./index";
 
 const options = [
-  { value: "one", label: "One", title: "Select one" },
-  { value: "two", label: "Two", title: "Select two" },
+	{ value: "one", label: "One", title: "Select one" },
+	{ value: "two", label: "Two", title: "Select two" },
 ] as const;
 
 describe("RadioToggle", () => {
-  it("renders the label alongside a radiogroup of the given options", () => {
-    render(
-      <RadioToggle
-        value="one"
-        onChange={vi.fn()}
-        options={options}
-        ariaLabel="Example group"
-        label={<span>Example</span>}
-      />,
-    );
+	it("renders the label alongside a radiogroup of the given options", () => {
+		render(
+			<RadioToggle
+				value="one"
+				onChange={vi.fn()}
+				options={options}
+				ariaLabel="Example group"
+				label={<span>Example</span>}
+			/>,
+		);
 
-    expect(screen.getByText("Example")).toBeVisible();
-    expect(screen.getByRole("radiogroup", { name: "Example" })).toBeVisible();
-  });
+		expect(screen.getByText("Example")).toBeVisible();
+		expect(screen.getByRole("radiogroup", { name: "Example" })).toBeVisible();
+	});
 
-  it("uses the visible label as the accessible name (SC 2.5.3), not the ariaLabel fallback, when a label is given", () => {
-    render(
-      <RadioToggle
-        value="one"
-        onChange={vi.fn()}
-        options={options}
-        ariaLabel="Example group"
-        label={<span>Example</span>}
-      />,
-    );
+	it("uses the visible label as the accessible name (SC 2.5.3), not the ariaLabel fallback, when a label is given", () => {
+		render(
+			<RadioToggle
+				value="one"
+				onChange={vi.fn()}
+				options={options}
+				ariaLabel="Example group"
+				label={<span>Example</span>}
+			/>,
+		);
 
-    expect(
-      screen.queryByRole("radiogroup", { name: "Example group" }),
-    ).toBeNull();
-  });
+		expect(screen.queryByRole("radiogroup", { name: "Example group" })).toBeNull();
+	});
 
-  it("marks the current value's radio as checked and the other as unchecked", () => {
-    render(
-      <RadioToggle
-        value="two"
-        onChange={vi.fn()}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("marks the current value's radio as checked and the other as unchecked", () => {
+		render(
+			<RadioToggle
+				value="two"
+				onChange={vi.fn()}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    expect(screen.getByRole("radio", { name: "One" })).toHaveAttribute(
-      "aria-checked",
-      "false",
-    );
-    expect(screen.getByRole("radio", { name: "Two" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
-  });
+		expect(screen.getByRole("radio", { name: "One" })).toHaveAttribute("aria-checked", "false");
+		expect(screen.getByRole("radio", { name: "Two" })).toHaveAttribute("aria-checked", "true");
+	});
 
-  it("calls onChange with the clicked option's value", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      <RadioToggle
-        value="one"
-        onChange={onChange}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("calls onChange with the clicked option's value", async () => {
+		const user = userEvent.setup();
+		const onChange = vi.fn();
+		render(
+			<RadioToggle
+				value="one"
+				onChange={onChange}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    await user.click(screen.getByRole("radio", { name: "Two" }));
+		await user.click(screen.getByRole("radio", { name: "Two" }));
 
-    expect(onChange).toHaveBeenCalledWith("two");
-  });
+		expect(onChange).toHaveBeenCalledWith("two");
+	});
 
-  it("only tabs to the checked radio, keeping the other out of the tab sequence", () => {
-    render(
-      <RadioToggle
-        value="one"
-        onChange={vi.fn()}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("only tabs to the checked radio, keeping the other out of the tab sequence", () => {
+		render(
+			<RadioToggle
+				value="one"
+				onChange={vi.fn()}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    expect(screen.getByRole("radio", { name: "One" })).toHaveAttribute(
-      "tabIndex",
-      "0",
-    );
-    expect(screen.getByRole("radio", { name: "Two" })).toHaveAttribute(
-      "tabIndex",
-      "-1",
-    );
-  });
+		expect(screen.getByRole("radio", { name: "One" })).toHaveAttribute("tabIndex", "0");
+		expect(screen.getByRole("radio", { name: "Two" })).toHaveAttribute("tabIndex", "-1");
+	});
 
-  it("moves focus and selection to the next option on ArrowRight, wrapping at the end", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      <RadioToggle
-        value="two"
-        onChange={onChange}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("moves focus and selection to the next option on ArrowRight, wrapping at the end", async () => {
+		const user = userEvent.setup();
+		const onChange = vi.fn();
+		render(
+			<RadioToggle
+				value="two"
+				onChange={onChange}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    screen.getByRole("radio", { name: "Two" }).focus();
-    await user.keyboard("[ArrowRight]");
+		screen.getByRole("radio", { name: "Two" }).focus();
+		await user.keyboard("[ArrowRight]");
 
-    expect(onChange).toHaveBeenCalledWith("one");
-    expect(screen.getByRole("radio", { name: "One" })).toHaveFocus();
-  });
+		expect(onChange).toHaveBeenCalledWith("one");
+		expect(screen.getByRole("radio", { name: "One" })).toHaveFocus();
+	});
 
-  it("moves focus and selection to the previous option on ArrowLeft, wrapping at the start", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      <RadioToggle
-        value="one"
-        onChange={onChange}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("moves focus and selection to the previous option on ArrowLeft, wrapping at the start", async () => {
+		const user = userEvent.setup();
+		const onChange = vi.fn();
+		render(
+			<RadioToggle
+				value="one"
+				onChange={onChange}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    screen.getByRole("radio", { name: "One" }).focus();
-    await user.keyboard("[ArrowLeft]");
+		screen.getByRole("radio", { name: "One" }).focus();
+		await user.keyboard("[ArrowLeft]");
 
-    expect(onChange).toHaveBeenCalledWith("two");
-    expect(screen.getByRole("radio", { name: "Two" })).toHaveFocus();
-  });
+		expect(onChange).toHaveBeenCalledWith("two");
+		expect(screen.getByRole("radio", { name: "Two" })).toHaveFocus();
+	});
 
-  it("treats ArrowDown the same as ArrowRight and ArrowUp the same as ArrowLeft", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(
-      <RadioToggle
-        value="one"
-        onChange={onChange}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("treats ArrowDown the same as ArrowRight and ArrowUp the same as ArrowLeft", async () => {
+		const user = userEvent.setup();
+		const onChange = vi.fn();
+		render(
+			<RadioToggle
+				value="one"
+				onChange={onChange}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    screen.getByRole("radio", { name: "One" }).focus();
-    await user.keyboard("[ArrowDown]");
+		screen.getByRole("radio", { name: "One" }).focus();
+		await user.keyboard("[ArrowDown]");
 
-    expect(onChange).toHaveBeenLastCalledWith("two");
-  });
+		expect(onChange).toHaveBeenLastCalledWith("two");
+	});
 
-  it("renders without a label when none is passed", () => {
-    render(
-      <RadioToggle
-        value="one"
-        onChange={vi.fn()}
-        options={options}
-        ariaLabel="Example group"
-      />,
-    );
+	it("renders without a label when none is passed", () => {
+		render(
+			<RadioToggle
+				value="one"
+				onChange={vi.fn()}
+				options={options}
+				ariaLabel="Example group"
+			/>,
+		);
 
-    expect(
-      screen.getByRole("radiogroup", { name: "Example group" }),
-    ).toBeVisible();
-  });
+		expect(screen.getByRole("radiogroup", { name: "Example group" })).toBeVisible();
+	});
 });

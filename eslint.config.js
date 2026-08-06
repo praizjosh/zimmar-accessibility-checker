@@ -37,6 +37,9 @@ export default defineConfig(
       tailwindcss: {
         cssConfigPath: "./src/index.css",
       },
+      react: { 
+        version: "detect"
+      },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
