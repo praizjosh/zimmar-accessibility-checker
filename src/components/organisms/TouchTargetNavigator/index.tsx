@@ -29,10 +29,14 @@ export default function TouchTargetNavigator() {
     }
 
     const { type, severity } = issue;
-    const { characters, width, height, name, requiredSize } =
+    const { characters, width, height, name, requiredSize, requiredSizePx } =
       issue?.nodeData ?? {};
-    const isWidthFail = (width ?? 0) < MIN_TOUCH_TARGET_SIZE_AAA;
-    const isHeightFail = (height ?? 0) < MIN_TOUCH_TARGET_SIZE_AAA;
+    // requiredSizePx is the actual threshold this node was checked against
+    // at detection time (24 for AA, 44 for AAA) - falls back to the AAA
+    // value only for older stored issues that predate this field existing.
+    const minSize = requiredSizePx ?? MIN_TOUCH_TARGET_SIZE_AAA;
+    const isWidthFail = (width ?? 0) < minSize;
+    const isHeightFail = (height ?? 0) < minSize;
 
     return (
       <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl border border-rose-50/10 bg-dark-shade p-4 font-medium">
@@ -51,8 +55,7 @@ export default function TouchTargetNavigator() {
 
         <IssueDetailRow
           icon={
-            (width ?? 0) >= MIN_TOUCH_TARGET_SIZE_AAA &&
-            (height ?? 0) >= MIN_TOUCH_TARGET_SIZE_AAA ? (
+            !isWidthFail && !isHeightFail ? (
               <Check
                 aria-hidden="true"
                 className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
@@ -64,7 +67,7 @@ export default function TouchTargetNavigator() {
               />
             )
           }
-          tooltip="Touch targets should be at least 44x44 pixels to ensure they are easily tappable on mobile devices."
+          tooltip={`Touch targets should be at least ${minSize}x${minSize} pixels to ensure they are easily tappable on mobile devices.`}
           label={
             <span
               className={cn(

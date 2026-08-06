@@ -259,6 +259,7 @@ export const createTouchTargetIssue = (
       height: hasDimensions ? node.height : undefined,
       nodeType: node.type,
       requiredSize: `${minSize} x ${minSize}px`,
+      requiredSizePx: minSize,
     },
   };
 };
