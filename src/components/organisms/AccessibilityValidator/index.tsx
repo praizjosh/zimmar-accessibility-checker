@@ -1,6 +1,6 @@
+import ScanSettingsPopover from "@/components/organisms/ScanSettingsPopover";
 import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
@@ -12,30 +12,47 @@ import { Bot, ChevronRight, Radar } from "lucide-react";
 import { useState } from "react";
 
 export default function AccessibilityValidator() {
-  const { scanning, startScan, setSelectedType, navigateTo } = useIssuesStore();
+  const {
+    scanning,
+    startScan,
+    setSelectedType,
+    navigateTo,
+    targetLevel,
+    setTargetLevel,
+    deviceType,
+    setDeviceType,
+  } = useIssuesStore();
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const handleIssuesListClick = (type: IssueType) => {
-    postMessageToBackend(MESSAGE_TYPES.START_QUICKCHECK);
+    postMessageToBackend(MESSAGE_TYPES.START_QUICKCHECK, {
+      deviceType,
+      targetLevel,
+    });
     setSelectedType(type);
     navigateTo(getRouteForIssueType(type));
   };
 
   return (
     <div className="flex size-full flex-col space-y-5">
-      <Card className="border border-rose-50/10 bg-dark-shade text-white">
-        <CardContent className="flex flex-col items-center p-4">
-          <Button
-            className="w-full bg-accent"
-            title="Scan design for accessibility issues"
-            onClick={startScan}
-            disabled={scanning}
-          >
-            <Radar aria-hidden="true" className="mr-2" />
-            <span>Scan entire page</span>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex gap-2 pt-2">
+        <Button
+          className="h-full flex-1 bg-accent"
+          title="Scan design for accessibility issues"
+          onClick={startScan}
+          disabled={scanning}
+        >
+          <Radar aria-hidden="true" />
+          <span>Scan entire page</span>
+        </Button>
+
+        <ScanSettingsPopover
+          targetLevel={targetLevel}
+          onTargetLevelChange={setTargetLevel}
+          deviceType={deviceType}
+          onDeviceTypeChange={setDeviceType}
+        />
+      </div>
 
       <div className="relative m-4">
         <div className="absolute inset-0 flex items-center">

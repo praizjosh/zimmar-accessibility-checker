@@ -61,6 +61,7 @@ const defaultState = {
   currentRoute: "INDEX" as const,
   selectedType: "" as const,
   targetLevel: "AA" as const,
+  deviceType: "touch" as const,
 };
 
 describe("IssuesOverviewList", () => {
@@ -121,7 +122,10 @@ describe("IssuesOverviewList", () => {
 
     await user.click(screen.getByRole("button", { name: "Rescan for issues" }));
 
-    expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN);
+    expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN, {
+      deviceType: "touch",
+      targetLevel: "AA",
+    });
     expect(useIssuesStore.getState().scanning).toBe(true);
   });
 

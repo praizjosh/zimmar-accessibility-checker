@@ -32,6 +32,15 @@ export type contrastScore = {
  */
 export type TargetLevel = "AA" | "AAA";
 
+/**
+ * Which input the design is primarily intended for. Drives whether touch
+ * target size/spacing is checked at all (WCAG 2.5.5/2.5.8 exist because of
+ * touch/finger imprecision - there is no equivalent WCAG-mandated minimum
+ * for pointer/mouse-driven interfaces) and, when it is, which size
+ * threshold (see TOUCH_TARGET_MIN_SIZE in constants.ts) applies.
+ */
+export type DeviceType = "touch" | "pointer";
+
 export type Routes =
   | "INDEX"
   | "ISSUE_OVERVIEW_LIST_VIEW"
@@ -96,11 +105,19 @@ export interface EnhancedIssuesStore extends IssuesStore {
   currentRoute: Routes;
   /** Which WCAG level CONTRAST detection is held to across the whole scan - defaults to AA. */
   targetLevel: TargetLevel;
+  /** Which input the design targets - defaults to "touch". Read at scan time (not a live filter like targetLevel is for contrast), since it changes what the scan itself collects. */
+  deviceType: DeviceType;
   setScanning: (isScanning: boolean) => void; // Setter for scanning state
   setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
   navigateTo: (route: Routes) => void;
   setSelectedType: (type: IssueType) => void;
   setTargetLevel: (level: TargetLevel) => void;
+  setDeviceType: (device: DeviceType) => void;
+  /** Restores both settings at once from a persisted figma.clientStorage value, without re-triggering a SAVE_SCAN_SETTINGS round trip (unlike setTargetLevel/setDeviceType). */
+  hydrateScanSettings: (settings: {
+    deviceType: DeviceType;
+    targetLevel: TargetLevel;
+  }) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];
   rescanIssues: () => void; // Rescan the document for issues

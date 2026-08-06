@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { MESSAGE_TYPES } from "../constants";
 import { postMessageToBackend } from "../figmaUtils";
 import {
+  DeviceType,
   EnhancedIssuesStore,
   IssueType,
   IssueX,
@@ -18,14 +19,15 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
   selectedType: "",
   scanning: false,
   targetLevel: "AA",
+  deviceType: "touch",
   setScanning: (isScanning) =>
     set({
       scanning: isScanning,
     }),
   startScan: () => {
-    const { setScanning, navigateTo } = get();
+    const { setScanning, navigateTo, deviceType, targetLevel } = get();
     setScanning(true);
-    postMessageToBackend(MESSAGE_TYPES.SCAN);
+    postMessageToBackend(MESSAGE_TYPES.SCAN, { deviceType, targetLevel });
     navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
   },
   setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
@@ -33,7 +35,26 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
     set({ issues: newIssues });
   },
   setSelectedType: (type: IssueType) => set({ selectedType: type }),
-  setTargetLevel: (level: TargetLevel) => set({ targetLevel: level }),
+  setTargetLevel: (level: TargetLevel) => {
+    const { deviceType } = get();
+    set({ targetLevel: level });
+    postMessageToBackend(MESSAGE_TYPES.SAVE_SCAN_SETTINGS, {
+      deviceType,
+      targetLevel: level,
+    });
+  },
+  setDeviceType: (device: DeviceType) => {
+    const { targetLevel } = get();
+    set({ deviceType: device });
+    postMessageToBackend(MESSAGE_TYPES.SAVE_SCAN_SETTINGS, {
+      deviceType: device,
+      targetLevel,
+    });
+  },
+  hydrateScanSettings: (settings: {
+    deviceType: DeviceType;
+    targetLevel: TargetLevel;
+  }) => set(settings),
   getIssueGroupList: () => {
     const { issues, selectedType, targetLevel } = get();
 

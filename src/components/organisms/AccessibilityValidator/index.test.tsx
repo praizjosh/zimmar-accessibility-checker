@@ -25,6 +25,8 @@ describe("AccessibilityValidator", () => {
       scanning: false,
       currentRoute: "INDEX",
       selectedType: "",
+      targetLevel: "AA",
+      deviceType: "touch",
     });
   });
 
@@ -34,10 +36,26 @@ describe("AccessibilityValidator", () => {
 
     await user.click(screen.getByRole("button", { name: "Scan entire page" }));
 
-    expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN);
+    expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN, {
+      deviceType: "touch",
+      targetLevel: "AA",
+    });
     expect(useIssuesStore.getState().currentRoute).toBe(
       "ISSUE_OVERVIEW_LIST_VIEW",
     );
+  });
+
+  it("sends the currently selected device type and target level with the scan", async () => {
+    const user = userEvent.setup();
+    useIssuesStore.setState({ deviceType: "pointer", targetLevel: "AAA" });
+    render(<AccessibilityValidator />);
+
+    await user.click(screen.getByRole("button", { name: "Scan entire page" }));
+
+    expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN, {
+      deviceType: "pointer",
+      targetLevel: "AAA",
+    });
   });
 
   it("disables the scan button while a scan is already in progress", () => {
@@ -68,11 +86,48 @@ describe("AccessibilityValidator", () => {
 
       expect(postMessageToBackend).toHaveBeenCalledWith(
         MESSAGE_TYPES.START_QUICKCHECK,
+        { deviceType: "touch", targetLevel: "AA" },
       );
       expect(useIssuesStore.getState().selectedType).toBe(type);
       expect(useIssuesStore.getState().currentRoute).toBe(route);
     },
   );
+
+  it("keeps the scan settings tucked behind a settings trigger, not shown inline", () => {
+    render(<AccessibilityValidator />);
+
+    expect(screen.getByLabelText("Scan settings")).toBeVisible();
+    expect(screen.queryByText("WCAG target")).toBeNull();
+    expect(screen.queryByText("Designing for")).toBeNull();
+  });
+
+  it("opens the scan settings popover showing the current AA/Touch defaults", async () => {
+    const user = userEvent.setup();
+    render(<AccessibilityValidator />);
+
+    await user.click(screen.getByLabelText("Scan settings"));
+
+    expect(screen.getByRole("radio", { name: "AA" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "Touch" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+
+  it("updates targetLevel and deviceType when the popover's toggles are used", async () => {
+    const user = userEvent.setup();
+    render(<AccessibilityValidator />);
+
+    await user.click(screen.getByLabelText("Scan settings"));
+    await user.click(screen.getByRole("radio", { name: "AAA" }));
+    await user.click(screen.getByRole("radio", { name: "Pointer" }));
+
+    expect(useIssuesStore.getState().targetLevel).toBe("AAA");
+    expect(useIssuesStore.getState().deviceType).toBe("pointer");
+  });
 
   it("passes its own isExpanded state down to the alt text generator, starting collapsed", () => {
     render(<AccessibilityValidator />);

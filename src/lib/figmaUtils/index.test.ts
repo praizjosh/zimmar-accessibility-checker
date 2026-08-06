@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  MIN_TOUCH_TARGET_SIZE_AAA,
+  TOUCH_TARGET_MIN_SIZE,
+} from "@/lib/constants";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
   createContrastIssue,
@@ -10,6 +14,13 @@ import {
   isTouchTargetTooSmall,
   replaceTopmostVisibleSolidFillColor,
 } from "./index";
+
+describe("TOUCH_TARGET_MIN_SIZE", () => {
+  it("maps AA to the WCAG 2.5.8 24px minimum and AAA to the existing 44px value", () => {
+    expect(TOUCH_TARGET_MIN_SIZE.AA).toBe(24);
+    expect(TOUCH_TARGET_MIN_SIZE.AAA).toBe(MIN_TOUCH_TARGET_SIZE_AAA);
+  });
+});
 
 function fakeNode(
   id: string,
@@ -153,6 +164,13 @@ describe("isTouchTargetTooSmall", () => {
     const node = { id: "a" } as unknown as SceneNode;
 
     expect(isTouchTargetTooSmall(node)).toBe(false);
+  });
+
+  it("checks against a custom minSize instead of the default 44px", () => {
+    const node = fakeNode("a", { x: 0, y: 0, width: 30, height: 30 });
+
+    expect(isTouchTargetTooSmall(node)).toBe(true); // fails the default AAA (44px) minimum
+    expect(isTouchTargetTooSmall(node, 24)).toBe(false); // passes the AA (24px) minimum
   });
 });
 
@@ -405,5 +423,26 @@ describe("createTouchTargetIssue", () => {
 
     expect(issue?.nodeData.width).toBeUndefined();
     expect(issue?.nodeData.height).toBeUndefined();
+  });
+
+  it("reflects a custom minSize in the Size issue's description and requiredSize", () => {
+    const node = fakeTouchTargetNode("n4", "FRAME", { width: 20, height: 20 });
+
+    const issue = createTouchTargetIssue(node, "Size", 24);
+
+    expect(issue?.description).toBe(
+      "Touch target size is too small for accessibility. Should be at least 24x24 pixels.",
+    );
+    expect(issue?.nodeData.requiredSize).toBe("24 x 24px");
+  });
+
+  it("does not change the Spacing issue's description when minSize is passed", () => {
+    const node = fakeTouchTargetNode("n5", "FRAME", { width: 44, height: 44 });
+
+    const issue = createTouchTargetIssue(node, "Spacing", 24);
+
+    expect(issue?.description).toBe(
+      "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
+    );
   });
 });

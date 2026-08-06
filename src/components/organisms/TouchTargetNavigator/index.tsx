@@ -1,6 +1,6 @@
 import IssueDetailRow from "@/components/organisms/IssueDetailRow";
 import IssuesWrapper from "@/components/organisms/IssuesWrapper";
-import { MIN_TOUCH_TARGET_SIZE } from "@/lib/constants";
+import { MIN_TOUCH_TARGET_SIZE_AAA } from "@/lib/constants";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getSeverityStyles } from "@/lib/utils";
 import {
@@ -31,8 +31,8 @@ export default function TouchTargetNavigator() {
     const { type, severity } = issue;
     const { characters, width, height, name, requiredSize } =
       issue?.nodeData ?? {};
-    const isWidthFail = (width ?? 0) < MIN_TOUCH_TARGET_SIZE;
-    const isHeightFail = (height ?? 0) < MIN_TOUCH_TARGET_SIZE;
+    const isWidthFail = (width ?? 0) < MIN_TOUCH_TARGET_SIZE_AAA;
+    const isHeightFail = (height ?? 0) < MIN_TOUCH_TARGET_SIZE_AAA;
 
     return (
       <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl border border-rose-50/10 bg-dark-shade p-4 font-medium">
@@ -51,8 +51,8 @@ export default function TouchTargetNavigator() {
 
         <IssueDetailRow
           icon={
-            (width ?? 0) >= MIN_TOUCH_TARGET_SIZE &&
-            (height ?? 0) >= MIN_TOUCH_TARGET_SIZE ? (
+            (width ?? 0) >= MIN_TOUCH_TARGET_SIZE_AAA &&
+            (height ?? 0) >= MIN_TOUCH_TARGET_SIZE_AAA ? (
               <Check
                 aria-hidden="true"
                 className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
