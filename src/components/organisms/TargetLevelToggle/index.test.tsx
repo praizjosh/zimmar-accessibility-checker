@@ -15,7 +15,7 @@ describe("TargetLevelToggle", () => {
 
     expect(screen.getByText("WCAG target")).toBeVisible();
     expect(
-      screen.getByRole("radiogroup", { name: "Target compliance level" }),
+      screen.getByRole("radiogroup", { name: "WCAG target" }),
     ).toBeVisible();
   });
 

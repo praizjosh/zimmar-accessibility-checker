@@ -60,25 +60,13 @@ export type NodeDataType = {
   name: string;
   foregroundColor?: RGBColor;
   backgroundColor?: RGBColor;
-  /**
-   * Identity of the node that contributed backgroundColor, and how many
-   * other nodes share its fill - undefined when backgroundColor is
-   * undefined, or when the node came from resolving a contributing solid
-   * fill couldn't be determined. Used by the contrast "fix it" suggester
-   * (roadmap/COLOR_FIX_SUGGESTER_PLAN.md) to know which node to mutate for
-   * the "lighten background" direction, and whether to disclose that it's
-   * shared with other layers before applying.
-   */
   backgroundNodeId?: string;
   backgroundNodeName?: string;
   backgroundSharedWithCount?: number;
-  /** Needed to correctly apply WCAG's large-text ratio threshold when
-   * suggesting a contrast fix - not derivable after the fact from
-   * contrastScore alone, since a "Fail" result doesn't say whether it was
-   * measured as large or normal text. */
   isBold?: boolean;
   nodeType: NodeType | NodeType[];
   requiredSize?: string;
+  requiredSizePx?: number;
 };
 
 export interface IssueX {
@@ -99,33 +87,31 @@ export interface IssuesStore {
 }
 
 export interface EnhancedIssuesStore extends IssuesStore {
-  singleIssue: IssueX | null; // An issue instance
+  /** An instance of a detected issue. */
+  singleIssue: IssueX | null;
   scanning: boolean;
-  selectedType: IssueType | ""; // Selected issue type; "" means no scan has run yet
+  /** Selected issue type. Empty string (`""`) means no scan has run yet. */
+  selectedType: IssueType | "";
   currentRoute: Routes;
-  /** Which WCAG level CONTRAST detection is held to across the whole scan - defaults to AA. */
   targetLevel: TargetLevel;
-  /** Which input the design targets - defaults to "touch". Read at scan time (not a live filter like targetLevel is for contrast), since it changes what the scan itself collects. */
   deviceType: DeviceType;
-  setScanning: (isScanning: boolean) => void; // Setter for scanning state
-  setSingleIssue: (newIssue: IssueX | null) => void; // Setter for a single issue
+  setScanning: (isScanning: boolean) => void;
+  setSingleIssue: (newIssue: IssueX | null) => void;
   navigateTo: (route: Routes) => void;
   setSelectedType: (type: IssueType) => void;
   setTargetLevel: (level: TargetLevel) => void;
   setDeviceType: (device: DeviceType) => void;
-  /** Restores both settings at once from a persisted figma.clientStorage value, without re-triggering a SAVE_SCAN_SETTINGS round trip (unlike setTargetLevel/setDeviceType). */
   hydrateScanSettings: (settings: {
     deviceType: DeviceType;
     targetLevel: TargetLevel;
   }) => void;
   updateIssue: (id: string, updates: Partial<IssueX>) => void;
   getIssueGroupList: () => IssueX[];
-  rescanIssues: () => void; // Rescan the document for issues
+  rescanIssues: () => void;
 }
 
 export type copyToClipboardProps = {
   text: string;
   onSuccess: () => void;
-  // eslint-disable-next-line no-unused-vars
   onError: (error: Error) => void;
 };

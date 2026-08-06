@@ -8,13 +8,6 @@ import { Info } from "lucide-react";
 export type InfoPopoverProps = {
   title?: string;
   content: string;
-  /**
-   * Which edge of the trigger the content aligns to. Defaults to "end" for
-   * triggers near the panel's right edge (e.g. a header icon); triggers
-   * positioned mid-row with room to their right should pass "start" instead,
-   * otherwise the content anchors past the trigger's left side and overlaps
-   * whatever precedes it.
-   */
   align?: "start" | "center" | "end";
 };
 

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
@@ -65,6 +66,38 @@ describe("TouchTargetNavigator", () => {
     expect(screen.getByText("30.6px")).toBeVisible();
     expect(screen.getByText("44 x 44px")).toBeVisible();
     expect(screen.getByText("minor")).toBeVisible();
+  });
+
+  it("judges pass/fail and shows the tooltip against the actual detection-time size, not always 44px", async () => {
+    const user = userEvent.setup();
+    useIssuesStore.setState({
+      selectedType: "TOUCH_TARGET_SIZE",
+      issues: [
+        {
+          ...touchTargetSizeIssue,
+          nodeData: {
+            ...touchTargetSizeIssue.nodeData,
+            // Scanned at AA (24px): width (30) passes, height (20) fails -
+            // at the old hardcoded 44px both would have read as failing.
+            width: 30,
+            height: 20,
+            requiredSize: "24 x 24px",
+            requiredSizePx: 24,
+          },
+        },
+      ],
+    });
+    render(<TouchTargetNavigator />);
+
+    expect(screen.getByText("24 x 24px")).toBeVisible();
+
+    await user.click(screen.getByLabelText("More info"));
+
+    expect(
+      screen.getByText(
+        "Touch targets should be at least 24x24 pixels to ensure they are easily tappable on mobile devices.",
+      ),
+    ).toBeVisible();
   });
 
   it("prefers the node's characters over its name when both are present", () => {

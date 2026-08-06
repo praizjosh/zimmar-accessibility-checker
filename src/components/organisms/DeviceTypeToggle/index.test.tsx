@@ -15,7 +15,7 @@ describe("DeviceTypeToggle", () => {
 
     expect(screen.getByText("Designing for")).toBeVisible();
     expect(
-      screen.getByRole("radiogroup", { name: "Device type" }),
+      screen.getByRole("radiogroup", { name: "Designing for" }),
     ).toBeVisible();
   });
 

@@ -401,6 +401,7 @@ describe("createTouchTargetIssue", () => {
         height: 20,
         nodeType: "FRAME",
         requiredSize: "44 x 44px",
+        requiredSizePx: 44,
       },
     });
   });
@@ -434,6 +435,7 @@ describe("createTouchTargetIssue", () => {
       "Touch target size is too small for accessibility. Should be at least 24x24 pixels.",
     );
     expect(issue?.nodeData.requiredSize).toBe("24 x 24px");
+    expect(issue?.nodeData.requiredSizePx).toBe(24);
   });
 
   it("does not change the Spacing issue's description when minSize is passed", () => {
