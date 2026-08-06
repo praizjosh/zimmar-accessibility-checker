@@ -53,6 +53,20 @@ const defaultState = {
   singleIssue: null,
   currentIndex: 0,
   selectedType: "" as const,
+  targetLevel: "AA" as const,
+};
+
+// #767676 on white is the commonly-cited "AA minimum grey" reference pair -
+// 4.54:1, clears AA's 4.5 but not AAA's 7 for normal-size text.
+const aaPassingAaaFailingContrastIssue: IssueX = {
+  ...contrastIssue,
+  nodeData: {
+    ...contrastIssue.nodeData,
+    id: "c2",
+    foregroundColor: [118, 118, 118],
+    backgroundColor: [255, 255, 255],
+    contrastScore: { compliance: "AA", ratio: 4.54 },
+  },
 };
 
 describe("IssuesNavigator", () => {
@@ -171,6 +185,31 @@ describe("IssuesNavigator", () => {
             },
           },
         ],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.queryByText("Suggested fixes")).toBeNull();
+    });
+
+    it("renders for an AA-passing/AAA-failing issue once the detection target level is AAA", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [aaPassingAaaFailingContrastIssue],
+        targetLevel: "AAA",
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.getByText("Suggested fixes")).toBeVisible();
+      expect(
+        screen.getAllByRole("button", { name: /^Apply$/ }).length,
+      ).toBeGreaterThan(0);
+    });
+
+    it("still does not render an AA-passing/AAA-failing issue while the detection target level is AA", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [aaPassingAaaFailingContrastIssue],
+        targetLevel: "AA",
       });
       render(<IssuesNavigator />);
 

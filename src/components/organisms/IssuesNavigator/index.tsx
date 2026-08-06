@@ -13,6 +13,7 @@ import { IssueX, TargetLevel } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
   cn,
+  contrastFailsTargetLevel,
   figmaRGBtoHex,
   getContrastCompliance,
   getSeverityStyles,
@@ -28,8 +29,19 @@ export default function IssuesNavigator() {
     updateIssue,
     getIssueGroupList,
     setSingleIssue,
+    targetLevel: detectionTargetLevel,
   } = useIssuesStore();
-  const [targetLevel, setTargetLevel] = useState<TargetLevel>("AA");
+  // Independent from detectionTargetLevel above once mounted - the
+  // fix-suggester's own "what should my suggested fix aim for" choice can
+  // be adjusted freely afterward via its own toggle - but it *initializes*
+  // from detectionTargetLevel rather than hardcoding "AA", since that's the
+  // level that actually got this issue flagged. Hardcoding "AA" here meant
+  // an issue only failing at AAA (detectionTargetLevel === "AAA") would
+  // open showing "no AA-compliant suggestion found" - true but useless,
+  // since the pair already passes AA; the level a fix should target is the
+  // one the user was told is failing, not always the least strict one.
+  const [targetLevel, setTargetLevel] =
+    useState<TargetLevel>(detectionTargetLevel);
 
   const issueGroupList: IssueX[] = getIssueGroupList();
   const currentIssue: IssueX = issueGroupList[currentIndex] ?? {};
@@ -84,7 +96,8 @@ export default function IssuesNavigator() {
     const fontSizeIsValid = getFontSize() >= MIN_FONT_SIZE;
 
     const isContrastFail =
-      type === "CONTRAST" && contrastScore?.compliance === "Fail";
+      type === "CONTRAST" &&
+      contrastFailsTargetLevel(contrastScore?.compliance, detectionTargetLevel);
     const foregroundSuggestion =
       isContrastFail && foregroundColor && backgroundColor
         ? suggestAccessibleColor(
@@ -296,7 +309,7 @@ export default function IssuesNavigator() {
 
               <IssueDetailRow
                 icon={
-                  contrastScore?.compliance === "Fail" ? (
+                  isContrastFail ? (
                     <X
                       aria-hidden="true"
                       className={cn(
@@ -314,7 +327,7 @@ export default function IssuesNavigator() {
                   <span
                     className={cn(
                       "text-sm",
-                      contrastScore?.compliance === "Fail" &&
+                      isContrastFail &&
                         getSeverityStyles(severity, { isBold: true }),
                     )}
                   >
@@ -325,7 +338,7 @@ export default function IssuesNavigator() {
                   <span
                     className={cn(
                       "font-bold ml-2.5 text-base",
-                      contrastScore?.compliance === "Fail" &&
+                      isContrastFail &&
                         getSeverityStyles(severity, { isBold: true }),
                     )}
                   >
@@ -333,14 +346,14 @@ export default function IssuesNavigator() {
                   </span>
                 }
                 tooltip={
-                  contrastScore?.compliance === "Fail" &&
+                  isContrastFail &&
                   "The color contrast between the text and the background on this screen is insufficient to meet the enhanced contrast requirements. In some edge cases, the test may fail when the background element is a “GROUP,” “COMPONENT,” or “INSTANCE. Other times, a background couldn't be detected."
                 }
               />
 
               <IssueDetailRow
                 icon={
-                  contrastScore?.compliance === "Fail" ? (
+                  isContrastFail ? (
                     <X
                       aria-hidden="true"
                       className={cn(
@@ -358,7 +371,7 @@ export default function IssuesNavigator() {
                   <span
                     className={cn(
                       "text-sm",
-                      contrastScore?.compliance === "Fail" &&
+                      isContrastFail &&
                         getSeverityStyles(severity, { isBold: true }),
                     )}
                   >
@@ -369,7 +382,7 @@ export default function IssuesNavigator() {
                   <span
                     className={cn(
                       "font-bold ml-2.5 text-base",
-                      contrastScore?.compliance === "Fail" &&
+                      isContrastFail &&
                         getSeverityStyles(severity, { isBold: true }),
                     )}
                   >
