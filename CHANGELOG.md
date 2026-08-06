@@ -1,8 +1,15 @@
 # Changelog
 
-All notable changes to this plugin are documented here. Versions correspond to `package.json`.
+All notable changes to this plugin are documented here.
 
-## [1.1.0] - 06/08/2026
+Two version numbers appear in this project and they are **not** the same thing:
+
+- `package.json`'s semver (e.g. `1.1.0`) tracks the codebase/npm tooling and bumps with each dev release cut from this repo.
+- Figma's own **"Version N"** (visible on the plugin's Community page under "Version history") auto-increments once per publish and is entirely Figma-managed — it has no relationship to semver. Entries below reference both where known, so either can be used to look up the same release.
+
+Versions prior to Figma's Version 11 are not itemized here — this changelog was only introduced retroactively (06/08/2026) and earlier release-to-version mapping isn't available.
+
+## [1.1.0] - Figma Version 12 - 06/08/2026
 
 ### Added
 
@@ -15,11 +22,9 @@ All notable changes to this plugin are documented here. Versions correspond to `
 
 - Replaced hover tooltips throughout the issue panels with click-to-open popovers, so explanatory text no longer disappears before you've finished reading it. (#31, #36)
 - Consistent card border styling across all issue-detail panels. (#40)
-- Alt Text Generator now uses the Clipboard API for copying, falling back only where the Figma iframe requires it. (#13)
 
 ### Fixed
 
-- Contrast detection now reads the topmost visible fill colour on a layer instead of always the first one in its fill list, fixing inaccurate contrast readings on layers with multiple fills. (#17)
 - Consolidated severity colour styling, fixing inconsistencies across issue panels. (#28)
 
 ### Accessibility
@@ -30,6 +35,13 @@ All notable changes to this plugin are documented here. Versions correspond to `
 ### Security
 
 - Resolved all outstanding dependency vulnerabilities flagged by Dependabot. None were reachable in the shipped plugin bundle (all were build-time tooling), but all are now patched. (#39)
+
+## Figma Version 11 - 04/08/2026
+
+### Fixed
+
+- Contrast checks occasionally read the wrong text colour on layers with multiple fills; contrast is now measured against the actual topmost visible colour, matching what's rendered on screen. (#17)
+- "Copy to clipboard" in the Alt Text Generator wasn't working reliably inside Figma's plugin panel; it now falls back automatically when the browser Clipboard API isn't available. (#13)
 
 ## [1.0.0] - Initial release
 
