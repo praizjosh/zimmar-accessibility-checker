@@ -1,6 +1,8 @@
+import ContrastFixSuggester, {
+  TargetLevel,
+} from "@/components/organisms/ContrastFixSuggester";
 import IssueDetailRow from "@/components/organisms/IssueDetailRow";
 import IssuesWrapper from "@/components/organisms/IssuesWrapper";
-import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import {
   ColorFixDirection,
@@ -20,8 +22,6 @@ import {
 import { CaseSensitive, Check, OctagonAlert, Palette, X } from "lucide-react";
 import { useState } from "react";
 
-const TARGET_LEVELS = ["AA", "AAA"] as const;
-
 export default function IssuesNavigator() {
   const {
     currentIndex,
@@ -31,7 +31,7 @@ export default function IssuesNavigator() {
     getIssueGroupList,
     setSingleIssue,
   } = useIssuesStore();
-  const [targetLevel, setTargetLevel] = useState<"AA" | "AAA">("AA");
+  const [targetLevel, setTargetLevel] = useState<TargetLevel>("AA");
 
   const issueGroupList: IssueX[] = getIssueGroupList();
   const currentIssue: IssueX = issueGroupList[currentIndex] ?? {};
@@ -400,157 +400,15 @@ export default function IssuesNavigator() {
         </div>
 
         {isContrastFail && (
-          <div className="grid w-full rounded-xl border border-rose-50/10 bg-dark-shade p-3">
-            <div className="mb-2 flex items-center justify-between gap-4">
-              <h4 className="text-sm font-medium text-grey">Suggested fixes</h4>
-              <div
-                role="radiogroup"
-                aria-label="Target compliance level"
-                className="inline-flex items-center gap-x-1"
-              >
-                {TARGET_LEVELS.map((level) => (
-                  <Button
-                    key={level}
-                    type="button"
-                    title={`Target WCAG ${level}`}
-                    role="radio"
-                    aria-checked={targetLevel === level}
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-6 px-2 text-xs",
-                      targetLevel === level &&
-                        "bg-dark text-accent ring-1 ring-accent",
-                    )}
-                    onClick={() => setTargetLevel(level)}
-                  >
-                    {level}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {!foregroundSuggestion && !backgroundSuggestion ? (
-              <p className="text-xs text-grey">
-                No {targetLevel}-compliant suggestion found for this pair.
-              </p>
-            ) : (
-              <div className="divide-y divide-rose-50/5">
-                {foregroundSuggestion && (
-                  <div className="py-1.5 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-x-2">
-                        <Button
-                          type="button"
-                          variant="nude"
-                          size="icon"
-                          title="Select the text layer in Figma"
-                          className="size-4 shrink-0 rounded border border-white/20 p-0"
-                          style={{
-                            backgroundColor: figmaRGBtoHex(
-                              foregroundSuggestion.color,
-                            ),
-                          }}
-                          onClick={() => handleSelectSwatchNode("foreground")}
-                        />
-                        {foregroundSuggestion.adjustment === "darker"
-                          ? "Darken"
-                          : "Lighten"}{" "}
-                        text
-                      </span>
-                      <span className="inline-flex items-center gap-x-1 font-mono text-green-500">
-                        <Check aria-hidden="true" className="size-4" />
-                        {foregroundSuggestion.ratio.toFixed(2)}:1
-                      </span>
-                    </div>
-                    <div className="mt-1.5 flex justify-end">
-                      <Button
-                        type="button"
-                        title={`${
-                          foregroundSuggestion.adjustment === "darker"
-                            ? "Darken"
-                            : "Lighten"
-                        } the text colour`}
-                        size="sm"
-                        variant="default"
-                        className="h-6 px-3 text-xs"
-                        onClick={() =>
-                          handleApplyColorSuggestion(
-                            "foreground",
-                            foregroundSuggestion,
-                          )
-                        }
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {backgroundSuggestion && (
-                  <div className="py-1.5 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-x-2">
-                        <Button
-                          type="button"
-                          variant="nude"
-                          size="icon"
-                          title="Select the background layer in Figma"
-                          className="size-4 shrink-0 rounded border border-white/20 p-0"
-                          style={{
-                            backgroundColor: figmaRGBtoHex(
-                              backgroundSuggestion.color,
-                            ),
-                          }}
-                          onClick={() => handleSelectSwatchNode("background")}
-                        />
-                        {backgroundSuggestion.adjustment === "darker"
-                          ? "Darken"
-                          : "Lighten"}{" "}
-                        background
-                      </span>
-                      <span className="inline-flex items-center gap-x-1 font-mono text-green-500">
-                        <Check aria-hidden="true" className="size-4" />
-                        {backgroundSuggestion.ratio.toFixed(2)}:1
-                      </span>
-                    </div>
-                    {Boolean(backgroundSharedWithCount) && (
-                      <p
-                        className={cn(
-                          "mt-1 text-xs",
-                          getSeverityStyles("minor"),
-                        )}
-                      >
-                        Shared with {backgroundSharedWithCount} other layer
-                        {backgroundSharedWithCount === 1 ? "" : "s"}
-                      </p>
-                    )}
-                    <div className="mt-1.5 flex justify-end">
-                      <Button
-                        type="button"
-                        title={`${
-                          backgroundSuggestion.adjustment === "darker"
-                            ? "Darken"
-                            : "Lighten"
-                        } the background colour`}
-                        size="sm"
-                        variant="default"
-                        className="h-6 px-3 text-xs"
-                        onClick={() =>
-                          handleApplyColorSuggestion(
-                            "background",
-                            backgroundSuggestion,
-                          )
-                        }
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <ContrastFixSuggester
+            targetLevel={targetLevel}
+            onTargetLevelChange={setTargetLevel}
+            foregroundSuggestion={foregroundSuggestion}
+            backgroundSuggestion={backgroundSuggestion}
+            backgroundSharedWithCount={backgroundSharedWithCount}
+            onSelectSwatchNode={handleSelectSwatchNode}
+            onApplySuggestion={handleApplyColorSuggestion}
+          />
         )}
       </>
     );
