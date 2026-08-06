@@ -10,6 +10,7 @@ import {
 import { RGBColor, rgb } from "wcag-contrast";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
+  contrastFailsTargetLevel,
   copyToClipboard,
   getBackgroundColorForNode,
   getContrastCompliance,
@@ -338,6 +339,33 @@ describe("getRouteForIssueType", () => {
   it("routes everything else to ISSUE_LIST_VIEW", () => {
     expect(getRouteForIssueType("CONTRAST")).toBe("ISSUE_LIST_VIEW");
     expect(getRouteForIssueType("TYPOGRAPHY")).toBe("ISSUE_LIST_VIEW");
+  });
+});
+
+describe("contrastFailsTargetLevel", () => {
+  it("flags a Fail result at both AA and AAA", () => {
+    expect(contrastFailsTargetLevel("Fail", "AA")).toBe(true);
+    expect(contrastFailsTargetLevel("Fail", "AAA")).toBe(true);
+  });
+
+  it("does not flag an AA-passing result when the target is AA", () => {
+    expect(contrastFailsTargetLevel("AA", "AA")).toBe(false);
+    expect(contrastFailsTargetLevel("AA Large", "AA")).toBe(false);
+  });
+
+  it("flags an AA-only result as failing when the target is AAA", () => {
+    expect(contrastFailsTargetLevel("AA", "AAA")).toBe(true);
+    expect(contrastFailsTargetLevel("AA Large", "AAA")).toBe(true);
+  });
+
+  it("does not flag an AAA-passing result when the target is AAA", () => {
+    expect(contrastFailsTargetLevel("AAA", "AAA")).toBe(false);
+    expect(contrastFailsTargetLevel("AAA Large", "AAA")).toBe(false);
+  });
+
+  it("does not flag when there is no compliance result yet", () => {
+    expect(contrastFailsTargetLevel(undefined, "AA")).toBe(false);
+    expect(contrastFailsTargetLevel(undefined, "AAA")).toBe(false);
   });
 });
 

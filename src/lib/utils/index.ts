@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { rgb, RGBColor, score } from "wcag-contrast";
-import { copyToClipboardProps, IssueType, Routes } from "../types";
+import { copyToClipboardProps, IssueType, Routes, TargetLevel } from "../types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,6 +16,27 @@ export function getRouteForIssueType(type: IssueType): Routes {
   return type === "TOUCH_TARGET_SIZE" || type === "TOUCH_TARGET_SPACING"
     ? "TOUCH_TARGET_ISSUE_LIST_VIEW"
     : "ISSUE_LIST_VIEW";
+}
+
+/**
+ * Whether a contrast result should be flagged as a failing issue at the
+ * given target level. `getContrastCompliance` reports the highest tier a
+ * pair actually achieved ("AAA"/"AA"/"AAA Large"/"AA Large"/"Fail"), not a
+ * pass/fail against one specific level - text that clears AA but not AAA
+ * comes back as "AA", which is a real issue if the target is AAA but not
+ * if it's AA. `compliance` is untyped (contrastScore.compliance: string)
+ * since it can be undefined when no contrast score exists yet.
+ */
+export function contrastFailsTargetLevel(
+  compliance: string | undefined,
+  targetLevel: TargetLevel,
+): boolean {
+  if (!compliance) return false;
+  if (compliance === "Fail") return true;
+  if (targetLevel === "AAA") {
+    return compliance === "AA" || compliance === "AA Large";
+  }
+  return false;
 }
 
 // Global state

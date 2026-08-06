@@ -1,3 +1,4 @@
+import TargetLevelToggle from "@/components/organisms/TargetLevelToggle";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
@@ -5,7 +6,12 @@ import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { cn, getRouteForIssueType, getSeverityStyles } from "@/lib/utils";
+import {
+  cn,
+  contrastFailsTargetLevel,
+  getRouteForIssueType,
+  getSeverityStyles,
+} from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import { useEffect } from "react";
@@ -22,20 +28,22 @@ export default function IssuesOverviewList() {
     setSelectedType,
     navigateTo,
     rescanIssues,
+    targetLevel,
+    setTargetLevel,
   } = useIssuesStore();
 
   const issuesGroupListRecords = issues.filter((issue) => {
-    if (issue.type && ISSUES_TYPES.includes(issue.type)) {
-      if (
-        issue.type === "CONTRAST" &&
-        issue.nodeData.contrastScore?.compliance === "Fail"
-      ) {
-        return true;
-      }
-      return issue.type !== "CONTRAST";
+    if (!issue.type || !ISSUES_TYPES.includes(issue.type)) return false;
+    if (issue.type === "CONTRAST") {
+      return contrastFailsTargetLevel(
+        issue.nodeData.contrastScore?.compliance,
+        targetLevel,
+      );
     }
-    return false;
+    return true;
   });
+
+  const hasContrastIssues = issues.some((issue) => issue.type === "CONTRAST");
 
   // Listen for messages from the backend
   useEffect(() => {
@@ -185,6 +193,18 @@ export default function IssuesOverviewList() {
 
       {!scanning ? (
         <div className="flex size-full flex-col">
+          {hasContrastIssues && (
+            <TargetLevelToggle
+              value={targetLevel}
+              onChange={setTargetLevel}
+              label={
+                <span className="text-sm font-medium text-grey">
+                  WCAG target
+                </span>
+              }
+            />
+          )}
+
           <Tabs defaultValue="issues">
             <TabsList className="mb-4 mt-2 flex space-x-4 bg-dark-shade !py-6">
               <TabsTrigger value="issues">Issues</TabsTrigger>

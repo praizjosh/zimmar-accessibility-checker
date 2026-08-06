@@ -136,4 +136,52 @@ describe("useIssuesStore.getIssueGroupList", () => {
 
     expect(useIssuesStore.getState().getIssueGroupList()).toEqual([]);
   });
+
+  it("defaults targetLevel to AA, so only Fail-compliance CONTRAST issues are flagged", () => {
+    useIssuesStore.setState({
+      issues: [
+        fakeContrastIssue("fail", "Fail"),
+        fakeContrastIssue("aa-pass", "AA"),
+        fakeContrastIssue("aaa-pass", "AAA"),
+      ],
+      selectedType: "CONTRAST",
+    });
+
+    expect(useIssuesStore.getState().targetLevel).toBe("AA");
+    expect(
+      useIssuesStore
+        .getState()
+        .getIssueGroupList()
+        .map((issue) => issue.nodeData.id),
+    ).toEqual(["fail"]);
+  });
+
+  it("flags AA-only compliant CONTRAST issues once the target level is AAA", () => {
+    useIssuesStore.setState({
+      issues: [
+        fakeContrastIssue("fail", "Fail"),
+        fakeContrastIssue("aa-pass", "AA"),
+        fakeContrastIssue("aaa-pass", "AAA"),
+      ],
+      selectedType: "CONTRAST",
+      targetLevel: "AAA",
+    });
+
+    expect(
+      useIssuesStore
+        .getState()
+        .getIssueGroupList()
+        .map((issue) => issue.nodeData.id),
+    ).toEqual(["fail", "aa-pass"]);
+  });
+});
+
+describe("useIssuesStore.setTargetLevel", () => {
+  it("updates targetLevel", () => {
+    useIssuesStore.setState({ targetLevel: "AA" });
+
+    useIssuesStore.getState().setTargetLevel("AAA");
+
+    expect(useIssuesStore.getState().targetLevel).toBe("AAA");
+  });
 });

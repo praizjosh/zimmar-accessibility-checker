@@ -1,11 +1,9 @@
+import TargetLevelToggle from "@/components/organisms/TargetLevelToggle";
 import { Button } from "@/components/ui/button";
 import { ColorFixDirection, ColorFixSuggestion } from "@/lib/colorFix";
+import { TargetLevel } from "@/lib/types";
 import { cn, figmaRGBtoHex, getSeverityStyles } from "@/lib/utils";
 import { Check } from "lucide-react";
-
-export type TargetLevel = "AA" | "AAA";
-
-const TARGET_LEVELS: readonly TargetLevel[] = ["AA", "AAA"] as const;
 
 export type ContrastFixSuggesterProps = {
   targetLevel: TargetLevel;
@@ -31,33 +29,14 @@ export default function ContrastFixSuggester({
 }: ContrastFixSuggesterProps) {
   return (
     <div className="grid w-full rounded-xl border border-rose-50/10 bg-dark-shade p-3">
-      <div className="mb-2 flex items-center justify-between gap-4">
-        <h4 className="text-sm font-medium text-grey">Suggested fixes</h4>
-        <div
-          role="radiogroup"
-          aria-label="Target compliance level"
-          className="inline-flex items-center gap-x-1"
-        >
-          {TARGET_LEVELS.map((level) => (
-            <Button
-              key={level}
-              type="button"
-              title={`Target WCAG ${level}`}
-              role="radio"
-              aria-checked={targetLevel === level}
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-6 px-2 text-xs",
-                targetLevel === level &&
-                  "bg-dark text-accent ring-1 ring-accent",
-              )}
-              onClick={() => onTargetLevelChange(level)}
-            >
-              {level}
-            </Button>
-          ))}
-        </div>
+      <div className="mb-2">
+        <TargetLevelToggle
+          value={targetLevel}
+          onChange={onTargetLevelChange}
+          label={
+            <h4 className="text-sm font-medium text-grey">Suggested fixes</h4>
+          }
+        />
       </div>
 
       {!foregroundSuggestion && !backgroundSuggestion ? (

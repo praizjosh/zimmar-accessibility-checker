@@ -1,5 +1,5 @@
 import ISSUE_TYPE_LABELS from "./issueTypeLabels";
-import { IssueType } from "./types";
+import { IssueType, TargetLevel } from "./types";
 
 export const MESSAGE_TYPES = {
   START_QUICKCHECK: "start-quickcheck",
@@ -29,3 +29,5 @@ export const MIN_TOUCH_TARGET_SIZE: number = 44;
 export const MIN_TOUCH_TARGET_SPACING: number = 8;
 
 export const TOUCH_TARGET_KEYWORDS = ["btn", "button", "link", "touch"];
+
+export const TARGET_LEVELS: readonly TargetLevel[] = ["AA", "AAA"] as const;
