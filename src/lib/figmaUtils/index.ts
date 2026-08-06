@@ -2,7 +2,7 @@ import { contrastScore, IssueX } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
 import {
   MESSAGE_TYPES,
-  MIN_TOUCH_TARGET_SIZE,
+  MIN_TOUCH_TARGET_SIZE_AAA,
   MIN_TOUCH_TARGET_SPACING,
   TOUCH_TARGET_KEYWORDS,
 } from "../constants";
@@ -152,13 +152,17 @@ export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
  * Checks if a SceneNode's size is below the minimum touch target size.
  *
  * @param {SceneNode} node - The node to analyze.
+ * @param {number} [minSize] - The minimum size in px to check against; defaults to the WCAG 2.5.5 (AAA) value. Pass TOUCH_TARGET_MIN_SIZE[targetLevel] (constants.ts) to check against the caller's selected WCAG level instead.
  * @returns {boolean} True if the node is too small, otherwise false.
  */
-export const isTouchTargetTooSmall = (node: SceneNode): boolean => {
+export const isTouchTargetTooSmall = (
+  node: SceneNode,
+  minSize: number = MIN_TOUCH_TARGET_SIZE_AAA,
+): boolean => {
   return (
     "width" in node &&
     "height" in node &&
-    (node.width < MIN_TOUCH_TARGET_SIZE || node.height < MIN_TOUCH_TARGET_SIZE)
+    (node.width < minSize || node.height < minSize)
   );
 };
 
@@ -225,11 +229,13 @@ export const isTouchTargetTooClose = (
  *
  * @param {SceneNode} node - The Figma SceneNode to analyze.
  * @param {"Size" | "Spacing"} issueType - The type of issue ("Size" or "Spacing").
+ * @param {number} [minSize] - The minimum size in px this node was checked against; defaults to the WCAG 2.5.5 (AAA) value. Only affects the "Size" issue's description/requiredSize text - spacing isn't level-dependent.
  * @returns {IssueX} An issue object detailing the touch target issue.
  */
 export const createTouchTargetIssue = (
   node: SceneNode,
   issueType: "Size" | "Spacing",
+  minSize: number = MIN_TOUCH_TARGET_SIZE_AAA,
 ): IssueX | null => {
   if (!node || typeof node !== "object" || !node.id || !node.name) {
     console.error("Invalid node passed to createTouchTargetIssue:", node);
@@ -242,7 +248,7 @@ export const createTouchTargetIssue = (
   return {
     description:
       issueType === "Size"
-        ? "Touch target size is too small for accessibility. Should be at least 44x44 pixels."
+        ? `Touch target size is too small for accessibility. Should be at least ${minSize}x${minSize} pixels.`
         : "Spacing between touch targets is too small for accessibility. Should be at least 8px to the nearest element in all directions.",
     severity: "minor",
     type: issueType === "Size" ? "TOUCH_TARGET_SIZE" : "TOUCH_TARGET_SPACING",
@@ -252,7 +258,7 @@ export const createTouchTargetIssue = (
       width: hasDimensions ? node.width : undefined,
       height: hasDimensions ? node.height : undefined,
       nodeType: node.type,
-      requiredSize: `${MIN_TOUCH_TARGET_SIZE} x ${MIN_TOUCH_TARGET_SIZE}px`,
+      requiredSize: `${minSize} x ${minSize}px`,
     },
   };
 };

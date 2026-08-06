@@ -50,51 +50,15 @@ describe("TargetLevelToggle", () => {
     ).toBeVisible();
   });
 
-  it("only tabs to the checked radio, keeping the other out of the tab sequence", () => {
-    render(<TargetLevelToggle value="AA" onChange={vi.fn()} />);
-
-    expect(screen.getByRole("radio", { name: "AA" })).toHaveAttribute(
-      "tabIndex",
-      "0",
-    );
-    expect(screen.getByRole("radio", { name: "AAA" })).toHaveAttribute(
-      "tabIndex",
-      "-1",
-    );
-  });
-
-  it("moves focus and selection to the next radio on ArrowRight, wrapping at the end", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(<TargetLevelToggle value="AAA" onChange={onChange} />);
-
-    screen.getByRole("radio", { name: "AAA" }).focus();
-    await user.keyboard("[ArrowRight]");
-
-    expect(onChange).toHaveBeenCalledWith("AA");
-    expect(screen.getByRole("radio", { name: "AA" })).toHaveFocus();
-  });
-
-  it("moves focus and selection to the previous radio on ArrowLeft, wrapping at the start", async () => {
+  it("wires arrow-key navigation through to the shared RadioToggle", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<TargetLevelToggle value="AA" onChange={onChange} />);
 
     screen.getByRole("radio", { name: "AA" }).focus();
-    await user.keyboard("[ArrowLeft]");
+    await user.keyboard("[ArrowRight]");
 
     expect(onChange).toHaveBeenCalledWith("AAA");
     expect(screen.getByRole("radio", { name: "AAA" })).toHaveFocus();
-  });
-
-  it("treats ArrowDown the same as ArrowRight and ArrowUp the same as ArrowLeft", async () => {
-    const user = userEvent.setup();
-    const onChange = vi.fn();
-    render(<TargetLevelToggle value="AA" onChange={onChange} />);
-
-    screen.getByRole("radio", { name: "AA" }).focus();
-    await user.keyboard("[ArrowDown]");
-
-    expect(onChange).toHaveBeenLastCalledWith("AAA");
   });
 });

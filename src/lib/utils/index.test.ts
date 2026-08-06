@@ -15,8 +15,10 @@ import {
   getBackgroundColorForNode,
   getContrastCompliance,
   getRouteForIssueType,
+  getScanSettings,
   getSeverityStyles,
   isBoldFont,
+  setScanSettings,
 } from "./index";
 
 const WHITE: RGBColor = [255, 255, 255];
@@ -366,6 +368,26 @@ describe("contrastFailsTargetLevel", () => {
   it("does not flag when there is no compliance result yet", () => {
     expect(contrastFailsTargetLevel(undefined, "AA")).toBe(false);
     expect(contrastFailsTargetLevel(undefined, "AAA")).toBe(false);
+  });
+});
+
+describe("getScanSettings / setScanSettings", () => {
+  it("defaults to touch/AA before any scan settings have been sent", () => {
+    expect(getScanSettings()).toEqual({
+      deviceType: "touch",
+      targetLevel: "AA",
+    });
+  });
+
+  it("returns whatever was last set", () => {
+    setScanSettings({ deviceType: "pointer", targetLevel: "AAA" });
+
+    expect(getScanSettings()).toEqual({
+      deviceType: "pointer",
+      targetLevel: "AAA",
+    });
+
+    setScanSettings({ deviceType: "touch", targetLevel: "AA" });
   });
 });
 

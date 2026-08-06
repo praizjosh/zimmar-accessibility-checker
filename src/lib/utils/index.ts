@@ -1,7 +1,13 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { rgb, RGBColor, score } from "wcag-contrast";
-import { copyToClipboardProps, IssueType, Routes, TargetLevel } from "../types";
+import {
+  copyToClipboardProps,
+  DeviceType,
+  IssueType,
+  Routes,
+  TargetLevel,
+} from "../types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -42,12 +48,34 @@ export function contrastFailsTargetLevel(
 // Global state
 const state = {
   IsQuickCheckModeActive: false,
+  scanSettings: { deviceType: "touch", targetLevel: "AA" } as {
+    deviceType: DeviceType;
+    targetLevel: TargetLevel;
+  },
 };
 
 export const getIsQuickCheckModeActive = (): boolean =>
   state.IsQuickCheckModeActive;
 export const setIsQuickCheckModeActive = (value: boolean) => {
   state.IsQuickCheckModeActive = value;
+};
+
+/**
+ * The device type/target level most recently sent from the UI (via a SCAN
+ * or START_QUICKCHECK message) - cached here so the selectionchange
+ * listener in plugin/code.ts, which fires without a message payload of its
+ * own, can check newly-selected nodes against the same settings the user
+ * last chose rather than always falling back to the defaults.
+ */
+export const getScanSettings = (): {
+  deviceType: DeviceType;
+  targetLevel: TargetLevel;
+} => state.scanSettings;
+export const setScanSettings = (settings: {
+  deviceType: DeviceType;
+  targetLevel: TargetLevel;
+}) => {
+  state.scanSettings = settings;
 };
 
 export const getSeverityStyles = (

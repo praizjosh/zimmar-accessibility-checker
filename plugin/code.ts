@@ -7,7 +7,12 @@ import {
 } from "@create-figma-plugin/utilities";
 import { RGBColor } from "wcag-contrast";
 
-import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
+import {
+  MESSAGE_TYPES,
+  MIN_FONT_SIZE,
+  SCAN_SETTINGS_STORAGE_KEY,
+  TOUCH_TARGET_MIN_SIZE,
+} from "@/lib/constants";
 import {
   analyzeTextNodeForContrastIssue,
   createTouchTargetIssue,
@@ -19,21 +24,46 @@ import {
   replaceTopmostVisibleSolidFillColor,
 } from "@/lib/figmaUtils";
 import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
-import { IssueX } from "@/lib/types";
+import { DeviceType, IssueX, TargetLevel } from "@/lib/types";
 import {
   figmaRGBtoHex,
   getIsQuickCheckModeActive,
+  getScanSettings,
   setIsQuickCheckModeActive,
+  setScanSettings,
 } from "@/lib/utils";
+
+type ScanSettings = {
+  deviceType?: DeviceType;
+  targetLevel?: TargetLevel;
+};
 
 figma.showUI(__html__);
 figma.ui.resize(375, 550);
+
+// Restore the last-saved scan settings (if any) before the UI ever asks -
+// clientStorage is per-plugin-per-user and persists across files/restarts,
+// unlike the in-memory Zustand store the UI iframe gets recreated with
+// every time the plugin reopens.
+(async () => {
+  const stored = (await figma.clientStorage.getAsync(
+    SCAN_SETTINGS_STORAGE_KEY,
+  )) as { deviceType?: DeviceType; targetLevel?: TargetLevel } | undefined;
+
+  const settings = {
+    deviceType: stored?.deviceType ?? "touch",
+    targetLevel: stored?.targetLevel ?? "AA",
+  };
+
+  setScanSettings(settings);
+  postMessageToUI(MESSAGE_TYPES.LOAD_SCAN_SETTINGS, settings);
+})();
 
 figma.ui.onmessage = async (message) => {
   try {
     switch (message.type) {
       case MESSAGE_TYPES.START_QUICKCHECK:
-        handleStartQuickCheck();
+        handleStartQuickCheck(message);
         break;
 
       case MESSAGE_TYPES.CANCEL_QUICKCHECK:
@@ -41,7 +71,11 @@ figma.ui.onmessage = async (message) => {
         break;
 
       case MESSAGE_TYPES.SCAN:
-        await handleScan();
+        await handleScan(message);
+        break;
+
+      case MESSAGE_TYPES.SAVE_SCAN_SETTINGS:
+        await handleSaveScanSettings(message);
         break;
 
       case MESSAGE_TYPES.UPDATE_FONT_SIZE:
@@ -91,7 +125,12 @@ figma.on("selectionchange", async () => {
   }
 
   try {
-    const detectedIssues = await detectIssuesInSelection(selection);
+    const { deviceType, targetLevel } = getScanSettings();
+    const detectedIssues = await detectIssuesInSelection(
+      selection,
+      deviceType,
+      targetLevel,
+    );
     if (detectedIssues.length) {
       postMessageToUI(MESSAGE_TYPES.DETECTED_ISSUE, detectedIssues);
     }
@@ -100,7 +139,10 @@ figma.on("selectionchange", async () => {
   }
 });
 
-async function handleStartQuickCheck() {
+async function handleStartQuickCheck(message: ScanSettings) {
+  const deviceType = message.deviceType ?? "touch";
+  const targetLevel = message.targetLevel ?? "AA";
+  setScanSettings({ deviceType, targetLevel });
   setIsQuickCheckModeActive(true);
 
   postMessageToUI(MESSAGE_TYPES.QUICKCHECK_ACTIVE, getIsQuickCheckModeActive());
@@ -113,7 +155,11 @@ async function handleStartQuickCheck() {
   }
 
   try {
-    const detectedIssues = await detectIssuesInSelection(selection);
+    const detectedIssues = await detectIssuesInSelection(
+      selection,
+      deviceType,
+      targetLevel,
+    );
     if (detectedIssues.length) {
       postMessageToUI(MESSAGE_TYPES.DETECTED_ISSUE, detectedIssues);
     }
@@ -130,7 +176,11 @@ function isScannable(node: SceneNode): boolean {
   return isVisible(node) && !isLocked(node);
 }
 
-async function handleScan() {
+async function handleScan(message: ScanSettings) {
+  const deviceType = message.deviceType ?? "touch";
+  const targetLevel = message.targetLevel ?? "AA";
+  setScanSettings({ deviceType, targetLevel });
+
   const allTextNodes = figma.currentPage.findAll(
     (node) => node.type === "TEXT" && isScannable(node),
   ) as TextNode[];
@@ -141,8 +191,23 @@ async function handleScan() {
     isScannable(node),
   ) as SceneNode[];
 
-  const issues: IssueX[] = await collectIssues(allTextNodes, allPageNodes);
+  const issues: IssueX[] = await collectIssues(
+    allTextNodes,
+    allPageNodes,
+    deviceType,
+    targetLevel,
+  );
   postMessageToUI(MESSAGE_TYPES.LOAD_ISSUES, issues);
+}
+
+async function handleSaveScanSettings(message: ScanSettings) {
+  const deviceType = message.deviceType ?? "touch";
+  const targetLevel = message.targetLevel ?? "AA";
+  setScanSettings({ deviceType, targetLevel });
+  await figma.clientStorage.setAsync(SCAN_SETTINGS_STORAGE_KEY, {
+    deviceType,
+    targetLevel,
+  });
 }
 
 async function handleUpdateFontSize(message: { id: string; fontSize: number }) {
@@ -204,6 +269,8 @@ async function handleNavigate(message: { id: string }) {
 async function collectIssues(
   allTextNodes: TextNode[],
   allPageNodes: SceneNode[],
+  deviceType: DeviceType,
+  targetLevel: TargetLevel,
 ): Promise<IssueX[]> {
   const issues: IssueX[] = [];
 
@@ -236,19 +303,25 @@ async function collectIssues(
     }),
   );
 
-  for (const node of allPageNodes) {
-    if ("absoluteBoundingBox" in node && (await isTouchTarget(node))) {
-      // eslint-disable-next-line no-console
-      if (isTouchTargetTooSmall(node)) {
-        const issue = createTouchTargetIssue(node, "Size");
-        if (issue) {
-          issues.push(issue);
+  // Touch target size/spacing (WCAG 2.5.5/2.5.8) exist because of
+  // touch/finger imprecision - there's no equivalent WCAG-mandated minimum
+  // for pointer/mouse-driven interfaces, so this is skipped entirely for
+  // "pointer" designs rather than checked against an invented number.
+  if (deviceType === "touch") {
+    const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
+    for (const node of allPageNodes) {
+      if ("absoluteBoundingBox" in node && (await isTouchTarget(node))) {
+        if (isTouchTargetTooSmall(node, minSize)) {
+          const issue = createTouchTargetIssue(node, "Size", minSize);
+          if (issue) {
+            issues.push(issue);
+          }
         }
-      }
-      if (isTouchTargetTooClose(node, allPageNodes)) {
-        const issue = createTouchTargetIssue(node, "Spacing");
-        if (issue) {
-          issues.push(issue);
+        if (isTouchTargetTooClose(node, allPageNodes)) {
+          const issue = createTouchTargetIssue(node, "Spacing", minSize);
+          if (issue) {
+            issues.push(issue);
+          }
         }
       }
     }
@@ -259,21 +332,26 @@ async function collectIssues(
 
 async function detectIssuesInSelection(
   selectedNodes: readonly SceneNode[],
+  deviceType: DeviceType,
+  targetLevel: TargetLevel,
 ): Promise<IssueX[]> {
   const issues: IssueX[] = [];
+  const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
 
   await Promise.all(
     selectedNodes.map(async (node) => {
-      if (isTouchTargetTooSmall(node)) {
-        const issue = createTouchTargetIssue(node, "Size");
-        if (issue) {
-          issues.push(issue);
+      if (deviceType === "touch") {
+        if (isTouchTargetTooSmall(node, minSize)) {
+          const issue = createTouchTargetIssue(node, "Size", minSize);
+          if (issue) {
+            issues.push(issue);
+          }
         }
-      }
-      if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
-        const issue = createTouchTargetIssue(node, "Spacing");
-        if (issue) {
-          issues.push(issue);
+        if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
+          const issue = createTouchTargetIssue(node, "Spacing", minSize);
+          if (issue) {
+            issues.push(issue);
+          }
         }
       }
 

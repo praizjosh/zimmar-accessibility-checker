@@ -177,11 +177,67 @@ describe("useIssuesStore.getIssueGroupList", () => {
 });
 
 describe("useIssuesStore.setTargetLevel", () => {
-  it("updates targetLevel", () => {
-    useIssuesStore.setState({ targetLevel: "AA" });
+  it("updates targetLevel and persists both settings via SAVE_SCAN_SETTINGS", () => {
+    postMessageToBackend.mockClear();
+    useIssuesStore.setState({ targetLevel: "AA", deviceType: "pointer" });
 
     useIssuesStore.getState().setTargetLevel("AAA");
 
     expect(useIssuesStore.getState().targetLevel).toBe("AAA");
+    expect(postMessageToBackend).toHaveBeenCalledWith(
+      MESSAGE_TYPES.SAVE_SCAN_SETTINGS,
+      { deviceType: "pointer", targetLevel: "AAA" },
+    );
+  });
+});
+
+describe("useIssuesStore.setDeviceType", () => {
+  it("defaults to touch", () => {
+    // getInitialState() reads the store's state as created, unaffected by
+    // setState() calls elsewhere in this file - getState() here would be
+    // order-dependent on whatever the last test to touch deviceType left it as.
+    expect(useIssuesStore.getInitialState().deviceType).toBe("touch");
+  });
+
+  it("updates deviceType and persists both settings via SAVE_SCAN_SETTINGS", () => {
+    postMessageToBackend.mockClear();
+    useIssuesStore.setState({ deviceType: "touch", targetLevel: "AAA" });
+
+    useIssuesStore.getState().setDeviceType("pointer");
+
+    expect(useIssuesStore.getState().deviceType).toBe("pointer");
+    expect(postMessageToBackend).toHaveBeenCalledWith(
+      MESSAGE_TYPES.SAVE_SCAN_SETTINGS,
+      { deviceType: "pointer", targetLevel: "AAA" },
+    );
+  });
+});
+
+describe("useIssuesStore.hydrateScanSettings", () => {
+  it("restores both settings at once without posting a SAVE_SCAN_SETTINGS message", () => {
+    postMessageToBackend.mockClear();
+    useIssuesStore.setState({ deviceType: "touch", targetLevel: "AA" });
+
+    useIssuesStore
+      .getState()
+      .hydrateScanSettings({ deviceType: "pointer", targetLevel: "AAA" });
+
+    expect(useIssuesStore.getState().deviceType).toBe("pointer");
+    expect(useIssuesStore.getState().targetLevel).toBe("AAA");
+    expect(postMessageToBackend).not.toHaveBeenCalled();
+  });
+});
+
+describe("useIssuesStore.startScan", () => {
+  it("posts the current deviceType and targetLevel with the SCAN message", () => {
+    postMessageToBackend.mockClear();
+    useIssuesStore.setState({ deviceType: "pointer", targetLevel: "AAA" });
+
+    useIssuesStore.getState().startScan();
+
+    expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN, {
+      deviceType: "pointer",
+      targetLevel: "AAA",
+    });
   });
 });
