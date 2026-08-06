@@ -7,6 +7,7 @@ import {
   TOUCH_TARGET_KEYWORDS,
 } from "../constants";
 import {
+  BackgroundColorResult,
   figmaRGBtoRGBColor,
   getBackgroundColorForNode,
   getContrastCompliance,
@@ -37,25 +38,60 @@ export function postMessageToBackend(
 }
 
 /**
- * Extracts the foreground color from the given Paint array.
+ * Finds the index of the topmost visible SOLID fill in a Paint array.
  *
  * Figma's fills array is ordered back-to-front — the last entry is
  * rendered on top of the others — so this scans from the end to find
  * the topmost visible SOLID fill, which is what's actually rendered.
+ *
+ * @param {Paint[]} fills - Array of Paint objects from a Figma node.
+ * @returns {number} The index of the topmost visible solid fill, or -1 if
+ * none exists (e.g. gradient/image-only fills).
+ */
+function findTopmostVisibleSolidFillIndex(fills: Paint[]): number {
+  for (let i = fills.length - 1; i >= 0; i--) {
+    const fill = fills[i];
+    if (fill.type === "SOLID" && fill.visible !== false) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Extracts the foreground color from the given Paint array.
  *
  * @param {Paint[]} nodeFills - Array of Paint objects from a Figma node.
  * @returns {RGBColor | null} The rendered foreground color, or null if
  * no visible solid fill exists (e.g. gradient/image-only fills).
  */
 export const extractForegroundColor = (nodeFills: Paint[]): RGBColor | null => {
-  for (let i = nodeFills.length - 1; i >= 0; i--) {
-    const fill = nodeFills[i];
-    if (fill.type === "SOLID" && fill.visible !== false) {
-      return figmaRGBtoRGBColor(fill.color);
-    }
-  }
-  return null;
+  const index = findTopmostVisibleSolidFillIndex(nodeFills);
+  if (index === -1) return null;
+  return figmaRGBtoRGBColor((nodeFills[index] as SolidPaint).color);
 };
+
+/**
+ * Returns a copy of `fills` with the topmost visible SOLID fill's colour
+ * replaced by `color` — the same fill `extractForegroundColor` would report
+ * as "what's actually rendered" — so a suggested fix touches exactly the
+ * fill that was measured, rather than overwriting the whole fills array and
+ * losing other paints/gradients underneath it.
+ *
+ * @param {Paint[]} fills - Array of Paint objects from a Figma node.
+ * @param {RGB} color - The replacement colour, in Figma's 0-1 RGB format.
+ * @returns {Paint[] | null} The updated fills array, or null if there was
+ * no visible solid fill to replace.
+ */
+export function replaceTopmostVisibleSolidFillColor(
+  fills: Paint[],
+  color: RGB,
+): Paint[] | null {
+  const index = findTopmostVisibleSolidFillIndex(fills);
+  if (index === -1) return null;
+
+  return fills.map((fill, i) => (i === index ? { ...fill, color } : fill));
+}
 
 /**
  * Creates a typography issue object for the given TextNode.
@@ -227,14 +263,16 @@ export const createTouchTargetIssue = (
  * @param {TextNode} node - The Figma TextNode to analyze.
  * @param {string} contrastScore - The WCAG contrast score.
  * @param {RGBColor} foregroundColor - The text's foreground color in RGB.
- * @param {RGBColor | null} backgroundColor - The background color in RGB or null.
+ * @param {BackgroundColorResult | null} background - The resolved background colour plus which node contributed it, or null.
+ * @param {boolean} isBold - Whether the text is bold, for the large-text contrast threshold.
  * @returns {IssueX} An issue object detailing the contrast issue.
  */
 export const createContrastIssue = (
   node: TextNode,
   contrastScore: contrastScore,
   foregroundColor: RGBColor,
-  backgroundColor: RGBColor | undefined,
+  background: BackgroundColorResult | null,
+  isBold: boolean,
 ): IssueX => ({
   description: "Text contrast is below WCAG AA standard.",
   severity: "critical",
@@ -249,7 +287,11 @@ export const createContrastIssue = (
     name: node.name,
     nodeType: node.type,
     foregroundColor,
-    backgroundColor: backgroundColor, // || [255, 255, 255]
+    backgroundColor: background?.color,
+    backgroundNodeId: background?.nodeId,
+    backgroundNodeName: background?.nodeName,
+    backgroundSharedWithCount: background?.sharedWithCount,
+    isBold,
   },
 });
 
@@ -261,7 +303,8 @@ export async function analyzeTextNodeForContrastIssue(
 
   if ("fills" in node) {
     const foregroundColor = extractForegroundColor(node.fills as Paint[]);
-    const backgroundColor = getBackgroundColorForNode(node);
+    const backgroundResult = getBackgroundColorForNode(node);
+    const backgroundColor = backgroundResult?.color;
     const fontWeight: number | symbol = node.fontWeight;
     const fontSize: number | symbol = node.fontSize;
 
@@ -300,7 +343,8 @@ export async function analyzeTextNodeForContrastIssue(
               node,
               contrastScore,
               foregroundColor,
-              backgroundColor,
+              backgroundResult,
+              isBold,
             ),
           );
         }

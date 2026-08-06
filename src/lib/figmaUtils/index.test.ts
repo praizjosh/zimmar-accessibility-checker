@@ -8,6 +8,7 @@ import {
   isTouchTarget,
   isTouchTargetTooClose,
   isTouchTargetTooSmall,
+  replaceTopmostVisibleSolidFillColor,
 } from "./index";
 
 function fakeNode(
@@ -70,6 +71,62 @@ describe("extractForegroundColor", () => {
     const invisibleSolid = solidFill(1, 1, 1, false);
 
     expect(extractForegroundColor([gradient, invisibleSolid])).toBeNull();
+  });
+});
+
+describe("replaceTopmostVisibleSolidFillColor", () => {
+  it("replaces only the topmost visible solid fill's colour", () => {
+    const fills = [solidFill(1, 0, 0), solidFill(0, 0, 1)];
+
+    const updated = replaceTopmostVisibleSolidFillColor(fills, {
+      r: 0,
+      g: 1,
+      b: 0,
+    });
+
+    expect(updated).toEqual([solidFill(1, 0, 0), solidFill(0, 1, 0)]);
+  });
+
+  it("leaves every other fill untouched, including non-solid ones", () => {
+    const gradient = { type: "GRADIENT_LINEAR", visible: true } as Paint;
+    const fills = [gradient, solidFill(1, 0, 0)];
+
+    const updated = replaceTopmostVisibleSolidFillColor(fills, {
+      r: 0,
+      g: 0,
+      b: 1,
+    });
+
+    expect(updated?.[0]).toBe(gradient);
+    expect(updated?.[1]).toEqual(solidFill(0, 0, 1));
+  });
+
+  it("skips an invisible solid fill on top and replaces the visible one beneath it", () => {
+    const fills = [solidFill(1, 0, 0), solidFill(0, 0, 1, false)];
+
+    const updated = replaceTopmostVisibleSolidFillColor(fills, {
+      r: 0,
+      g: 1,
+      b: 0,
+    });
+
+    expect(updated).toEqual([solidFill(0, 1, 0), solidFill(0, 0, 1, false)]);
+  });
+
+  it("returns null when there is no visible solid fill to replace", () => {
+    const gradient = { type: "GRADIENT_LINEAR", visible: true } as Paint;
+
+    expect(
+      replaceTopmostVisibleSolidFillColor([gradient], { r: 0, g: 0, b: 0 }),
+    ).toBeNull();
+  });
+
+  it("does not mutate the original fills array", () => {
+    const fills = [solidFill(1, 0, 0)];
+
+    replaceTopmostVisibleSolidFillColor(fills, { r: 0, g: 1, b: 0 });
+
+    expect(fills).toEqual([solidFill(1, 0, 0)]);
   });
 });
 
@@ -224,12 +281,18 @@ describe("createTypographyIssue", () => {
 });
 
 describe("createContrastIssue", () => {
-  it("builds a CONTRAST issue with the given colours and score", () => {
+  it("builds a CONTRAST issue with the given colours, score, and background node identity", () => {
     const node = fakeTextNode({ id: "text-2", characters: "Hi", name: "Body" });
     const contrastScore = { compliance: "Fail" as const, ratio: 2.1 };
+    const background = {
+      color: [255, 255, 255] as [number, number, number],
+      nodeId: "bg-1",
+      nodeName: "Card",
+      sharedWithCount: 2,
+    };
 
     expect(
-      createContrastIssue(node, contrastScore, [0, 0, 0], [255, 255, 255]),
+      createContrastIssue(node, contrastScore, [0, 0, 0], background, true),
     ).toEqual({
       description: "Text contrast is below WCAG AA standard.",
       severity: "critical",
@@ -245,19 +308,28 @@ describe("createContrastIssue", () => {
         nodeType: "TEXT",
         foregroundColor: [0, 0, 0],
         backgroundColor: [255, 255, 255],
+        backgroundNodeId: "bg-1",
+        backgroundNodeName: "Card",
+        backgroundSharedWithCount: 2,
+        isBold: true,
       },
     });
   });
 
-  it("leaves backgroundColor undefined instead of defaulting to white when none was detected", () => {
+  it("leaves every background-related field undefined instead of defaulting when none was detected", () => {
     const issue = createContrastIssue(
       fakeTextNode(),
       { compliance: "Fail", ratio: 2.1 },
       [0, 0, 0],
-      undefined,
+      null,
+      false,
     );
 
     expect(issue.nodeData.backgroundColor).toBeUndefined();
+    expect(issue.nodeData.backgroundNodeId).toBeUndefined();
+    expect(issue.nodeData.backgroundNodeName).toBeUndefined();
+    expect(issue.nodeData.backgroundSharedWithCount).toBeUndefined();
+    expect(issue.nodeData.isBold).toBe(false);
   });
 });
 

@@ -180,6 +180,7 @@ function nodeWithEarlierSibling(
 ): SceneNode {
   const sibling = {
     id: "sibling",
+    name: "Sibling shape",
     fills: siblingFills,
     absoluteBoundingBox: siblingBounds,
   };
@@ -198,12 +199,33 @@ describe("getBackgroundColorForNode", () => {
     expect(getBackgroundColorForNode(node)).toBeNull();
   });
 
-  it("returns the parent's solid fill color", () => {
+  it("returns the parent's solid fill color, id, and name, with a zero shared count when it has no other children", () => {
     const node = {
-      parent: { fills: [solidFill(1, 0, 0)] },
+      id: "node",
+      parent: { id: "parent-1", name: "Card", fills: [solidFill(1, 0, 0)] },
     } as unknown as SceneNode;
 
-    expect(getBackgroundColorForNode(node)).toEqual([255, 0, 0]);
+    expect(getBackgroundColorForNode(node)).toEqual({
+      color: [255, 0, 0],
+      nodeId: "parent-1",
+      nodeName: "Card",
+      sharedWithCount: 0,
+    });
+  });
+
+  it("counts every other child as sharing the parent's own fill, since they all sit on it by definition", () => {
+    const node = { id: "node" };
+    const parent = {
+      id: "parent-1",
+      name: "Card",
+      fills: [solidFill(1, 0, 0)],
+      children: [node, { id: "sibling-1" }, { id: "sibling-2" }],
+    };
+    (node as Record<string, unknown>).parent = parent;
+
+    expect(
+      getBackgroundColorForNode(node as unknown as SceneNode)?.sharedWithCount,
+    ).toBe(2);
   });
 
   it("skips an invisible parent fill and returns null when no sibling covers it", () => {
@@ -214,11 +236,40 @@ describe("getBackgroundColorForNode", () => {
     expect(getBackgroundColorForNode(node)).toBeNull();
   });
 
-  it("falls back to an overlapping earlier sibling's fill when the parent has no fill", () => {
+  it("falls back to an overlapping earlier sibling's fill, id, and name when the parent has no fill", () => {
     const bounds = { x: 0, y: 0, width: 100, height: 100 };
     const node = nodeWithEarlierSibling(bounds, bounds, [solidFill(0, 1, 0)]);
 
-    expect(getBackgroundColorForNode(node)).toEqual([0, 255, 0]);
+    expect(getBackgroundColorForNode(node)).toEqual({
+      color: [0, 255, 0],
+      nodeId: "sibling",
+      nodeName: "Sibling shape",
+      sharedWithCount: 0,
+    });
+  });
+
+  it("counts other siblings that also overlap the same contributing sibling", () => {
+    const bgSibling = {
+      id: "bg-sibling",
+      name: "Background shape",
+      fills: [solidFill(0, 1, 0)],
+      absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 100 },
+    };
+    const otherSibling = {
+      id: "other-sibling",
+      // No fills - shouldn't be picked as the contributing node itself,
+      // but should still count toward bgSibling's sharedWithCount.
+      absoluteBoundingBox: { x: 10, y: 10, width: 20, height: 20 },
+    };
+    const node: Record<string, unknown> = {
+      id: "node",
+      absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 100 },
+    };
+    node.parent = { fills: [], children: [bgSibling, otherSibling, node] };
+
+    expect(
+      getBackgroundColorForNode(node as unknown as SceneNode)?.sharedWithCount,
+    ).toBe(1);
   });
 
   it("ignores a non-overlapping earlier sibling and returns null", () => {
