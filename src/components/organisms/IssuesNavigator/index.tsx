@@ -181,7 +181,7 @@ export default function IssuesNavigator() {
 
     return (
       <>
-        <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
+        <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl border border-rose-50/10 bg-dark-shade p-4 font-medium">
           <IssueDetailRow
             icon={<CaseSensitive aria-hidden="true" className="mr-3 size-5" />}
             label="Text:"

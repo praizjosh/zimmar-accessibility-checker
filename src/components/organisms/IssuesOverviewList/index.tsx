@@ -221,7 +221,7 @@ export default function IssuesOverviewList() {
                       <li
                         key={issue.id}
                         title={`View all ${label} issues`}
-                        className="group flex items-center justify-between rounded-xl bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
+                        className="group flex items-center justify-between rounded-xl border border-rose-50/10 bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
                       >
                         <button
                           className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"

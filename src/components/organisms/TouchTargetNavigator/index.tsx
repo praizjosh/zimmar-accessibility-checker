@@ -35,7 +35,7 @@ export default function TouchTargetNavigator() {
     const isHeightFail = (height ?? 0) < MIN_TOUCH_TARGET_SIZE;
 
     return (
-      <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl bg-dark-shade p-4 font-medium">
+      <div className="relative flex w-full flex-col space-y-1 divide-y divide-rose-50/5 rounded-xl border border-rose-50/10 bg-dark-shade p-4 font-medium">
         <IssueDetailRow
           icon={<Target aria-hidden="true" className="mr-3 size-5" />}
           label="Element:"
