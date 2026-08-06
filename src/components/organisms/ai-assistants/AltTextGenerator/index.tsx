@@ -128,7 +128,7 @@ export default function AltTextGenerator({
       tabIndex={0}
       aria-label="Alt Text Generator"
       className={cn(
-        "flex items-center justify-between rounded-xl bg-dark-shade transition-all duration-200 ease-in-out delay-1000",
+        "flex items-center justify-between rounded-xl border border-rose-50/10 bg-dark-shade transition-all duration-200 ease-in-out delay-1000",
         {
           "group text-grey hover:cursor-pointer hover:ring-1 hover:ring-accent":
             !isExpanded,

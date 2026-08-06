@@ -1,6 +1,11 @@
 /// <reference types="@figma/plugin-typings" />
 
-import { isLocked, isVisible } from "@create-figma-plugin/utilities";
+import {
+  convertHexColorToRgbColor,
+  isLocked,
+  isVisible,
+} from "@create-figma-plugin/utilities";
+import { RGBColor } from "wcag-contrast";
 
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import {
@@ -11,10 +16,12 @@ import {
   isTouchTargetTooClose,
   isTouchTargetTooSmall,
   postMessageToUI,
+  replaceTopmostVisibleSolidFillColor,
 } from "@/lib/figmaUtils";
 import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
 import { IssueX } from "@/lib/types";
 import {
+  figmaRGBtoHex,
   getIsQuickCheckModeActive,
   setIsQuickCheckModeActive,
 } from "@/lib/utils";
@@ -39,6 +46,10 @@ figma.ui.onmessage = async (message) => {
 
       case MESSAGE_TYPES.UPDATE_FONT_SIZE:
         await handleUpdateFontSize(message);
+        break;
+
+      case MESSAGE_TYPES.UPDATE_FILL_COLOR:
+        await handleUpdateFillColor(message);
         break;
 
       case MESSAGE_TYPES.NAVIGATE:
@@ -142,6 +153,38 @@ async function handleUpdateFontSize(message: { id: string; fontSize: number }) {
   } else {
     console.warn(`Failed to update font size for node ${message.id}`);
   }
+}
+
+async function handleUpdateFillColor(message: {
+  nodeId: string;
+  color: RGBColor;
+}) {
+  const node = await figma.getNodeByIdAsync(message.nodeId);
+  if (!node || !("fills" in node) || !Array.isArray(node.fills)) {
+    console.warn(`Failed to update fill color for node ${message.nodeId}`);
+    return;
+  }
+
+  const figmaColor = convertHexColorToRgbColor(
+    figmaRGBtoHex(message.color).slice(1),
+  );
+  if (!figmaColor) {
+    console.warn(
+      `Failed to convert suggested color for node ${message.nodeId}`,
+    );
+    return;
+  }
+
+  const updatedFills = replaceTopmostVisibleSolidFillColor(
+    node.fills as Paint[],
+    figmaColor,
+  );
+  if (!updatedFills) {
+    console.warn(`No visible solid fill found on node ${message.nodeId}`);
+    return;
+  }
+
+  node.fills = updatedFills;
 }
 
 function handleNotify(message: { message: string }) {

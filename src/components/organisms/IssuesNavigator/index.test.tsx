@@ -140,4 +140,319 @@ describe("IssuesNavigator", () => {
     expect(screen.queryByText("WCAG score:")).toBeNull();
     expect(screen.queryByText("Contrast ratio:")).toBeNull();
   });
+
+  describe("Suggested fixes card", () => {
+    function getDisplayedRatio(label: string): number {
+      const text = screen.getByText(new RegExp(`^${label}$`)).parentElement;
+      const match = text?.textContent?.match(/([\d.]+):1/);
+      if (!match) throw new Error(`No ratio found next to "${label}"`);
+      return parseFloat(match[1]);
+    }
+
+    it("does not render for a non-CONTRAST issue", () => {
+      useIssuesStore.setState({
+        selectedType: "TYPOGRAPHY",
+        issues: [typographyIssue],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.queryByText("Suggested fixes")).toBeNull();
+    });
+
+    it("does not render when the contrast check isn't failing", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              contrastScore: { compliance: "AA", ratio: 5 },
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.queryByText("Suggested fixes")).toBeNull();
+    });
+
+    it("suggests darkening text that's the lighter of the two colours", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [128, 128, 128],
+              backgroundColor: [255, 255, 255],
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.getByText("Suggested fixes")).toBeVisible();
+      expect(screen.getByText("Darken text")).toBeVisible();
+      expect(getDisplayedRatio("Darken text")).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it("suggests lightening text that's already the darker of the two colours", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [60, 60, 60],
+              backgroundColor: [20, 20, 20],
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.getByText("Lighten text")).toBeVisible();
+    });
+
+    it("recomputes a stricter ratio when the AAA target is selected", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [130, 130, 130],
+              backgroundColor: [255, 255, 255],
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      expect(getDisplayedRatio("Darken text")).toBeGreaterThanOrEqual(4.5);
+
+      await user.click(screen.getByRole("radio", { name: "AAA" }));
+
+      expect(getDisplayedRatio("Darken text")).toBeGreaterThanOrEqual(7);
+    });
+
+    it("discloses when the suggested background is shared with other layers", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              backgroundSharedWithCount: 2,
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.getByText("Shared with 2 other layers")).toBeVisible();
+    });
+
+    it("omits the disclosure when the background isn't shared with anything else", () => {
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [contrastIssue],
+      });
+      render(<IssuesNavigator />);
+
+      expect(screen.queryByText(/Shared with/)).toBeNull();
+    });
+
+    it("shows a fallback message when no suggestion is reachable at the selected level", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [255, 0, 255],
+              backgroundColor: [128, 128, 128],
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      await user.click(screen.getByRole("radio", { name: "AAA" }));
+
+      expect(
+        screen.getByText("No AAA-compliant suggestion found for this pair."),
+      ).toBeVisible();
+    });
+
+    it("applies the foreground suggestion, updates local state, and does not toast", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [128, 128, 128],
+              backgroundColor: [255, 255, 255],
+              backgroundNodeId: "bg-1",
+              backgroundNodeName: "Card",
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      const [applyForeground] = screen.getAllByRole("button", {
+        name: "Apply",
+      });
+      await user.click(applyForeground);
+
+      expect(postMessageToBackend).toHaveBeenCalledWith(
+        MESSAGE_TYPES.UPDATE_FILL_COLOR,
+        { nodeId: "c1", color: expect.any(Array) },
+      );
+      expect(postMessageToBackend).not.toHaveBeenCalledWith(
+        MESSAGE_TYPES.NOTIFY,
+        expect.anything(),
+      );
+
+      const updatedIssue = useIssuesStore
+        .getState()
+        .issues.find((issue) => issue.nodeData.id === "c1");
+      expect(updatedIssue?.nodeData.contrastScore?.compliance).not.toBe("Fail");
+      expect(screen.queryByText("Suggested fixes")).toBeNull();
+    });
+
+    it("applies the background suggestion using the contributing node's id and toasts", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [128, 128, 128],
+              backgroundColor: [255, 255, 255],
+              backgroundNodeId: "bg-1",
+              backgroundNodeName: "Card",
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      const [, applyBackground] = screen.getAllByRole("button", {
+        name: "Apply",
+      });
+      await user.click(applyBackground);
+
+      expect(postMessageToBackend).toHaveBeenCalledWith(
+        MESSAGE_TYPES.UPDATE_FILL_COLOR,
+        { nodeId: "bg-1", color: expect.any(Array) },
+      );
+      expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.NOTIFY, {
+        message: 'Updated background fill on "Card"',
+      });
+    });
+
+    it("navigates to the text node when the foreground swatch is tapped", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [128, 128, 128],
+              backgroundColor: [255, 255, 255],
+              backgroundNodeId: "bg-1",
+              backgroundNodeName: "Card",
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      await user.click(
+        screen.getByRole("button", { name: "Select the text layer in Figma" }),
+      );
+
+      expect(postMessageToBackend).toHaveBeenCalledWith(
+        MESSAGE_TYPES.NAVIGATE,
+        { id: "c1" },
+      );
+    });
+
+    it("navigates to the contributing node when the background swatch is tapped", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [128, 128, 128],
+              backgroundColor: [255, 255, 255],
+              backgroundNodeId: "bg-1",
+              backgroundNodeName: "Card",
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      await user.click(
+        screen.getByRole("button", {
+          name: "Select the background layer in Figma",
+        }),
+      );
+
+      expect(postMessageToBackend).toHaveBeenCalledWith(
+        MESSAGE_TYPES.NAVIGATE,
+        { id: "bg-1" },
+      );
+    });
+
+    it("does not navigate for the background swatch when no contributing node was detected", async () => {
+      const user = userEvent.setup();
+      useIssuesStore.setState({
+        selectedType: "CONTRAST",
+        issues: [
+          {
+            ...contrastIssue,
+            nodeData: {
+              ...contrastIssue.nodeData,
+              foregroundColor: [128, 128, 128],
+              backgroundColor: [255, 255, 255],
+            },
+          },
+        ],
+      });
+      render(<IssuesNavigator />);
+
+      await user.click(
+        screen.getByRole("button", {
+          name: "Select the background layer in Figma",
+        }),
+      );
+
+      expect(postMessageToBackend).not.toHaveBeenCalledWith(
+        MESSAGE_TYPES.NAVIGATE,
+        expect.anything(),
+      );
+    });
+  });
 });

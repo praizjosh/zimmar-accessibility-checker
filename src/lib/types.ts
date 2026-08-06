@@ -44,6 +44,23 @@ export type NodeDataType = {
   name: string;
   foregroundColor?: RGBColor;
   backgroundColor?: RGBColor;
+  /**
+   * Identity of the node that contributed backgroundColor, and how many
+   * other nodes share its fill - undefined when backgroundColor is
+   * undefined, or when the node came from resolving a contributing solid
+   * fill couldn't be determined. Used by the contrast "fix it" suggester
+   * (roadmap/COLOR_FIX_SUGGESTER_PLAN.md) to know which node to mutate for
+   * the "lighten background" direction, and whether to disclose that it's
+   * shared with other layers before applying.
+   */
+  backgroundNodeId?: string;
+  backgroundNodeName?: string;
+  backgroundSharedWithCount?: number;
+  /** Needed to correctly apply WCAG's large-text ratio threshold when
+   * suggesting a contrast fix - not derivable after the fact from
+   * contrastScore alone, since a "Fail" result doesn't say whether it was
+   * measured as large or normal text. */
+  isBold?: boolean;
   nodeType: NodeType | NodeType[];
   requiredSize?: string;
 };

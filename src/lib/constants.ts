@@ -6,6 +6,7 @@ export const MESSAGE_TYPES = {
   CANCEL_QUICKCHECK: "cancel-quickcheck",
   SCAN: "scan",
   UPDATE_FONT_SIZE: "update-font-size",
+  UPDATE_FILL_COLOR: "update-fill-color",
   NAVIGATE: "navigate",
   GET_IMAGE_DATA: "get-image-data",
   GENERATE_ALT_TEXT: "generate-alt-text",

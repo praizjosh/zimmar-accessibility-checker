@@ -234,7 +234,26 @@ export function overlaps(nodeA: SceneNode, nodeB: SceneNode): boolean {
   );
 }
 
-export function getBackgroundColorForNode(node: SceneNode): RGBColor | null {
+export type BackgroundColorResult = {
+  color: RGBColor;
+  nodeId: string;
+  nodeName: string;
+  /**
+   * How many other nodes also depend on this same contributing node's fill.
+   * Case 1 (direct parent fill): every other child of that parent sits on
+   * the same fill by definition of nesting, so this is exact, not a guess.
+   * Case 2 (sibling-overlap fallback): how many other siblings also overlap
+   * the same contributing sibling - i.e. other elements sitting on the same
+   * background shape. Used by the contrast "fix it" suggester
+   * (roadmap/COLOR_FIX_SUGGESTER_PLAN.md) to disclose when changing this
+   * fill could visually affect more than just the node being fixed.
+   */
+  sharedWithCount: number;
+};
+
+export function getBackgroundColorForNode(
+  node: SceneNode,
+): BackgroundColorResult | null {
   if (!node.parent) return null;
 
   const parent = node.parent;
@@ -245,7 +264,17 @@ export function getBackgroundColorForNode(node: SceneNode): RGBColor | null {
       (fill) => fill.type === "SOLID" && fill.visible,
     );
     if (solidFill && "color" in solidFill) {
-      return figmaRGBtoRGBColor(solidFill.color);
+      const sharedWithCount =
+        "children" in parent
+          ? parent.children.filter((child) => child.id !== node.id).length
+          : 0;
+
+      return {
+        color: figmaRGBtoRGBColor(solidFill.color),
+        nodeId: parent.id,
+        nodeName: parent.name,
+        sharedWithCount,
+      };
     }
   }
 
@@ -260,7 +289,19 @@ export function getBackgroundColorForNode(node: SceneNode): RGBColor | null {
             (fill) => fill.type === "SOLID" && fill.visible,
           );
           if (solidFill && "color" in solidFill) {
-            return figmaRGBtoRGBColor(solidFill.color);
+            const sharedWithCount = parent.children.filter(
+              (other) =>
+                other.id !== node.id &&
+                other.id !== sibling.id &&
+                overlaps(sibling, other),
+            ).length;
+
+            return {
+              color: figmaRGBtoRGBColor(solidFill.color),
+              nodeId: sibling.id,
+              nodeName: sibling.name,
+              sharedWithCount,
+            };
           }
         }
       }
