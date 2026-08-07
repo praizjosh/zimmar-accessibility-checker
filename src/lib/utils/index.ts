@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { rgb, RGBColor, score } from "wcag-contrast";
-import { copyToClipboardProps, DeviceType, IssueType, Routes, TargetLevel } from "../types";
+import { copyToClipboardProps, DeviceType, IssueType, IssueX, Routes, TargetLevel } from "../types";
 
 export function cn(...inputs: ClassValue[]) {
 	// eslint-disable-next-line tailwindcss/no-custom-classname -- false positive: the plugin treats the `inputs` variable reference as if it were a classname string literal.
@@ -61,6 +61,24 @@ export function getContrastIssueDescription(
 		return "Text contrast is below WCAG AA standard.";
 	}
 	return "Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.";
+}
+
+/**
+ * Whether an issue currently counts as an active issue at the given target
+ * level. `analyzeTextNodeForContrastIssue` pushes a CONTRAST issue object
+ * for every scanned text node with a resolvable background, regardless of
+ * whether it currently passes - `getContrastCompliance` always returns a
+ * compliance tier, never null. So raw presence of a CONTRAST issue in
+ * `issues` doesn't mean it's actually failing right now;
+ * `contrastFailsTargetLevel` is the source of truth for that. Every other
+ * issue type's pass/fail state is fixed at scan time, so it's always active
+ * once present.
+ */
+export function isActiveIssue(issue: IssueX, targetLevel: TargetLevel): boolean {
+	if (issue.type === "CONTRAST") {
+		return contrastFailsTargetLevel(issue.nodeData.contrastScore?.compliance, targetLevel);
+	}
+	return true;
 }
 
 // Global state

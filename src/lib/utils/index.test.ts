@@ -10,9 +10,11 @@ import {
 	getRouteForIssueType,
 	getScanSettings,
 	getSeverityStyles,
+	isActiveIssue,
 	isBoldFont,
 	setScanSettings,
 } from "./index";
+import { IssueX } from "@/lib/types";
 
 const WHITE: RGBColor = [255, 255, 255];
 const BLACK: RGBColor = [0, 0, 0];
@@ -369,6 +371,50 @@ describe("getContrastIssueDescription", () => {
 		expect(getContrastIssueDescription("AAA", "AAA")).toBe(
 			"Text contrast meets the selected WCAG standard.",
 		);
+	});
+});
+
+function fakeContrastIssue(compliance: string): IssueX {
+	return {
+		type: "CONTRAST",
+		severity: "critical",
+		nodeData: {
+			id: "c1",
+			name: "Text",
+			nodeType: "TEXT",
+			contrastScore: { compliance, ratio: 5 },
+		},
+	};
+}
+
+describe("isActiveIssue", () => {
+	it("is always active for non-contrast issue types, regardless of target level", () => {
+		const typographyIssue: IssueX = {
+			type: "TYPOGRAPHY",
+			severity: "major",
+			nodeData: { id: "t1", name: "Label", nodeType: "TEXT" },
+		};
+
+		expect(isActiveIssue(typographyIssue, "AA")).toBe(true);
+		expect(isActiveIssue(typographyIssue, "AAA")).toBe(true);
+	});
+
+	it("is active for a genuinely failing contrast issue at any target level", () => {
+		expect(isActiveIssue(fakeContrastIssue("Fail"), "AA")).toBe(true);
+		expect(isActiveIssue(fakeContrastIssue("Fail"), "AAA")).toBe(true);
+	});
+
+	it("is not active for an AA-passing contrast issue when the target is AA", () => {
+		expect(isActiveIssue(fakeContrastIssue("AA"), "AA")).toBe(false);
+	});
+
+	it("is active for an AA-passing/AAA-failing contrast issue only when the target is AAA", () => {
+		expect(isActiveIssue(fakeContrastIssue("AA"), "AAA")).toBe(true);
+	});
+
+	it("is not active for an AAA-passing contrast issue at any target level", () => {
+		expect(isActiveIssue(fakeContrastIssue("AAA"), "AA")).toBe(false);
+		expect(isActiveIssue(fakeContrastIssue("AAA"), "AAA")).toBe(false);
 	});
 });
 
