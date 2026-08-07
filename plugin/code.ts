@@ -1,26 +1,15 @@
 /// <reference types="@figma/plugin-typings" />
 
-import { convertHexColorToRgbColor, isLocked, isVisible } from "@create-figma-plugin/utilities";
+import { convertHexColorToRgbColor } from "@create-figma-plugin/utilities";
 import { RGBColor } from "wcag-contrast";
 
+import { MESSAGE_TYPES, SCAN_SETTINGS_STORAGE_KEY } from "@/lib/constants";
+import { postMessageToUI, replaceTopmostVisibleSolidFillColor } from "@/lib/figmaUtils";
 import {
-	MESSAGE_TYPES,
-	MIN_FONT_SIZE,
-	SCAN_SETTINGS_STORAGE_KEY,
-	TOUCH_TARGET_MIN_SIZE,
-} from "@/lib/constants";
-import {
-	analyzeTextNodeForContrastIssue,
-	buildTouchTargetSpatialIndex,
-	createTouchTargetIssue,
-	createTypographyIssue,
-	getNearbyNodes,
-	isTouchTarget,
-	isTouchTargetTooClose,
-	isTouchTargetTooSmall,
-	postMessageToUI,
-	replaceTopmostVisibleSolidFillColor,
-} from "@/lib/figmaUtils";
+	collectIssues,
+	detectIssuesInSelection,
+	isScannable,
+} from "@/lib/figmaUtils/collectIssues";
 import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
 import { DeviceType, IssueX, TargetLevel } from "@/lib/types";
 import {
@@ -121,7 +110,9 @@ figma.on("selectionchange", async () => {
 
 	try {
 		const { deviceType, targetLevel } = getScanSettings();
-		const detectedIssues = await detectIssuesInSelection(selection, deviceType, targetLevel);
+		const detectedIssues = await detectIssuesInSelection(selection, deviceType, targetLevel, [
+			...figma.currentPage.children,
+		]);
 		if (detectedIssues.length) {
 			postMessageToUI(MESSAGE_TYPES.DETECTED_ISSUE, detectedIssues);
 		}
@@ -146,7 +137,9 @@ async function handleStartQuickCheck(message: ScanSettings) {
 	}
 
 	try {
-		const detectedIssues = await detectIssuesInSelection(selection, deviceType, targetLevel);
+		const detectedIssues = await detectIssuesInSelection(selection, deviceType, targetLevel, [
+			...figma.currentPage.children,
+		]);
 		if (detectedIssues.length) {
 			postMessageToUI(MESSAGE_TYPES.DETECTED_ISSUE, detectedIssues);
 		}
@@ -157,10 +150,6 @@ async function handleStartQuickCheck(message: ScanSettings) {
 
 function handleCancelQuickCheck() {
 	setIsQuickCheckModeActive(false);
-}
-
-function isScannable(node: SceneNode): boolean {
-	return isVisible(node) && !isLocked(node);
 }
 
 async function handleScan(message: ScanSettings) {
@@ -239,118 +228,4 @@ async function handleNavigate(message: { id: string }) {
 	} else {
 		console.warn(`Node with ID ${message.id} not found.`);
 	}
-}
-
-async function collectIssues(
-	allTextNodes: TextNode[],
-	allPageNodes: SceneNode[],
-	deviceType: DeviceType,
-	targetLevel: TargetLevel,
-): Promise<IssueX[]> {
-	const issues: IssueX[] = [];
-
-	await Promise.all(
-		allTextNodes.map(async (textNode) => {
-			// Safeguard font loading
-			try {
-				if (textNode.fontName === figma.mixed) {
-					return;
-				}
-
-				// Ensure fontName is of the correct format
-				const fontName = textNode.fontName as FontName;
-				await figma.loadFontAsync(fontName);
-
-				if (typeof textNode.fontSize === "number" && textNode.fontSize < MIN_FONT_SIZE) {
-					issues.push(createTypographyIssue(textNode));
-				}
-
-				await analyzeTextNodeForContrastIssue(textNode, issues);
-			} catch (error) {
-				console.error(`Failed to load font for text node "${textNode.name}":`, error);
-			}
-		}),
-	);
-
-	// Touch target size/spacing (WCAG 2.5.5/2.5.8) exist because of
-	// touch/finger imprecision - there's no equivalent WCAG-mandated minimum
-	// for pointer/mouse-driven interfaces, so this is skipped entirely for
-	// "pointer" designs rather than checked against an invented number.
-	if (deviceType === "touch") {
-		const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
-
-		// Building the spatial index and resolving touch-target eligibility are
-		// both independent of the per-node checks below, so they're done as one
-		// upfront pass instead of inline inside a sequential loop - see
-		// buildTouchTargetSpatialIndex/getNearbyNodes (figmaUtils) for why the
-		// naive all-pairs distance check doesn't scale to large pages.
-		const spatialIndex = buildTouchTargetSpatialIndex(allPageNodes);
-		const eligibilityResults = await Promise.all(
-			allPageNodes.map(async (node) => ({
-				node,
-				eligible: "absoluteBoundingBox" in node && (await isTouchTarget(node)),
-			})),
-		);
-
-		for (const { node, eligible } of eligibilityResults) {
-			if (!eligible) continue;
-
-			if (isTouchTargetTooSmall(node, minSize)) {
-				const issue = createTouchTargetIssue(node, "Size", minSize);
-				if (issue) {
-					issues.push(issue);
-				}
-			}
-			if (isTouchTargetTooClose(node, getNearbyNodes(node, spatialIndex))) {
-				const issue = createTouchTargetIssue(node, "Spacing", minSize);
-				if (issue) {
-					issues.push(issue);
-				}
-			}
-		}
-	}
-
-	return issues;
-}
-
-async function detectIssuesInSelection(
-	selectedNodes: readonly SceneNode[],
-	deviceType: DeviceType,
-	targetLevel: TargetLevel,
-): Promise<IssueX[]> {
-	const issues: IssueX[] = [];
-	const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
-
-	await Promise.all(
-		selectedNodes.map(async (node) => {
-			if (deviceType === "touch") {
-				if (isTouchTargetTooSmall(node, minSize)) {
-					const issue = createTouchTargetIssue(node, "Size", minSize);
-					if (issue) {
-						issues.push(issue);
-					}
-				}
-				if (isTouchTargetTooClose(node, [...figma.currentPage.children])) {
-					const issue = createTouchTargetIssue(node, "Spacing", minSize);
-					if (issue) {
-						issues.push(issue);
-					}
-				}
-			}
-
-			if (
-				node.type === "TEXT" &&
-				node.fontSize &&
-				typeof node.fontSize === "number" &&
-				node.fontSize < MIN_FONT_SIZE
-			) {
-				issues.push(createTypographyIssue(node));
-			}
-			if (node.type === "TEXT") {
-				await analyzeTextNodeForContrastIssue(node, issues);
-			}
-		}),
-	);
-
-	return issues;
 }

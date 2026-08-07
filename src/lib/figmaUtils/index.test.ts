@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { MIN_TOUCH_TARGET_SIZE_AAA, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
+import fakeSceneNode from "@/lib/test-utils/fakeSceneNode";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
 	buildTouchTargetSpatialIndex,
@@ -20,18 +21,6 @@ describe("TOUCH_TARGET_MIN_SIZE", () => {
 		expect(TOUCH_TARGET_MIN_SIZE.AAA).toBe(MIN_TOUCH_TARGET_SIZE_AAA);
 	});
 });
-
-function fakeNode(
-	id: string,
-	bounds: { x: number; y: number; width: number; height: number },
-): SceneNode {
-	return {
-		id,
-		width: bounds.width,
-		height: bounds.height,
-		absoluteBoundingBox: bounds,
-	} as unknown as SceneNode;
-}
 
 function fakeTextNode(overrides: Partial<TextNode> = {}): TextNode {
 	return {
@@ -140,19 +129,19 @@ describe("replaceTopmostVisibleSolidFillColor", () => {
 
 describe("isTouchTargetTooSmall", () => {
 	it("returns false when both dimensions meet the 44px minimum", () => {
-		const node = fakeNode("a", { x: 0, y: 0, width: 44, height: 44 });
+		const node = fakeSceneNode("a", { x: 0, y: 0, width: 44, height: 44 });
 
 		expect(isTouchTargetTooSmall(node)).toBe(false);
 	});
 
 	it("returns true when width is below the minimum", () => {
-		const node = fakeNode("a", { x: 0, y: 0, width: 43, height: 44 });
+		const node = fakeSceneNode("a", { x: 0, y: 0, width: 43, height: 44 });
 
 		expect(isTouchTargetTooSmall(node)).toBe(true);
 	});
 
 	it("returns true when height is below the minimum", () => {
-		const node = fakeNode("a", { x: 0, y: 0, width: 44, height: 43 });
+		const node = fakeSceneNode("a", { x: 0, y: 0, width: 44, height: 43 });
 
 		expect(isTouchTargetTooSmall(node)).toBe(true);
 	});
@@ -164,7 +153,7 @@ describe("isTouchTargetTooSmall", () => {
 	});
 
 	it("checks against a custom minSize instead of the default 44px", () => {
-		const node = fakeNode("a", { x: 0, y: 0, width: 30, height: 30 });
+		const node = fakeSceneNode("a", { x: 0, y: 0, width: 30, height: 30 });
 
 		expect(isTouchTargetTooSmall(node)).toBe(true); // fails the default AAA (44px) minimum
 		expect(isTouchTargetTooSmall(node, 24)).toBe(false); // passes the AA (24px) minimum
@@ -172,7 +161,7 @@ describe("isTouchTargetTooSmall", () => {
 });
 
 describe("isTouchTargetTooClose", () => {
-	const node = fakeNode("a", { x: 0, y: 0, width: 44, height: 44 });
+	const node = fakeSceneNode("a", { x: 0, y: 0, width: 44, height: 44 });
 
 	it("returns false when there is no bounding box", () => {
 		const boundsless = { id: "a" } as unknown as SceneNode;
@@ -185,32 +174,32 @@ describe("isTouchTargetTooClose", () => {
 	});
 
 	it("returns false when nodes are far apart", () => {
-		const other = fakeNode("b", { x: 500, y: 500, width: 44, height: 44 });
+		const other = fakeSceneNode("b", { x: 500, y: 500, width: 44, height: 44 });
 
 		expect(isTouchTargetTooClose(node, [node, other])).toBe(false);
 	});
 
 	it("returns true when vertically overlapping nodes are closer than 8px horizontally", () => {
-		const other = fakeNode("b", { x: 49, y: 0, width: 44, height: 44 });
+		const other = fakeSceneNode("b", { x: 49, y: 0, width: 44, height: 44 });
 
 		expect(isTouchTargetTooClose(node, [node, other])).toBe(true);
 	});
 
 	it("returns true when horizontally overlapping nodes are closer than 8px vertically", () => {
-		const other = fakeNode("b", { x: 0, y: 49, width: 44, height: 44 });
+		const other = fakeSceneNode("b", { x: 0, y: 49, width: 44, height: 44 });
 
 		expect(isTouchTargetTooClose(node, [node, other])).toBe(true);
 	});
 
 	it("returns false when overlapping nodes have at least 8px of spacing", () => {
-		const other = fakeNode("b", { x: 52, y: 0, width: 44, height: 44 });
+		const other = fakeSceneNode("b", { x: 52, y: 0, width: 44, height: 44 });
 
 		expect(isTouchTargetTooClose(node, [node, other])).toBe(false);
 	});
 });
 
 describe("getNearbyNodes", () => {
-	const node = fakeNode("a", { x: 0, y: 0, width: 44, height: 44 });
+	const node = fakeSceneNode("a", { x: 0, y: 0, width: 44, height: 44 });
 
 	it("returns an empty array when the node has no bounding box", () => {
 		const boundsless = { id: "a" } as unknown as SceneNode;
@@ -220,14 +209,14 @@ describe("getNearbyNodes", () => {
 	});
 
 	it("finds a node sharing a cell nearby", () => {
-		const other = fakeNode("b", { x: 49, y: 0, width: 44, height: 44 });
+		const other = fakeSceneNode("b", { x: 49, y: 0, width: 44, height: 44 });
 		const index = buildTouchTargetSpatialIndex([node, other]);
 
 		expect(getNearbyNodes(node, index).map((n) => n.id)).toEqual(["b"]);
 	});
 
 	it("excludes nodes far enough away to land in unrelated cells", () => {
-		const far = fakeNode("far", { x: 5000, y: 5000, width: 44, height: 44 });
+		const far = fakeSceneNode("far", { x: 5000, y: 5000, width: 44, height: 44 });
 		const index = buildTouchTargetSpatialIndex([node, far]);
 
 		expect(getNearbyNodes(node, index)).toEqual([]);
@@ -240,7 +229,7 @@ describe("getNearbyNodes", () => {
 	});
 
 	it("does not return duplicates when a large node spans multiple shared cells", () => {
-		const big = fakeNode("big", { x: 0, y: 0, width: 500, height: 500 });
+		const big = fakeSceneNode("big", { x: 0, y: 0, width: 500, height: 500 });
 		const index = buildTouchTargetSpatialIndex([node, big], 100);
 
 		const nearby = getNearbyNodes(node, index, 100);
@@ -257,8 +246,8 @@ describe("getNearbyNodes", () => {
 	});
 
 	it("agrees with the naive isTouchTargetTooClose result when passed the full node list vs. just the nearby subset", () => {
-		const close = fakeNode("close", { x: 49, y: 0, width: 44, height: 44 });
-		const far = fakeNode("far", { x: 5000, y: 5000, width: 44, height: 44 });
+		const close = fakeSceneNode("close", { x: 49, y: 0, width: 44, height: 44 });
+		const far = fakeSceneNode("far", { x: 5000, y: 5000, width: 44, height: 44 });
 		const allNodes = [node, close, far];
 		const index = buildTouchTargetSpatialIndex(allNodes);
 
@@ -282,7 +271,7 @@ describe("spatial index performance", () => {
 			const col = i % columns;
 			const row = Math.floor(i / columns);
 			nodes.push(
-				fakeNode(`n${i}`, {
+				fakeSceneNode(`n${i}`, {
 					x: col * gridStride,
 					y: row * gridStride,
 					width: 44,
@@ -295,8 +284,8 @@ describe("spatial index performance", () => {
 		// spacing violations to find, not just distant nodes.
 		for (let i = 0; i < 20; i++) {
 			nodes.push(
-				fakeNode(`close-a-${i}`, { x: i * 1000, y: 0, width: 44, height: 44 }),
-				fakeNode(`close-b-${i}`, { x: i * 1000 + 49, y: 0, width: 44, height: 44 }),
+				fakeSceneNode(`close-a-${i}`, { x: i * 1000, y: 0, width: 44, height: 44 }),
+				fakeSceneNode(`close-b-${i}`, { x: i * 1000 + 49, y: 0, width: 44, height: 44 }),
 			);
 		}
 
@@ -461,12 +450,10 @@ describe("createTouchTargetIssue", () => {
 		type: SceneNode["type"],
 		dimensions?: { width: number; height: number },
 	): SceneNode {
-		return {
-			id,
+		return fakeSceneNode(id, dimensions ? { x: 0, y: 0, ...dimensions } : undefined, {
 			name: "Icon button",
 			type,
-			...dimensions,
-		} as unknown as SceneNode;
+		});
 	}
 
 	it("returns null and logs an error for an invalid node", () => {
