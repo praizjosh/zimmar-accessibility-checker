@@ -9,6 +9,27 @@ Two version numbers appear in this project and they are **not** the same thing:
 
 Versions 2-10's descriptions are transcribed as originally published on Figma - full commit-level detail for that period isn't available since this changelog was only introduced retroactively (06/08/2026).
 
+## [1.2.0] - Figma Version 13 - 07/08/2026
+
+### Added
+
+- Global AA/AAA target-level toggle for contrast issue detection, in addition to the existing fix-suggester toggle: text that passes AA but fails the stricter AAA standard is no longer invisible as an issue. Recomputes instantly, no rescan needed. (#43)
+- Device-aware touch target sizing: new Device Type setting (Touch/Pointer) alongside the target-level toggle, behind a new Scan Settings popover. AA now checks against the WCAG 2.5.8 24px minimum instead of always using the AAA 2.5.5 44px threshold, and touch-target checks are skipped entirely for Pointer designs, since WCAG defines no separate desktop minimum. Settings persist across plugin restarts and files. (#44)
+
+### Changed
+
+- Upgraded Tailwind CSS to v4 and ESLint to v9 (tooling/build only; no user-facing behaviour change). (#46)
+- Re-themed all shared UI components (buttons, cards, alerts, inputs, popovers, tabs, etc.) through semantic design tokens instead of hardcoded colours - root-cause fix for an intermittent white-on-white button bug, plus two related latent styling bugs caught along the way. (#47)
+
+### Fixed
+
+- A touch-target issue scanned at the AA level no longer shows a contradictory "at least 44x44 pixels" message alongside a correct "Required size: 24 x 24px" row. (#45)
+- The target-level and device-type toggles' accessible names now always match their visible labels (WCAG SC 2.5.3). (#45)
+
+### Performance
+
+- Large pages with many frames/sections no longer risk freezing the plugin during a full-page scan: touch-target spacing detection now uses a spatial index instead of comparing every node against every other node on the page. (#48)
+
 ## [1.1.0] - Figma Version 12 - 06/08/2026
 
 ### Added
