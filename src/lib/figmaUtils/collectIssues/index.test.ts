@@ -5,6 +5,7 @@ import {
 	collectIssues,
 	collectTouchTargetIssues,
 	detectIssuesInSelection,
+	expandSelectionWithDescendants,
 	isScannable,
 } from "./index";
 
@@ -14,6 +15,19 @@ function fakeTouchTargetNode(
 	name = "Button",
 ): SceneNode {
 	return fakeSceneNode(id, bounds, { name });
+}
+
+/** A fake container node whose `findAll` returns the given descendants, filtered by the callback. */
+function fakeContainerNode(
+	id: string,
+	descendants: SceneNode[],
+	name = "Frame",
+): SceneNode & { findAll: (callback?: (node: SceneNode) => boolean) => SceneNode[] } {
+	const node = fakeSceneNode(id, undefined, { name, type: "FRAME" }) as SceneNode & {
+		findAll: (callback?: (node: SceneNode) => boolean) => SceneNode[];
+	};
+	node.findAll = (callback) => (callback ? descendants.filter(callback) : descendants);
+	return node;
 }
 
 describe("isScannable", () => {
@@ -90,6 +104,57 @@ describe("collectTouchTargetIssues", () => {
 	});
 });
 
+describe("expandSelectionWithDescendants", () => {
+	it("returns just the node itself when it has no findAll (not a container)", () => {
+		const node = fakeTouchTargetNode("btn", { x: 0, y: 0, width: 44, height: 44 });
+
+		expect(expandSelectionWithDescendants([node])).toEqual([{ node, isDirectSelection: true }]);
+	});
+
+	it("includes scannable descendants of a selected container, marked as not directly selected", () => {
+		const child = fakeTouchTargetNode("child", { x: 0, y: 0, width: 20, height: 20 });
+		const container = fakeContainerNode("frame", [child]);
+
+		expect(expandSelectionWithDescendants([container])).toEqual([
+			{ node: container, isDirectSelection: true },
+			{ node: child, isDirectSelection: false },
+		]);
+	});
+
+	it("excludes hidden or locked descendants", () => {
+		const hiddenChild = {
+			id: "hidden",
+			name: "Button",
+			visible: false,
+			locked: false,
+			parent: null,
+		} as unknown as SceneNode;
+		const lockedChild = {
+			id: "locked",
+			name: "Button",
+			visible: true,
+			locked: true,
+			parent: null,
+		} as unknown as SceneNode;
+		const container = fakeContainerNode("frame", [hiddenChild, lockedChild]);
+
+		expect(expandSelectionWithDescendants([container])).toEqual([
+			{ node: container, isDirectSelection: true },
+		]);
+	});
+
+	it("flattens descendants across multiple selected containers", () => {
+		const childA = fakeTouchTargetNode("a-child", { x: 0, y: 0, width: 20, height: 20 });
+		const childB = fakeTouchTargetNode("b-child", { x: 0, y: 0, width: 20, height: 20 });
+		const containerA = fakeContainerNode("a", [childA]);
+		const containerB = fakeContainerNode("b", [childB]);
+
+		const entries = expandSelectionWithDescendants([containerA, containerB]);
+
+		expect(entries.map((entry) => entry.node.id)).toEqual(["a", "a-child", "b", "b-child"]);
+	});
+});
+
 describe("collectIssues", () => {
 	it("skips figma.loadFontAsync entirely and still runs touch-target checks when allTextNodes is empty", async () => {
 		const node = fakeTouchTargetNode("btn", { x: 0, y: 0, width: 20, height: 20 });
@@ -148,5 +213,53 @@ describe("detectIssuesInSelection", () => {
 		expect(
 			issues.some((issue) => issue.type === "TYPOGRAPHY" || issue.type === "CONTRAST"),
 		).toBe(false);
+	});
+
+	it("checks a directly selected node unconditionally, even without a touch-target keyword name", async () => {
+		const node = fakeTouchTargetNode(
+			"weird-icon",
+			{ x: 0, y: 0, width: 20, height: 20 },
+			"Decorative icon",
+		);
+
+		const issues = await detectIssuesInSelection([node], "touch", "AAA", []);
+
+		expect(issues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(true);
+	});
+
+	it("recurses into a selected container and flags an eligible descendant", async () => {
+		const child = fakeTouchTargetNode("child-btn", { x: 0, y: 0, width: 20, height: 20 });
+		const container = fakeContainerNode("frame", [child]);
+
+		const issues = await detectIssuesInSelection([container], "touch", "AAA", []);
+
+		expect(
+			issues.some(
+				(issue) => issue.type === "TOUCH_TARGET_SIZE" && issue.nodeData.id === "child-btn",
+			),
+		).toBe(true);
+	});
+
+	it("does not flag an ineligible descendant, unlike a direct selection", async () => {
+		const child = fakeTouchTargetNode(
+			"decorative",
+			{ x: 0, y: 0, width: 20, height: 20 },
+			"Background rectangle",
+		);
+		const container = fakeContainerNode("frame", [child]);
+
+		const issues = await detectIssuesInSelection([container], "touch", "AAA", []);
+
+		expect(issues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(false);
+	});
+
+	it("checks descendants of a selected container against each other for spacing", async () => {
+		const childA = fakeTouchTargetNode("child-a", { x: 0, y: 0, width: 44, height: 44 });
+		const childB = fakeTouchTargetNode("child-b", { x: 49, y: 0, width: 44, height: 44 });
+		const container = fakeContainerNode("frame", [childA, childB]);
+
+		const issues = await detectIssuesInSelection([container], "touch", "AAA", []);
+
+		expect(issues.some((issue) => issue.type === "TOUCH_TARGET_SPACING")).toBe(true);
 	});
 });
