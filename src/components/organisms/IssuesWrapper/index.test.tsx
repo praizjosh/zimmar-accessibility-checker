@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MESSAGE_TYPES } from "@/lib/constants";
-import { IssueX } from "@/lib/types";
+import { DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 
 const { postMessageToBackend } = vi.hoisted(() => ({
@@ -17,14 +17,14 @@ function dispatch(type: string, data: unknown) {
 	window.dispatchEvent(new MessageEvent("message", { data: { pluginMessage: { type, data } } }));
 }
 
-const typographyIssue: IssueX = {
+const typographyIssue: DetectedIssue = {
 	type: "TYPOGRAPHY",
 	description: "Text size is too small for readability.",
 	severity: "major",
 	nodeData: { id: "t1", name: "Label", nodeType: "TEXT" },
 };
 
-const touchTargetIssue: IssueX = {
+const touchTargetIssue: DetectedIssue = {
 	type: "TOUCH_TARGET_SIZE",
 	description: "Touch target size is too small for accessibility.",
 	severity: "minor",
@@ -37,7 +37,7 @@ const touchTargetIssue: IssueX = {
 	},
 };
 
-const contrastFailIssue: IssueX = {
+const contrastFailIssue: DetectedIssue = {
 	type: "CONTRAST",
 	severity: "critical",
 	nodeData: {
@@ -48,7 +48,7 @@ const contrastFailIssue: IssueX = {
 	},
 };
 
-const contrastAaOnlyIssue: IssueX = {
+const contrastAaOnlyIssue: DetectedIssue = {
 	...contrastFailIssue,
 	nodeData: {
 		...contrastFailIssue.nodeData,
@@ -58,9 +58,9 @@ const contrastAaOnlyIssue: IssueX = {
 };
 
 const defaultState = {
-	issues: [] as IssueX[],
+	detectedIssues: [] as DetectedIssue[],
 	singleIssue: null,
-	currentIndex: 0,
+	currentIssueIndex: 0,
 	currentRoute: "INDEX" as const,
 	selectedType: "" as const,
 	targetLevel: "AA" as const,
@@ -146,7 +146,7 @@ describe("IssuesWrapper", () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [
+			detectedIssues: [
 				typographyIssue,
 				{
 					...typographyIssue,
@@ -169,13 +169,13 @@ describe("IssuesWrapper", () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [typographyIssue],
+			detectedIssues: [typographyIssue],
 		});
 		const { rerender } = render(<IssuesWrapper>child</IssuesWrapper>);
 
 		expect(screen.queryByRole("tablist")).toBeNull();
 
-		useIssuesStore.setState({ issues: [typographyIssue, touchTargetIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue, touchTargetIssue] });
 		rerender(<IssuesWrapper>child</IssuesWrapper>);
 
 		const tablist = screen.getByRole("tablist", { name: "Switch issue type" });
@@ -190,7 +190,7 @@ describe("IssuesWrapper", () => {
 	it("does not show a Contrast tab when the only contrast issues present aren't currently failing", async () => {
 		useIssuesStore.setState({
 			selectedType: "TOUCH_TARGET_SIZE",
-			issues: [touchTargetIssue, contrastAaOnlyIssue],
+			detectedIssues: [touchTargetIssue, contrastAaOnlyIssue],
 			targetLevel: "AA",
 		});
 		const { rerender } = render(<IssuesWrapper>child</IssuesWrapper>);
@@ -217,7 +217,7 @@ describe("IssuesWrapper", () => {
 	it("renders the issue description, children, and recommendations once an issue is present", () => {
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [typographyIssue],
+			detectedIssues: [typographyIssue],
 		});
 		render(<IssuesWrapper>Row content</IssuesWrapper>);
 
@@ -229,7 +229,7 @@ describe("IssuesWrapper", () => {
 	it("describes a genuine AA contrast failure as below WCAG AA standard", () => {
 		useIssuesStore.setState({
 			selectedType: "CONTRAST",
-			issues: [contrastFailIssue],
+			detectedIssues: [contrastFailIssue],
 			targetLevel: "AA",
 		});
 		render(<IssuesWrapper>child</IssuesWrapper>);
@@ -240,7 +240,7 @@ describe("IssuesWrapper", () => {
 	it("describes an AA-passing/AAA-failing issue without falsely claiming it fails AA", () => {
 		useIssuesStore.setState({
 			selectedType: "CONTRAST",
-			issues: [contrastAaOnlyIssue],
+			detectedIssues: [contrastAaOnlyIssue],
 			targetLevel: "AAA",
 		});
 		render(<IssuesWrapper>child</IssuesWrapper>);
@@ -257,7 +257,7 @@ describe("IssuesWrapper", () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			selectedType: "CONTRAST",
-			issues: [contrastAaOnlyIssue],
+			detectedIssues: [contrastAaOnlyIssue],
 			targetLevel: "AAA",
 		});
 		render(<IssuesWrapper>child</IssuesWrapper>);
@@ -270,7 +270,7 @@ describe("IssuesWrapper", () => {
 	it("shows the description for a quick-check singleIssue even though issueGroupList is empty", () => {
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [],
+			detectedIssues: [],
 			singleIssue: typographyIssue,
 		});
 		render(<IssuesWrapper>child</IssuesWrapper>);

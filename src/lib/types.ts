@@ -66,7 +66,7 @@ export type NodeDataType = {
 	requiredSizePx?: number;
 };
 
-export interface IssueX {
+export interface DetectedIssue {
 	description?: string;
 	type?: IssueType;
 	severity: Severity;
@@ -75,17 +75,17 @@ export interface IssueX {
 }
 
 export interface IssuesStore {
-	issues: IssueX[]; // List of issues
-	currentIndex: number; // Index of the currently selected issue
+	detectedIssues: DetectedIssue[];
+	currentIssueIndex: number;
 	startScan: () => void; // Start the scan
-	setIssues: (newIssues: IssueX[]) => void; // Setter for issues
-	setCurrentIndex: (index: number) => void; // Setter for the current index
+	setDetectedIssues: (newIssues: DetectedIssue[]) => void; // Setter for issues
+	setCurrentIssueIndex: (index: number) => void;
 	navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }
 
 export interface EnhancedIssuesStore extends IssuesStore {
 	/** An instance of a detected issue. */
-	singleIssue: IssueX | null;
+	singleIssue: DetectedIssue | null;
 	scanning: boolean;
 	/** Selected issue type. Empty string (`""`) means no scan has run yet. */
 	selectedType: IssueType | "";
@@ -93,14 +93,14 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	targetLevel: TargetLevel;
 	deviceType: DeviceType;
 	setScanning: (isScanning: boolean) => void;
-	setSingleIssue: (newIssue: IssueX | null) => void;
+	setSingleIssue: (newIssue: DetectedIssue | null) => void;
 	navigateTo: (route: Routes) => void;
 	setSelectedType: (type: IssueType) => void;
 	setTargetLevel: (level: TargetLevel) => void;
 	setDeviceType: (device: DeviceType) => void;
 	hydrateScanSettings: (settings: { deviceType: DeviceType; targetLevel: TargetLevel }) => void;
-	updateIssue: (id: string, updates: Partial<IssueX>) => void;
-	getIssueGroupList: () => IssueX[];
+	updateIssue: (id: string, updates: Partial<DetectedIssue>) => void;
+	getIssueGroupList: () => DetectedIssue[];
 	rescanIssues: () => void;
 }
 
