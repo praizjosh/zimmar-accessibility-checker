@@ -3,10 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
-import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
+import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { cn, contrastFailsTargetLevel, getRouteForIssueType, getSeverityStyles } from "@/lib/utils";
+import {
+	cn,
+	contrastFailsTargetLevel,
+	getContrastIssueDescription,
+	getRouteForIssueType,
+	getSeverityStyles,
+} from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
 import { useEffect } from "react";
@@ -83,10 +89,22 @@ export default function IssuesOverviewList() {
 				issue.nodeData?.nodeType === "TEXT"
 					? issue.nodeData?.characters
 					: issue.nodeData?.name;
+			// Contrast's description depends on the live targetLevel, not just
+			// what was true at scan time - toggling AA/AAA doesn't rescan, so an
+			// issue exported while browsing at AAA needs different copy than the
+			// same issue exported while browsing at AA.
+			const description =
+				issue.type === "CONTRAST"
+					? getContrastIssueDescription(
+							issue.nodeData.contrastScore?.compliance,
+							targetLevel,
+						)
+					: issue.description;
+
 			return {
 				elementType: issue.nodeData?.nodeType || "N/A",
 				elementName: elementName || "N/A",
-				description: issue.description,
+				description,
 				severity: issue.severity,
 				type: (issue.type && ISSUE_TYPE_LABELS[issue.type]) || issue.type,
 				wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",

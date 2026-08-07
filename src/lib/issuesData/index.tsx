@@ -1,6 +1,5 @@
 import { Contrast, MoveHorizontal, Pointer, TypeOutline } from "lucide-react";
-import { MIN_FONT_SIZE } from "./constants";
-import { Issue, IssueRecommendations } from "./types";
+import { Issue } from "../types";
 
 /**
  * Node types a touch-target issue (size or spacing) can apply to. Shared
@@ -79,29 +78,4 @@ const ISSUES_DATA_SCHEMA: Issue[] = [
 	},
 ];
 
-const ISSUE_RECOMMENDATIONS: IssueRecommendations[] = [
-	{
-		contrast: [
-			"Increase the contrast ratio to at least 4.5:1 for normal text and 3:1 for large text (18px and up).",
-			"To improve contrast, use a darker text color or a lighter background color.",
-		],
-	},
-	{
-		typography: [
-			`Ensure font size is at least ${MIN_FONT_SIZE}px to enhance readability and comply with WCAG "AA" standards.`,
-			"Use a minimum font size of 16px for body text and 14px for buttons and other interactive elements.",
-		],
-	},
-	{
-		"touch target size": [
-			"Increase the touch target size to at least 44x44 pixels to ensure better accessibility on mobile devices. Maintain adequate spacing between interactive elements.",
-		],
-	},
-	{
-		"touch target spacing": [
-			"The touch target spacing should be at least 8px to the nearest element in all directions.",
-		],
-	},
-];
-
-export { ISSUE_RECOMMENDATIONS, ISSUES_DATA_SCHEMA };
+export default ISSUES_DATA_SCHEMA;

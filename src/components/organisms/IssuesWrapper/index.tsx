@@ -5,10 +5,11 @@ import Separator from "@/components/ui/separator";
 import { MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { ISSUE_RECOMMENDATIONS, ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
+import getIssueRecommendations from "@/lib/issueRecommendations";
+import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { cn, getRouteForIssueType } from "@/lib/utils";
+import { cn, getContrastIssueDescription, getRouteForIssueType } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -42,6 +43,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		issues,
 		singleIssue,
 		selectedType,
+		targetLevel,
 		navigateTo,
 		setCurrentIndex,
 		setSelectedType,
@@ -127,7 +129,13 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 
 	const issueGroupList = getIssueGroupList();
 	const currentIssue = issueGroupList[currentIndex];
-	const { type, description } = currentIssue || {};
+	// The issue actually being rendered below (see renderWrapper's call site) -
+	// singleIssue in quick-check mode, currentIssue when paging a scanned
+	// list. description/suggestions need to derive from whichever one that
+	// actually is, not always currentIssue, or quick-check mode would compute
+	// them from an issue that isn't the one on screen.
+	const activeIssue = issueGroupList.length === 0 ? singleIssue : currentIssue;
+	const { type } = activeIssue || {};
 	const availableTypes = ISSUES_DATA_SCHEMA.filter((issue) =>
 		issues.some((i) => i.type === issue.type),
 	);
@@ -135,14 +143,23 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	const currentOrSelectedType = type ?? selectedType;
 	const headerLabel = currentOrSelectedType ? ISSUE_TYPE_LABELS[currentOrSelectedType] : "";
 
-	const getIssueRecommendations = (issueType: IssueType | "") => {
-		if (!issueType) return null;
-		const label = ISSUE_TYPE_LABELS[issueType].toLowerCase();
-		const entry = ISSUE_RECOMMENDATIONS.find((item) => item[label] !== undefined);
-		return entry ? entry[label] : null;
-	};
+	// Contrast's description depends on the live targetLevel, not just what
+	// was true at scan time - target-level filtering is instant/client-side
+	// (toggling AA/AAA doesn't rescan), so the same stored issue needs
+	// different copy depending on which level is currently selected.
+	const description =
+		activeIssue?.type === "CONTRAST"
+			? getContrastIssueDescription(
+					activeIssue.nodeData.contrastScore?.compliance,
+					targetLevel,
+				)
+			: activeIssue?.description;
 
-	const suggestions = getIssueRecommendations(selectedType);
+	const suggestions = getIssueRecommendations(
+		selectedType,
+		targetLevel,
+		activeIssue?.nodeData?.requiredSizePx,
+	);
 
 	const renderWrapper = (issue: typeof singleIssue | null) => {
 		if (!issue) {

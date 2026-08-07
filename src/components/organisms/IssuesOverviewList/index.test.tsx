@@ -222,4 +222,20 @@ describe("IssuesOverviewList", () => {
 
 		expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), "accessibility-issues-report.json");
 	});
+
+	it("exports a target-level-aware contrast description, not the stale 'below WCAG AA standard' text", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ issues: [contrastPassIssue], targetLevel: "AAA" });
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download JSON" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = JSON.parse(await blob.text());
+
+		expect(content[0].description).toBe(
+			"Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.",
+		);
+	});
 });

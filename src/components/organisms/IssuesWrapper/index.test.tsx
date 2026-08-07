@@ -39,7 +39,6 @@ const touchTargetIssue: IssueX = {
 
 const contrastFailIssue: IssueX = {
 	type: "CONTRAST",
-	description: "Text contrast is below WCAG AA standard.",
 	severity: "critical",
 	nodeData: {
 		id: "c1",
@@ -49,12 +48,22 @@ const contrastFailIssue: IssueX = {
 	},
 };
 
+const contrastAaOnlyIssue: IssueX = {
+	...contrastFailIssue,
+	nodeData: {
+		...contrastFailIssue.nodeData,
+		id: "c2",
+		contrastScore: { compliance: "AA", ratio: 5 },
+	},
+};
+
 const defaultState = {
 	issues: [] as IssueX[],
 	singleIssue: null,
 	currentIndex: 0,
 	currentRoute: "INDEX" as const,
 	selectedType: "" as const,
+	targetLevel: "AA" as const,
 };
 
 describe("IssuesWrapper", () => {
@@ -198,5 +207,57 @@ describe("IssuesWrapper", () => {
 		expect(screen.getByText("Text size is too small for readability.")).toBeVisible();
 		expect(screen.getByText("Row content")).toBeVisible();
 		expect(screen.getByText("Recommendations")).toBeVisible();
+	});
+
+	it("describes a genuine AA contrast failure as below WCAG AA standard", () => {
+		useIssuesStore.setState({
+			selectedType: "CONTRAST",
+			issues: [contrastFailIssue],
+			targetLevel: "AA",
+		});
+		render(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(screen.getByText("Text contrast is below WCAG AA standard.")).toBeVisible();
+	});
+
+	it("describes an AA-passing/AAA-failing issue without falsely claiming it fails AA", () => {
+		useIssuesStore.setState({
+			selectedType: "CONTRAST",
+			issues: [contrastAaOnlyIssue],
+			targetLevel: "AAA",
+		});
+		render(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(
+			screen.getByText(
+				"Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.",
+			),
+		).toBeVisible();
+		expect(screen.queryByText("Text contrast is below WCAG AA standard.")).toBeNull();
+	});
+
+	it("cites the stricter AAA contrast ratios in the recommendation when the target level is AAA", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({
+			selectedType: "CONTRAST",
+			issues: [contrastAaOnlyIssue],
+			targetLevel: "AAA",
+		});
+		render(<IssuesWrapper>child</IssuesWrapper>);
+
+		await user.click(screen.getByRole("button", { name: "Toggle Recommendations" }));
+
+		expect(screen.getByText(/7:1 for normal text and 4.5:1 for large text/)).toBeVisible();
+	});
+
+	it("shows the description for a quick-check singleIssue even though issueGroupList is empty", () => {
+		useIssuesStore.setState({
+			selectedType: "TYPOGRAPHY",
+			issues: [],
+			singleIssue: typographyIssue,
+		});
+		render(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(screen.getByText("Text size is too small for readability.")).toBeVisible();
 	});
 });

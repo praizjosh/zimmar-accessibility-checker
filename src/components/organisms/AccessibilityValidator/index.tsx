@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { ISSUES_DATA_SCHEMA } from "@/lib/issuesData";
+import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getRouteForIssueType } from "@/lib/utils";

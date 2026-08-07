@@ -6,6 +6,7 @@ import {
 	copyToClipboard,
 	getBackgroundColorForNode,
 	getContrastCompliance,
+	getContrastIssueDescription,
 	getRouteForIssueType,
 	getScanSettings,
 	getSeverityStyles,
@@ -336,6 +337,38 @@ describe("contrastFailsTargetLevel", () => {
 	it("does not flag when there is no compliance result yet", () => {
 		expect(contrastFailsTargetLevel(undefined, "AA")).toBe(false);
 		expect(contrastFailsTargetLevel(undefined, "AAA")).toBe(false);
+	});
+});
+
+describe("getContrastIssueDescription", () => {
+	it("describes a genuine AA failure the same regardless of target level", () => {
+		expect(getContrastIssueDescription("Fail", "AA")).toBe(
+			"Text contrast is below WCAG AA standard.",
+		);
+		expect(getContrastIssueDescription("Fail", "AAA")).toBe(
+			"Text contrast is below WCAG AA standard.",
+		);
+	});
+
+	it("describes an AA-passing/AAA-failing result differently when the target is AAA", () => {
+		expect(getContrastIssueDescription("AA", "AAA")).toBe(
+			"Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.",
+		);
+		expect(getContrastIssueDescription("AA Large", "AAA")).toBe(
+			"Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.",
+		);
+	});
+
+	it("does not describe an AA-passing result as failing when the target is AA", () => {
+		expect(getContrastIssueDescription("AA", "AA")).toBe(
+			"Text contrast meets the selected WCAG standard.",
+		);
+	});
+
+	it("does not describe an AAA-passing result as failing when the target is AAA", () => {
+		expect(getContrastIssueDescription("AAA", "AAA")).toBe(
+			"Text contrast meets the selected WCAG standard.",
+		);
 	});
 });
 

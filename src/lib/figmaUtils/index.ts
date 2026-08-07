@@ -363,7 +363,11 @@ export const createContrastIssue = (
 	background: BackgroundColorResult | null,
 	isBold: boolean,
 ): IssueX => ({
-	description: "Text contrast is below WCAG AA standard.",
+	// No static description here - contrast target-level filtering is
+	// instant/client-side (toggling AA/AAA doesn't rescan), so a description
+	// baked in at scan time can't reflect whichever level is later selected.
+	// getContrastIssueDescription (utils) derives it at render/report time
+	// instead, from contrastScore.compliance and the live targetLevel.
 	severity: "critical",
 	type: "CONTRAST",
 	nodeData: {

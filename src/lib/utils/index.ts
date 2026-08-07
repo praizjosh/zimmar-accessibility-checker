@@ -40,6 +40,29 @@ export function contrastFailsTargetLevel(
 	return false;
 }
 
+/**
+ * Contrast issue description text for the given compliance tier and target
+ * level - computed at render/report time rather than baked into the issue
+ * at scan time, since contrast target-level filtering is instant/client-side
+ * (toggling AA/AAA doesn't rescan) and the same stored issue is shown or
+ * exported under whichever level is currently selected. A pair that passes
+ * AA but only fails AAA (`compliance: "AA"`/`"AA Large"`) needs different
+ * copy from one that fails outright - "below WCAG AA standard" would be
+ * false for the former.
+ */
+export function getContrastIssueDescription(
+	compliance: string | undefined,
+	targetLevel: TargetLevel,
+): string {
+	if (!contrastFailsTargetLevel(compliance, targetLevel)) {
+		return "Text contrast meets the selected WCAG standard.";
+	}
+	if (compliance === "Fail") {
+		return "Text contrast is below WCAG AA standard.";
+	}
+	return "Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.";
+}
+
 // Global state
 const state = {
 	IsQuickCheckModeActive: false,
