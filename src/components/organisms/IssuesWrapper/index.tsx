@@ -7,7 +7,7 @@ import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import getIssueRecommendations from "@/lib/issueRecommendations";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
-import { IssueType, IssueX } from "@/lib/types";
+import { IssueType, DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getContrastIssueDescription, getRouteForIssueType, isActiveIssue } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -39,13 +39,13 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	const [hasBackground, setHasBackground] = useState("");
 	const [hasForeground, setHasForeground] = useState("");
 	const {
-		currentIndex,
-		issues,
+		currentIssueIndex,
+		detectedIssues,
 		singleIssue,
 		selectedType,
 		targetLevel,
 		navigateTo,
-		setCurrentIndex,
+		setCurrentIssueIndex,
 		setSelectedType,
 		setSingleIssue,
 		navigateToIssue,
@@ -57,7 +57,9 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 			const { type, data } = event.data.pluginMessage || {};
 
 			if (type === MESSAGE_TYPES.DETECTED_ISSUE) {
-				const matchingIssues = data.filter((issue: IssueX) => issue.type === selectedType);
+				const matchingIssues = data.filter(
+					(issue: DetectedIssue) => issue.type === selectedType,
+				);
 
 				if (matchingIssues.length === 0) {
 					setSingleIssue(null);
@@ -111,24 +113,24 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	};
 
 	const handleNavigation = (direction: "prev" | "next") => {
-		if (direction === "prev" && currentIndex > 0) {
-			navigateToIssue(currentIndex - 1);
+		if (direction === "prev" && currentIssueIndex > 0) {
+			navigateToIssue(currentIssueIndex - 1);
 		}
-		if (direction === "next" && currentIndex < issueGroupList.length - 1) {
-			navigateToIssue(currentIndex + 1);
+		if (direction === "next" && currentIssueIndex < issueGroupList.length - 1) {
+			navigateToIssue(currentIssueIndex + 1);
 		}
 	};
 
 	const handleSwitchType = (nextType: IssueType) => {
 		if (nextType === selectedType) return;
 		setSelectedType(nextType);
-		setCurrentIndex(0);
+		setCurrentIssueIndex(0);
 		navigateTo(getRouteForIssueType(nextType));
 		navigateToIssue(0);
 	};
 
 	const issueGroupList = getIssueGroupList();
-	const currentIssue = issueGroupList[currentIndex];
+	const currentIssue = issueGroupList[currentIssueIndex];
 	// The issue actually being rendered below (see renderWrapper's call site) -
 	// singleIssue in quick-check mode, currentIssue when paging a scanned
 	// list. description/suggestions need to derive from whichever one that
@@ -142,7 +144,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	// whenever the page has any text at all, even with zero currently-failing
 	// contrast issues.
 	const availableTypes = ISSUES_DATA_SCHEMA.filter((schemaIssue) =>
-		issues.some(
+		detectedIssues.some(
 			(issue) => issue.type === schemaIssue.type && isActiveIssue(issue, targetLevel),
 		),
 	);
@@ -276,20 +278,20 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 							variant="ghost"
 							size="icon"
 							onClick={() => handleNavigation("prev")}
-							disabled={currentIndex === 0}
+							disabled={currentIssueIndex === 0}
 							className="p-2.5"
 						>
 							<ChevronLeft strokeWidth={1.5} aria-hidden="true" className="size-6!" />
 						</Button>
 						<span className="text-sm text-slate-200">
-							Issue {currentIndex + 1} of {issueGroupList.length}
+							Issue {currentIssueIndex + 1} of {issueGroupList.length}
 						</span>
 						<Button
 							title="Goto next issue"
 							variant="ghost"
 							size="icon"
 							onClick={() => handleNavigation("next")}
-							disabled={currentIndex === issueGroupList.length - 1}
+							disabled={currentIssueIndex === issueGroupList.length - 1}
 							className="p-2.5"
 						>
 							<ChevronRight

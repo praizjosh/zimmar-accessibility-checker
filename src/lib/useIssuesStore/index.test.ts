@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IssueX } from "../types";
+import { DetectedIssue } from "../types";
 
 const { postMessageToBackend } = vi.hoisted(() => ({
 	postMessageToBackend: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock("../figmaUtils", () => ({ postMessageToBackend }));
 import { MESSAGE_TYPES } from "../constants";
 import useIssuesStore from "./index";
 
-const issues: IssueX[] = [
+const issues: DetectedIssue[] = [
 	{
 		type: "TYPOGRAPHY",
 		severity: "major",
@@ -27,9 +27,9 @@ describe("useIssuesStore.navigateToIssue", () => {
 	beforeEach(() => {
 		postMessageToBackend.mockClear();
 		useIssuesStore.setState({
-			issues,
+			detectedIssues: issues,
 			selectedType: "TYPOGRAPHY",
-			currentIndex: 0,
+			currentIssueIndex: 0,
 		});
 	});
 
@@ -39,25 +39,25 @@ describe("useIssuesStore.navigateToIssue", () => {
 		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.NAVIGATE, {
 			id: "node-2",
 		});
-		expect(useIssuesStore.getState().currentIndex).toBe(1);
+		expect(useIssuesStore.getState().currentIssueIndex).toBe(1);
 	});
 
 	it("does nothing when the index is out of range", () => {
 		useIssuesStore.getState().navigateToIssue(5);
 
 		expect(postMessageToBackend).not.toHaveBeenCalled();
-		expect(useIssuesStore.getState().currentIndex).toBe(0);
+		expect(useIssuesStore.getState().currentIssueIndex).toBe(0);
 	});
 
 	it("does nothing when the index is negative", () => {
 		useIssuesStore.getState().navigateToIssue(-1);
 
 		expect(postMessageToBackend).not.toHaveBeenCalled();
-		expect(useIssuesStore.getState().currentIndex).toBe(0);
+		expect(useIssuesStore.getState().currentIssueIndex).toBe(0);
 	});
 });
 
-function fakeContrastIssue(id: string, compliance: string): IssueX {
+function fakeContrastIssue(id: string, compliance: string): DetectedIssue {
 	return {
 		type: "CONTRAST",
 		severity: "critical",
@@ -73,7 +73,7 @@ function fakeContrastIssue(id: string, compliance: string): IssueX {
 describe("useIssuesStore.getIssueGroupList", () => {
 	it("returns only issues matching the selected type", () => {
 		useIssuesStore.setState({
-			issues: [
+			detectedIssues: [
 				{
 					type: "TYPOGRAPHY",
 					severity: "major",
@@ -95,7 +95,7 @@ describe("useIssuesStore.getIssueGroupList", () => {
 
 	it("includes a CONTRAST issue only when its compliance is Fail", () => {
 		useIssuesStore.setState({
-			issues: [fakeContrastIssue("fail", "Fail"), fakeContrastIssue("pass", "AA")],
+			detectedIssues: [fakeContrastIssue("fail", "Fail"), fakeContrastIssue("pass", "AA")],
 			selectedType: "CONTRAST",
 		});
 
@@ -106,7 +106,7 @@ describe("useIssuesStore.getIssueGroupList", () => {
 
 	it("excludes a CONTRAST issue with no contrastScore at all", () => {
 		useIssuesStore.setState({
-			issues: [
+			detectedIssues: [
 				{
 					type: "CONTRAST",
 					severity: "critical",
@@ -121,7 +121,7 @@ describe("useIssuesStore.getIssueGroupList", () => {
 
 	it("returns an empty list when no scan has run yet (selectedType is empty)", () => {
 		useIssuesStore.setState({
-			issues: [
+			detectedIssues: [
 				{
 					type: "TYPOGRAPHY",
 					severity: "major",
@@ -136,7 +136,7 @@ describe("useIssuesStore.getIssueGroupList", () => {
 
 	it("defaults targetLevel to AA, so only Fail-compliance CONTRAST issues are flagged", () => {
 		useIssuesStore.setState({
-			issues: [
+			detectedIssues: [
 				fakeContrastIssue("fail", "Fail"),
 				fakeContrastIssue("aa-pass", "AA"),
 				fakeContrastIssue("aaa-pass", "AAA"),
@@ -155,7 +155,7 @@ describe("useIssuesStore.getIssueGroupList", () => {
 
 	it("flags AA-only compliant CONTRAST issues once the target level is AAA", () => {
 		useIssuesStore.setState({
-			issues: [
+			detectedIssues: [
 				fakeContrastIssue("fail", "Fail"),
 				fakeContrastIssue("aa-pass", "AA"),
 				fakeContrastIssue("aaa-pass", "AAA"),

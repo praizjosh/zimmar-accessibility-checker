@@ -11,7 +11,7 @@ import {
 	isScannable,
 } from "@/lib/figmaUtils/collectIssues";
 import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
-import { DeviceType, IssueX, TargetLevel } from "@/lib/types";
+import { DeviceType, DetectedIssue, TargetLevel } from "@/lib/types";
 import {
 	figmaRGBtoHex,
 	getIsQuickCheckModeActive,
@@ -165,7 +165,7 @@ async function handleScan(message: ScanSettings) {
 	// ) as VectorNode[];
 	const allPageNodes = figma.currentPage.findAll((node) => isScannable(node)) as SceneNode[];
 
-	const issues: IssueX[] = await collectIssues(
+	const issues: DetectedIssue[] = await collectIssues(
 		allTextNodes,
 		allPageNodes,
 		deviceType,

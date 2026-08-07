@@ -1,13 +1,20 @@
 import { create } from "zustand";
 import { MESSAGE_TYPES } from "../constants";
 import { postMessageToBackend } from "../figmaUtils";
-import { DeviceType, EnhancedIssuesStore, IssueType, IssueX, Routes, TargetLevel } from "../types";
+import {
+	DeviceType,
+	EnhancedIssuesStore,
+	IssueType,
+	DetectedIssue,
+	Routes,
+	TargetLevel,
+} from "../types";
 import { isActiveIssue } from "../utils";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
-	issues: [],
+	detectedIssues: [],
 	singleIssue: null,
-	currentIndex: 0,
+	currentIssueIndex: 0,
 	currentRoute: "INDEX", // Default route
 	selectedType: "",
 	scanning: false,
@@ -24,8 +31,8 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 		navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
 	},
 	setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
-	setIssues: (newIssues: IssueX[]) => {
-		set({ issues: newIssues });
+	setDetectedIssues: (newIssues: DetectedIssue[]) => {
+		set({ detectedIssues: newIssues });
 	},
 	setSelectedType: (type: IssueType) => set({ selectedType: type }),
 	setTargetLevel: (level: TargetLevel) => {
@@ -47,23 +54,23 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	hydrateScanSettings: (settings: { deviceType: DeviceType; targetLevel: TargetLevel }) =>
 		set(settings),
 	getIssueGroupList: () => {
-		const { issues, selectedType, targetLevel } = get();
+		const { detectedIssues, selectedType, targetLevel } = get();
 
-		const response = issues.filter(
+		const response = detectedIssues.filter(
 			(issue) => issue.type === selectedType && isActiveIssue(issue, targetLevel),
 		);
 
 		return response;
 	},
-	updateIssue: (id: string, updates: Partial<IssueX>) => {
+	updateIssue: (id: string, updates: Partial<DetectedIssue>) => {
 		set((state) => ({
-			issues: state.issues.map((issue) =>
+			detectedIssues: state.detectedIssues.map((issue) =>
 				issue.nodeData.id === id ? { ...issue, ...updates } : issue,
 			),
 		}));
 	},
-	setCurrentIndex: (index: number) => set({ currentIndex: index }),
-	navigateToIssue: (index: number) => {
+	setCurrentIssueIndex: (index) => set({ currentIssueIndex: index }),
+	navigateToIssue: (index) => {
 		const { getIssueGroupList } = get();
 		const issueGroupList = getIssueGroupList();
 
@@ -71,16 +78,16 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 			postMessageToBackend(MESSAGE_TYPES.NAVIGATE, {
 				id: issueGroupList[index].nodeData.id,
 			});
-			set({ currentIndex: index });
+			set({ currentIssueIndex: index });
 		}
 	},
 	navigateTo: (route: Routes) => {
 		set({ currentRoute: route });
 	},
 	rescanIssues: () => {
-		const { startScan, setIssues } = get();
-		setIssues([]); // Clear old issues
-		startScan(); // Start a fresh scan
+		const { startScan, setDetectedIssues } = get();
+		setDetectedIssues([]);
+		startScan();
 	},
 }));
 

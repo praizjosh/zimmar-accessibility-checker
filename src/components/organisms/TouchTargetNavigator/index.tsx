@@ -6,10 +6,10 @@ import { cn, getSeverityStyles } from "@/lib/utils";
 import { Check, MoveHorizontal, OctagonAlert, Ruler, Target, X } from "lucide-react";
 
 export default function TouchTargetNavigator() {
-	const { currentIndex, singleIssue, selectedType, getIssueGroupList } = useIssuesStore();
+	const { currentIssueIndex, singleIssue, selectedType, getIssueGroupList } = useIssuesStore();
 
 	const issueGroupList = getIssueGroupList();
-	const currentIssue = issueGroupList[currentIndex] ?? {};
+	const currentIssue = issueGroupList[currentIssueIndex] ?? {};
 
 	const renderIssueDetails = (issue: typeof singleIssue | null) => {
 		if (!issue) {

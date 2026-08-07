@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
-import { IssueType, IssueX } from "@/lib/types";
+import { IssueType, DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
 	cn,
@@ -23,8 +23,8 @@ import LoadingScreen from "@/components/organisms/LoadingScreen";
 export default function IssuesOverviewList() {
 	const {
 		scanning,
-		issues,
-		setIssues,
+		detectedIssues,
+		setDetectedIssues,
 		setScanning,
 		setSelectedType,
 		navigateTo,
@@ -33,12 +33,12 @@ export default function IssuesOverviewList() {
 		setTargetLevel,
 	} = useIssuesStore();
 
-	const issuesGroupListRecords = issues.filter((issue) => {
+	const issuesGroupListRecords = detectedIssues.filter((issue) => {
 		if (!issue.type || !ISSUES_TYPES.includes(issue.type)) return false;
 		return isActiveIssue(issue, targetLevel);
 	});
 
-	const hasContrastIssues = issues.some((issue) => issue.type === "CONTRAST");
+	const hasContrastIssues = detectedIssues.some((issue) => issue.type === "CONTRAST");
 
 	// Listen for messages from the backend
 	useEffect(() => {
@@ -51,7 +51,7 @@ export default function IssuesOverviewList() {
 			const { type, data } = event.data.pluginMessage;
 
 			if (type === MESSAGE_TYPES.LOAD_ISSUES) {
-				setIssues(data);
+				setDetectedIssues(data);
 				setScanning(false);
 			}
 		};
@@ -61,7 +61,7 @@ export default function IssuesOverviewList() {
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [setIssues, setScanning]);
+	}, [setDetectedIssues, setScanning]);
 
 	const handleIssuesListClick = (type: IssueType) => {
 		setSelectedType(type);
@@ -69,7 +69,7 @@ export default function IssuesOverviewList() {
 	};
 
 	const issuesGroup = ISSUES_DATA_SCHEMA.filter((issue) =>
-		issues?.some((i: IssueX) => i.type === issue.type),
+		detectedIssues?.some((i: DetectedIssue) => i.type === issue.type),
 	);
 
 	const breakdownItems = issuesGroup
@@ -160,7 +160,7 @@ export default function IssuesOverviewList() {
 							className="w-fit! gap-0.5 group-hover:text-accent"
 							onClick={() => {
 								navigateTo("INDEX");
-								setIssues([]);
+								setDetectedIssues([]);
 							}}
 						>
 							<ChevronLeft
@@ -216,7 +216,7 @@ export default function IssuesOverviewList() {
 
 						<TabsContent value="issues">
 							<h3
-								className={`text-base font-medium tracking-wide text-grey ${issues.length > 0 ? "mb-1" : "mb-4"}`}
+								className={`text-base font-medium tracking-wide text-grey ${detectedIssues.length > 0 ? "mb-1" : "mb-4"}`}
 							>
 								Identified Issues
 							</h3>
@@ -232,7 +232,7 @@ export default function IssuesOverviewList() {
 								<ul className="space-y-2 last:mb-5!">
 									{issuesGroup.map((issue) => {
 										const issueCount = issuesGroupListRecords.filter(
-											(i: IssueX) => i.type === issue.type,
+											(i: DetectedIssue) => i.type === issue.type,
 										).length;
 
 										// Skip rendering if the issueCount is zero

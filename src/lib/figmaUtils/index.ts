@@ -1,4 +1,4 @@
-import { contrastScore, IssueX } from "@/lib/types";
+import { contrastScore, DetectedIssue } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
 import {
 	MESSAGE_TYPES,
@@ -92,9 +92,9 @@ export function replaceTopmostVisibleSolidFillColor(fills: Paint[], color: RGB):
  * Creates a typography issue object for the given TextNode.
  *
  * @param {TextNode} node - The Figma TextNode to analyze.
- * @returns {IssueX} An issue object detailing the typography issue.
+ * @returns {DetectedIssue} An issue object detailing the typography issue.
  */
-export const createTypographyIssue = (node: TextNode): IssueX => ({
+export const createTypographyIssue = (node: TextNode): DetectedIssue => ({
 	description: "Text size is too small for readability.",
 	severity: "major",
 	type: "TYPOGRAPHY",
@@ -312,13 +312,13 @@ export function getNearbyNodes(
  * @param {SceneNode} node - The Figma SceneNode to analyze.
  * @param {"Size" | "Spacing"} issueType - The type of issue ("Size" or "Spacing").
  * @param {number} [minSize] - The minimum size in px this node was checked against; defaults to the WCAG 2.5.5 (AAA) value. Only affects the "Size" issue's description/requiredSize text - spacing isn't level-dependent.
- * @returns {IssueX} An issue object detailing the touch target issue.
+ * @returns {DetectedIssue} An issue object detailing the touch target issue.
  */
 export const createTouchTargetIssue = (
 	node: SceneNode,
 	issueType: "Size" | "Spacing",
 	minSize: number = MIN_TOUCH_TARGET_SIZE_AAA,
-): IssueX | null => {
+): DetectedIssue | null => {
 	if (!node || typeof node !== "object" || !node.id || !node.name) {
 		console.error("Invalid node passed to createTouchTargetIssue:", node);
 		return null;
@@ -354,7 +354,7 @@ export const createTouchTargetIssue = (
  * @param {RGBColor} foregroundColor - The text's foreground color in RGB.
  * @param {BackgroundColorResult | null} background - The resolved background colour plus which node contributed it, or null.
  * @param {boolean} isBold - Whether the text is bold, for the large-text contrast threshold.
- * @returns {IssueX} An issue object detailing the contrast issue.
+ * @returns {DetectedIssue} An issue object detailing the contrast issue.
  */
 export const createContrastIssue = (
 	node: TextNode,
@@ -362,7 +362,7 @@ export const createContrastIssue = (
 	foregroundColor: RGBColor,
 	background: BackgroundColorResult | null,
 	isBold: boolean,
-): IssueX => ({
+): DetectedIssue => ({
 	// No static description here - contrast target-level filtering is
 	// instant/client-side (toggling AA/AAA doesn't rescan), so a description
 	// baked in at scan time can't reflect whichever level is later selected.
@@ -388,7 +388,7 @@ export const createContrastIssue = (
 	},
 });
 
-export async function analyzeTextNodeForContrastIssue(node: TextNode, issues: IssueX[]) {
+export async function analyzeTextNodeForContrastIssue(node: TextNode, issues: DetectedIssue[]) {
 	await figma.loadFontAsync(node.fontName as FontName);
 
 	if ("fills" in node) {
