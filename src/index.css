@@ -4,63 +4,102 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-inter: inter, sans-serif, Helvetica, Arial;
-  --font-open-sans: Open Sans, Helvetica, Arial, serif;
+	--font-inter: inter, sans-serif, Helvetica, Arial;
+	--font-open-sans: Open Sans, Helvetica, Arial, serif;
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+	--radius-lg: var(--radius);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-sm: calc(var(--radius) - 4px);
 
-  --color-accent: #3498db;
-  --color-dark: #141213;
-  --color-dark-alt: #1a1a1d;
-  --color-dark-shade: #232325;
-  --color-grey: #d1d1d1;
-  --color-light-blue: #b0d4ff;
+	--color-accent: #3498db;
+	--color-dark: #141213;
+	--color-dark-alt: #1a1a1d;
+	--color-dark-shade: #232325;
+	--color-grey: #d1d1d1;
+	--color-light-blue: #b0d4ff;
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+:root {
+	--background: #141213; /* dark */
+	--foreground: rgba(255, 255, 255, 0.87);
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+	--card: #232325; /* dark-shade */
+	--card-foreground: rgba(255, 255, 255, 0.87);
+
+	--popover: #232325; /* dark-shade */
+	--popover-foreground: #d1d1d1; /* grey */
+
+	--primary: #3498db; /* accent */
+	--primary-foreground: #232325; /* dark-shade */
+
+	--secondary: #1a1a1d; /* dark-alt */
+	--secondary-foreground: #fff1f2; /* rose-50 */
+
+	--muted: #1a1a1d; /* dark-alt */
+	--muted-foreground: #d1d1d1; /* grey */
+
+	--destructive: #ef4444; /* red-500 */
+	--destructive-foreground: #fff1f2; /* rose-50 */
+
+	--border: rgba(255, 255, 255, 0.1);
+	--input: rgba(255, 255, 255, 0.1);
+	--ring: #3498db; /* accent */
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+}
+
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-gray-200, currentcolor);
+	}
 }
 
 @layer utilities {
-  :root {
-    line-height: 1.5;
-    font-weight: 400;
-    /* color-scheme: light dark; */
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #141213;
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+	:root {
+		line-height: 1.5;
+		font-weight: 400;
+		/* color-scheme: light dark; */
+		color: rgba(255, 255, 255, 0.87);
+		background-color: #141213;
+		font-synthesis: none;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 
-  body {
-    margin: 0;
-  }
+	body {
+		margin: 0;
+	}
 }
 
 @layer base {
-  :root {
-    --radius: 0.5rem;
-  }
+	:root {
+		--radius: 0.5rem;
+	}
 
-  html {
-    font-family: Inter, system-ui, Helvetica, Arial, sans-serif;
-  }
+	html {
+		font-family: Inter, system-ui, Helvetica, Arial, sans-serif;
+	}
 }

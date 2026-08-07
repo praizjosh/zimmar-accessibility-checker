@@ -118,6 +118,7 @@ export default function AltTextGenerator({ isExpanded, setIsExpanded }: AltTextG
 	return (
 		<div
 			role={!isExpanded ? "button" : "presentation"}
+			title={!isExpanded ? "Generate alternate text for selected images" : undefined}
 			aria-live={isExpanded ? "polite" : undefined}
 			tabIndex={0}
 			aria-label="Alt Text Generator"
@@ -181,7 +182,7 @@ export default function AltTextGenerator({ isExpanded, setIsExpanded }: AltTextG
 						<div className="flex items-center justify-between gap-1.5">
 							<div
 								className={cn(
-									"flex size-full min-h-10 overflow-y-auto rounded-md border border-gray-500/55 px-3 py-2 text-sm text-white/75",
+									"flex size-full min-h-10 overflow-y-auto rounded-md border border-gray-500/55 px-3 py-2 text-sm text-grey hover:text-white",
 									{
 										"text-red-500": error,
 									},

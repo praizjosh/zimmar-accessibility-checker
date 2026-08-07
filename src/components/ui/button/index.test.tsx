@@ -18,7 +18,7 @@ describe("Button", () => {
 			</Button>,
 		);
 
-		expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("bg-red-500");
+		expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("bg-destructive");
 	});
 
 	it("is disabled when the disabled prop is set", () => {

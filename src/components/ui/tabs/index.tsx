@@ -11,7 +11,7 @@ const TabsList = React.forwardRef<
 	<TabsPrimitive.List
 		ref={ref}
 		className={cn(
-			"inline-flex h-10 items-center justify-center rounded-md bg-stone-100 p-1 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
+			"inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground dark:bg-stone-800 dark:text-stone-400",
 			className,
 		)}
 		{...props}
@@ -26,7 +26,7 @@ const TabsTrigger = React.forwardRef<
 	<TabsPrimitive.Trigger
 		ref={ref}
 		className={cn(
-			"inline-flex items-center justify-center rounded-xs px-3 py-1.5 text-sm font-medium whitespace-nowrap ring-offset-white transition-all focus-visible:ring-2 focus-visible:ring-stone-950 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-dark-alt data-[state=active]:text-rose-50 data-[state=active]:shadow-xs data-[state=inactive]:text-stone-50 data-[state=inactive]:hover:bg-dark-alt data-[state=inactive]:hover:text-stone-50 dark:ring-offset-stone-950 dark:focus-visible:ring-stone-300 dark:data-[state=active]:bg-stone-950",
+			"inline-flex items-center justify-center rounded-xs px-3 py-1.5 text-sm font-medium whitespace-nowrap ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-dark-alt data-[state=active]:text-rose-50 data-[state=active]:shadow-xs data-[state=inactive]:text-stone-50 data-[state=inactive]:hover:bg-dark-alt data-[state=inactive]:hover:text-stone-50 dark:ring-offset-stone-950 dark:focus-visible:ring-stone-300 dark:data-[state=active]:bg-stone-950",
 			className,
 		)}
 		{...props}
@@ -41,7 +41,7 @@ const TabsContent = React.forwardRef<
 	<TabsPrimitive.Content
 		ref={ref}
 		className={cn(
-			"mt-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-stone-950 focus-visible:ring-offset-2 focus-visible:outline-hidden dark:ring-offset-stone-950 dark:focus-visible:ring-stone-300",
+			"mt-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden dark:ring-offset-stone-950 dark:focus-visible:ring-stone-300",
 			className,
 		)}
 		{...props}
