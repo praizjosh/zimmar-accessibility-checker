@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IssueX } from "@/lib/types";
+import { DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 
 vi.mock("@/lib/figmaUtils", () => ({ postMessageToBackend: vi.fn() }));
@@ -12,7 +12,7 @@ vi.mock("@/components/organisms/IssuesWrapper", () => ({
 
 import TouchTargetNavigator from "./index";
 
-const touchTargetSizeIssue: IssueX = {
+const touchTargetSizeIssue: DetectedIssue = {
 	type: "TOUCH_TARGET_SIZE",
 	description: "Touch target size is too small.",
 	severity: "minor",
@@ -26,15 +26,15 @@ const touchTargetSizeIssue: IssueX = {
 	},
 };
 
-const touchTargetSpacingIssue: IssueX = {
+const touchTargetSpacingIssue: DetectedIssue = {
 	...touchTargetSizeIssue,
 	type: "TOUCH_TARGET_SPACING",
 };
 
 const defaultState = {
-	issues: [] as IssueX[],
+	detectedIssues: [] as DetectedIssue[],
 	singleIssue: null,
-	currentIndex: 0,
+	currentIssueIndex: 0,
 	selectedType: "" as const,
 };
 
@@ -53,7 +53,7 @@ describe("TouchTargetNavigator", () => {
 	it("renders the element name, current/required size, and severity", () => {
 		useIssuesStore.setState({
 			selectedType: "TOUCH_TARGET_SIZE",
-			issues: [touchTargetSizeIssue],
+			detectedIssues: [touchTargetSizeIssue],
 		});
 		render(<TouchTargetNavigator />);
 
@@ -68,7 +68,7 @@ describe("TouchTargetNavigator", () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			selectedType: "TOUCH_TARGET_SIZE",
-			issues: [
+			detectedIssues: [
 				{
 					...touchTargetSizeIssue,
 					nodeData: {
@@ -99,7 +99,7 @@ describe("TouchTargetNavigator", () => {
 	it("prefers the node's characters over its name when both are present", () => {
 		useIssuesStore.setState({
 			selectedType: "TOUCH_TARGET_SIZE",
-			issues: [
+			detectedIssues: [
 				{
 					...touchTargetSizeIssue,
 					nodeData: {
@@ -118,7 +118,7 @@ describe("TouchTargetNavigator", () => {
 	it("shows the element-spacing row only for TOUCH_TARGET_SPACING", () => {
 		useIssuesStore.setState({
 			selectedType: "TOUCH_TARGET_SPACING",
-			issues: [touchTargetSpacingIssue],
+			detectedIssues: [touchTargetSpacingIssue],
 		});
 		render(<TouchTargetNavigator />);
 
@@ -128,7 +128,7 @@ describe("TouchTargetNavigator", () => {
 	it("does not show the element-spacing row for TOUCH_TARGET_SIZE", () => {
 		useIssuesStore.setState({
 			selectedType: "TOUCH_TARGET_SIZE",
-			issues: [touchTargetSizeIssue],
+			detectedIssues: [touchTargetSizeIssue],
 		});
 		render(<TouchTargetNavigator />);
 

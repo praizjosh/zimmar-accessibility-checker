@@ -5,7 +5,7 @@ import Input from "@/components/ui/input";
 import { ColorFixDirection, ColorFixSuggestion, suggestAccessibleColor } from "@/lib/colorFix";
 import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
-import { IssueX, TargetLevel } from "@/lib/types";
+import { DetectedIssue, TargetLevel } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
 	cn,
@@ -19,7 +19,7 @@ import { useState } from "react";
 
 export default function IssuesNavigator() {
 	const {
-		currentIndex,
+		currentIssueIndex,
 		singleIssue,
 		selectedType,
 		updateIssue,
@@ -38,8 +38,8 @@ export default function IssuesNavigator() {
 	// one the user was told is failing, not always the least strict one.
 	const [targetLevel, setTargetLevel] = useState<TargetLevel>(detectionTargetLevel);
 
-	const issueGroupList: IssueX[] = getIssueGroupList();
-	const currentIssue: IssueX = issueGroupList[currentIndex] ?? {};
+	const issueGroupList: DetectedIssue[] = getIssueGroupList();
+	const currentIssue: DetectedIssue = issueGroupList[currentIssueIndex] ?? {};
 
 	const handleFontSizeChange = (id: string, value: string, isSingleIssue: boolean = false) => {
 		const newSize = Number(value);

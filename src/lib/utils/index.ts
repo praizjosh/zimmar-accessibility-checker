@@ -1,7 +1,14 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { rgb, RGBColor, score } from "wcag-contrast";
-import { copyToClipboardProps, DeviceType, IssueType, IssueX, Routes, TargetLevel } from "../types";
+import {
+	copyToClipboardProps,
+	DeviceType,
+	IssueType,
+	DetectedIssue,
+	Routes,
+	TargetLevel,
+} from "../types";
 
 export function cn(...inputs: ClassValue[]) {
 	// eslint-disable-next-line tailwindcss/no-custom-classname -- false positive: the plugin treats the `inputs` variable reference as if it were a classname string literal.
@@ -74,7 +81,7 @@ export function getContrastIssueDescription(
  * issue type's pass/fail state is fixed at scan time, so it's always active
  * once present.
  */
-export function isActiveIssue(issue: IssueX, targetLevel: TargetLevel): boolean {
+export function isActiveIssue(issue: DetectedIssue, targetLevel: TargetLevel): boolean {
 	if (issue.type === "CONTRAST") {
 		return contrastFailsTargetLevel(issue.nodeData.contrastScore?.compliance, targetLevel);
 	}

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MESSAGE_TYPES } from "@/lib/constants";
-import { IssueX } from "@/lib/types";
+import { DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 
 const { postMessageToBackend } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ vi.mock("@/components/organisms/IssuesWrapper", () => ({
 
 import IssuesNavigator from "./index";
 
-const typographyIssue: IssueX = {
+const typographyIssue: DetectedIssue = {
 	type: "TYPOGRAPHY",
 	description: "Text size is too small for readability.",
 	severity: "major",
@@ -30,7 +30,7 @@ const typographyIssue: IssueX = {
 	},
 };
 
-const contrastIssue: IssueX = {
+const contrastIssue: DetectedIssue = {
 	type: "CONTRAST",
 	description: "Text contrast is below WCAG AA standard.",
 	severity: "critical",
@@ -47,16 +47,16 @@ const contrastIssue: IssueX = {
 };
 
 const defaultState = {
-	issues: [] as IssueX[],
+	detectedIssues: [] as DetectedIssue[],
 	singleIssue: null,
-	currentIndex: 0,
+	currentIssueIndex: 0,
 	selectedType: "" as const,
 	targetLevel: "AA" as const,
 };
 
 // #767676 on white is the commonly-cited "AA minimum grey" reference pair -
 // 4.54:1, clears AA's 4.5 but not AAA's 7 for normal-size text.
-const aaPassingAaaFailingContrastIssue: IssueX = {
+const aaPassingAaaFailingContrastIssue: DetectedIssue = {
 	...contrastIssue,
 	nodeData: {
 		...contrastIssue.nodeData,
@@ -83,7 +83,7 @@ describe("IssuesNavigator", () => {
 	it("renders the text, font size, and severity rows for a typography issue", () => {
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [typographyIssue],
+			detectedIssues: [typographyIssue],
 		});
 		render(<IssuesNavigator />);
 
@@ -96,7 +96,7 @@ describe("IssuesNavigator", () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [typographyIssue],
+			detectedIssues: [typographyIssue],
 		});
 		render(<IssuesNavigator />);
 
@@ -108,14 +108,14 @@ describe("IssuesNavigator", () => {
 			id: "t1",
 			fontSize: 18,
 		});
-		expect(useIssuesStore.getState().issues[0].nodeData.fontSize).toBe(18);
+		expect(useIssuesStore.getState().detectedIssues[0].nodeData.fontSize).toBe(18);
 	});
 
 	it("updates singleIssue instead of the issues list when there is no active issue group (quick check mode)", async () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [],
+			detectedIssues: [],
 			singleIssue: typographyIssue,
 		});
 		render(<IssuesNavigator />);
@@ -130,7 +130,7 @@ describe("IssuesNavigator", () => {
 	it("shows the contrast-specific rows only for a CONTRAST issue", () => {
 		useIssuesStore.setState({
 			selectedType: "CONTRAST",
-			issues: [contrastIssue],
+			detectedIssues: [contrastIssue],
 		});
 		render(<IssuesNavigator />);
 
@@ -145,7 +145,7 @@ describe("IssuesNavigator", () => {
 	it("does not show the contrast-specific rows for a non-CONTRAST issue", () => {
 		useIssuesStore.setState({
 			selectedType: "TYPOGRAPHY",
-			issues: [typographyIssue],
+			detectedIssues: [typographyIssue],
 		});
 		render(<IssuesNavigator />);
 
@@ -164,7 +164,7 @@ describe("IssuesNavigator", () => {
 		it("does not render for a non-CONTRAST issue", () => {
 			useIssuesStore.setState({
 				selectedType: "TYPOGRAPHY",
-				issues: [typographyIssue],
+				detectedIssues: [typographyIssue],
 			});
 			render(<IssuesNavigator />);
 
@@ -174,7 +174,7 @@ describe("IssuesNavigator", () => {
 		it("does not render when the contrast check isn't failing", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -192,7 +192,7 @@ describe("IssuesNavigator", () => {
 		it("renders for an AA-passing/AAA-failing issue once the detection target level is AAA", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [aaPassingAaaFailingContrastIssue],
+				detectedIssues: [aaPassingAaaFailingContrastIssue],
 				targetLevel: "AAA",
 			});
 			render(<IssuesNavigator />);
@@ -204,7 +204,7 @@ describe("IssuesNavigator", () => {
 		it("still does not render an AA-passing/AAA-failing issue while the detection target level is AA", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [aaPassingAaaFailingContrastIssue],
+				detectedIssues: [aaPassingAaaFailingContrastIssue],
 				targetLevel: "AA",
 			});
 			render(<IssuesNavigator />);
@@ -215,7 +215,7 @@ describe("IssuesNavigator", () => {
 		it("suggests darkening text that's the lighter of the two colours", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -236,7 +236,7 @@ describe("IssuesNavigator", () => {
 		it("suggests lightening text that's already the darker of the two colours", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -256,7 +256,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -279,7 +279,7 @@ describe("IssuesNavigator", () => {
 		it("discloses when the suggested background is shared with other layers", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -297,7 +297,7 @@ describe("IssuesNavigator", () => {
 		it("omits the disclosure when the background isn't shared with anything else", () => {
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [contrastIssue],
+				detectedIssues: [contrastIssue],
 			});
 			render(<IssuesNavigator />);
 
@@ -308,7 +308,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -332,7 +332,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -363,7 +363,7 @@ describe("IssuesNavigator", () => {
 
 			const updatedIssue = useIssuesStore
 				.getState()
-				.issues.find((issue) => issue.nodeData.id === "c1");
+				.detectedIssues.find((issue) => issue.nodeData.id === "c1");
 			expect(updatedIssue?.nodeData.contrastScore?.compliance).not.toBe("Fail");
 			expect(screen.queryByText("Suggested fixes")).toBeNull();
 		});
@@ -372,7 +372,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -405,7 +405,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -431,7 +431,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {
@@ -461,7 +461,7 @@ describe("IssuesNavigator", () => {
 			const user = userEvent.setup();
 			useIssuesStore.setState({
 				selectedType: "CONTRAST",
-				issues: [
+				detectedIssues: [
 					{
 						...contrastIssue,
 						nodeData: {

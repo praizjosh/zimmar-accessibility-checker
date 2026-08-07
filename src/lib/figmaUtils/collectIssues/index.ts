@@ -1,6 +1,6 @@
 import { isLocked, isVisible } from "@create-figma-plugin/utilities";
 import { MIN_FONT_SIZE, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
-import { DeviceType, IssueX, TargetLevel } from "@/lib/types";
+import { DeviceType, DetectedIssue, TargetLevel } from "@/lib/types";
 import {
 	analyzeTextNodeForContrastIssue,
 	buildTouchTargetSpatialIndex,
@@ -33,8 +33,8 @@ export function isScannable(node: SceneNode): boolean {
 export async function collectTouchTargetIssues(
 	allPageNodes: SceneNode[],
 	targetLevel: TargetLevel,
-): Promise<IssueX[]> {
-	const issues: IssueX[] = [];
+): Promise<DetectedIssue[]> {
+	const issues: DetectedIssue[] = [];
 	const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
 
 	// Building the spatial index and resolving touch-target eligibility are
@@ -77,8 +77,8 @@ export async function collectTouchTargetIssues(
  * have no vitest equivalent, so this needs manual verification in Figma dev
  * mode rather than unit tests.
  */
-async function collectTextNodeIssues(allTextNodes: TextNode[]): Promise<IssueX[]> {
-	const issues: IssueX[] = [];
+async function collectTextNodeIssues(allTextNodes: TextNode[]): Promise<DetectedIssue[]> {
+	const issues: DetectedIssue[] = [];
 
 	await Promise.all(
 		allTextNodes.map(async (textNode) => {
@@ -122,7 +122,7 @@ export async function collectIssues(
 	allPageNodes: SceneNode[],
 	deviceType: DeviceType,
 	targetLevel: TargetLevel,
-): Promise<IssueX[]> {
+): Promise<DetectedIssue[]> {
 	const [textNodeIssues, touchTargetIssues] = await Promise.all([
 		collectTextNodeIssues(allTextNodes),
 		deviceType === "touch" ? collectTouchTargetIssues(allPageNodes, targetLevel) : [],
@@ -196,8 +196,8 @@ export async function detectIssuesInSelection(
 	deviceType: DeviceType,
 	targetLevel: TargetLevel,
 	candidateNodesForSpacing: SceneNode[],
-): Promise<IssueX[]> {
-	const issues: IssueX[] = [];
+): Promise<DetectedIssue[]> {
+	const issues: DetectedIssue[] = [];
 	const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
 
 	const expandedEntries = expandSelectionWithDescendants(selectedNodes);

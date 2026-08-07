@@ -14,7 +14,7 @@ import {
 	isBoldFont,
 	setScanSettings,
 } from "./index";
-import { IssueX } from "@/lib/types";
+import { DetectedIssue } from "@/lib/types";
 
 const WHITE: RGBColor = [255, 255, 255];
 const BLACK: RGBColor = [0, 0, 0];
@@ -374,7 +374,7 @@ describe("getContrastIssueDescription", () => {
 	});
 });
 
-function fakeContrastIssue(compliance: string): IssueX {
+function fakeContrastIssue(compliance: string): DetectedIssue {
 	return {
 		type: "CONTRAST",
 		severity: "critical",
@@ -389,7 +389,7 @@ function fakeContrastIssue(compliance: string): IssueX {
 
 describe("isActiveIssue", () => {
 	it("is always active for non-contrast issue types, regardless of target level", () => {
-		const typographyIssue: IssueX = {
+		const typographyIssue: DetectedIssue = {
 			type: "TYPOGRAPHY",
 			severity: "major",
 			nodeData: { id: "t1", name: "Label", nodeType: "TEXT" },

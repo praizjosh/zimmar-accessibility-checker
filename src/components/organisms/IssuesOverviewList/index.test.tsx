@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MESSAGE_TYPES } from "@/lib/constants";
-import { IssueX } from "@/lib/types";
+import { DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 
 const { postMessageToBackend } = vi.hoisted(() => ({
@@ -25,14 +25,14 @@ async function goToReportTab(user: ReturnType<typeof userEvent.setup>) {
 	await user.click(screen.getByRole("tab", { name: "Report" }));
 }
 
-const typographyIssue: IssueX = {
+const typographyIssue: DetectedIssue = {
 	type: "TYPOGRAPHY",
 	description: "Text size is too small for readability.",
 	severity: "major",
 	nodeData: { id: "t1", name: "Label", nodeType: "TEXT" },
 };
 
-const contrastFailIssue: IssueX = {
+const contrastFailIssue: DetectedIssue = {
 	type: "CONTRAST",
 	description: "Text contrast is below WCAG AA standard.",
 	severity: "critical",
@@ -44,7 +44,7 @@ const contrastFailIssue: IssueX = {
 	},
 };
 
-const contrastPassIssue: IssueX = {
+const contrastPassIssue: DetectedIssue = {
 	...contrastFailIssue,
 	nodeData: {
 		...contrastFailIssue.nodeData,
@@ -54,7 +54,7 @@ const contrastPassIssue: IssueX = {
 };
 
 const defaultState = {
-	issues: [] as IssueX[],
+	detectedIssues: [] as DetectedIssue[],
 	scanning: false,
 	currentRoute: "INDEX" as const,
 	selectedType: "" as const,
@@ -85,7 +85,7 @@ describe("IssuesOverviewList", () => {
 		dispatch(MESSAGE_TYPES.LOAD_ISSUES, [typographyIssue]);
 
 		expect(useIssuesStore.getState().scanning).toBe(false);
-		expect(useIssuesStore.getState().issues).toEqual([typographyIssue]);
+		expect(useIssuesStore.getState().detectedIssues).toEqual([typographyIssue]);
 	});
 
 	it("logs an error and ignores a malformed message", () => {
@@ -95,25 +95,25 @@ describe("IssuesOverviewList", () => {
 		window.dispatchEvent(new MessageEvent("message", { data: null }));
 
 		expect(errorSpy).toHaveBeenCalledWith("Invalid message format:", null);
-		expect(useIssuesStore.getState().issues).toEqual([]);
+		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
 
 		errorSpy.mockRestore();
 	});
 
 	it("returns to the index and clears issues when the back button is clicked", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [typographyIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
 		render(<IssuesOverviewList />);
 
 		await user.click(screen.getByRole("button", { name: "Back" }));
 
 		expect(useIssuesStore.getState().currentRoute).toBe("INDEX");
-		expect(useIssuesStore.getState().issues).toEqual([]);
+		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
 	});
 
 	it("rescans by clearing issues and starting a new scan", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [typographyIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
 		render(<IssuesOverviewList />);
 
 		await user.click(screen.getByRole("button", { name: "Rescan for issues" }));
@@ -134,7 +134,7 @@ describe("IssuesOverviewList", () => {
 	it("lists each present issue type with its count and only counts failing contrast issues", async () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
-			issues: [typographyIssue, contrastFailIssue, contrastPassIssue],
+			detectedIssues: [typographyIssue, contrastFailIssue, contrastPassIssue],
 		});
 		render(<IssuesOverviewList />);
 
@@ -150,7 +150,7 @@ describe("IssuesOverviewList", () => {
 	});
 
 	it("does not show the WCAG target toggle when there are no contrast issues", () => {
-		useIssuesStore.setState({ issues: [typographyIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
 		render(<IssuesOverviewList />);
 
 		expect(screen.queryByText("WCAG target")).toBeNull();
@@ -158,7 +158,7 @@ describe("IssuesOverviewList", () => {
 
 	it("shows the WCAG target toggle when there are contrast issues, defaulting to AA", () => {
 		useIssuesStore.setState({
-			issues: [contrastFailIssue, contrastPassIssue],
+			detectedIssues: [contrastFailIssue, contrastPassIssue],
 		});
 		render(<IssuesOverviewList />);
 
@@ -169,7 +169,7 @@ describe("IssuesOverviewList", () => {
 	it("counts an AA-passing contrast issue as failing once the target level is switched to AAA", async () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
-			issues: [contrastFailIssue, contrastPassIssue],
+			detectedIssues: [contrastFailIssue, contrastPassIssue],
 		});
 		render(<IssuesOverviewList />);
 
@@ -183,7 +183,7 @@ describe("IssuesOverviewList", () => {
 
 	it("shows the category breakdown chart on the Report tab only when there are counted issues", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [typographyIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
 		render(<IssuesOverviewList />);
 
 		await goToReportTab(user);
@@ -193,7 +193,7 @@ describe("IssuesOverviewList", () => {
 
 	it("does not show the breakdown chart when there are no counted issues", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [contrastPassIssue] });
+		useIssuesStore.setState({ detectedIssues: [contrastPassIssue] });
 		render(<IssuesOverviewList />);
 
 		await goToReportTab(user);
@@ -203,7 +203,7 @@ describe("IssuesOverviewList", () => {
 
 	it("downloads a CSV report when 'Download CSV' is clicked", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [typographyIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
 		render(<IssuesOverviewList />);
 
 		await goToReportTab(user);
@@ -214,7 +214,7 @@ describe("IssuesOverviewList", () => {
 
 	it("downloads a JSON report when 'Download JSON' is clicked", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [typographyIssue] });
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
 		render(<IssuesOverviewList />);
 
 		await goToReportTab(user);
@@ -225,7 +225,7 @@ describe("IssuesOverviewList", () => {
 
 	it("exports a target-level-aware contrast description, not the stale 'below WCAG AA standard' text", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ issues: [contrastPassIssue], targetLevel: "AAA" });
+		useIssuesStore.setState({ detectedIssues: [contrastPassIssue], targetLevel: "AAA" });
 		render(<IssuesOverviewList />);
 
 		await goToReportTab(user);
