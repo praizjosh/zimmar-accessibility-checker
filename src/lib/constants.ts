@@ -35,6 +35,18 @@ export const MIN_TOUCH_TARGET_SPACING: number = 8;
 
 export const TOUCH_TARGET_KEYWORDS = ["btn", "button", "link", "touch"];
 
+/**
+ * Grid cell size (px) for the spatial index isTouchTargetTooClose's callers
+ * use to avoid comparing every scannable node against every other one - see
+ * buildTouchTargetSpatialIndex (figmaUtils). Two nodes can only ever trigger
+ * a spacing violation if they're within MIN_TOUCH_TARGET_SPACING of each
+ * other, so cells only need to be roughly "typical touch target" sized:
+ * big enough that most elements span 1-4 cells (keeping the index cheap to
+ * build), small enough that a busy row of icons doesn't collapse into one
+ * cell and defeat the point.
+ */
+export const TOUCH_TARGET_SPATIAL_CELL_SIZE = 100;
+
 export const TARGET_LEVELS: readonly TargetLevel[] = ["AA", "AAA"] as const;
 
 /**
