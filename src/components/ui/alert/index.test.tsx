@@ -8,13 +8,13 @@ describe("Alert", () => {
 
 		const alert = screen.getByRole("alert");
 		expect(alert).toHaveTextContent("Something happened");
-		expect(alert).toHaveClass("bg-white");
+		expect(alert).toHaveClass("bg-card");
 	});
 
 	it("applies the destructive variant's classes instead of the default", () => {
 		render(<Alert variant="destructive">Error</Alert>);
 
-		expect(screen.getByRole("alert")).toHaveClass("text-red-500");
+		expect(screen.getByRole("alert")).toHaveClass("text-destructive");
 	});
 });
 

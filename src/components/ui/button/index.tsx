@@ -6,18 +6,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap ring-offset-white transition-colors focus-visible:ring-2 focus-visible:ring-stone-950 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-stone-950 dark:focus-visible:ring-stone-300 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+	"inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-stone-950 dark:focus-visible:ring-stone-300 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 	{
 		variants: {
 			variant: {
 				default:
-					"bg-accent text-dark-shade hover:bg-[#2980b9] dark:bg-stone-50 dark:text-accent dark:hover:bg-stone-50/90",
+					"bg-primary text-primary-foreground hover:bg-[#2980b9] dark:bg-stone-50 dark:text-accent dark:hover:bg-stone-50/90",
 				destructive:
-					"bg-red-500 text-stone-50 hover:bg-red-500/90 dark:bg-red-900 dark:text-stone-50 dark:hover:bg-red-900/90",
+					"bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:bg-red-900 dark:text-stone-50 dark:hover:bg-red-900/90",
 				outline:
-					"border border-stone-200 bg-white hover:bg-stone-100 hover:text-accent dark:border-stone-800 dark:bg-stone-950 dark:hover:bg-stone-800 dark:hover:text-stone-50",
+					"border border-border bg-background hover:bg-secondary hover:text-accent dark:border-stone-800 dark:bg-stone-950 dark:hover:bg-stone-800 dark:hover:text-stone-50",
 				secondary:
-					"bg-stone-100 text-accent hover:bg-stone-100/80 dark:bg-stone-800 dark:text-stone-50 dark:hover:bg-stone-800/80",
+					"bg-secondary text-accent hover:bg-secondary/80 dark:bg-stone-800 dark:text-stone-50 dark:hover:bg-stone-800/80",
 				ghost: "hover:bg-dark-shade hover:text-accent dark:hover:bg-stone-800 dark:hover:text-stone-50",
 				link: "text-accent underline-offset-4 hover:underline dark:text-stone-50",
 				nude: "",
