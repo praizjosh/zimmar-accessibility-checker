@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { MIN_TOUCH_TARGET_SIZE_AAA, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
+	buildTouchTargetSpatialIndex,
 	createContrastIssue,
 	createTouchTargetIssue,
 	createTypographyIssue,
 	extractForegroundColor,
+	getNearbyNodes,
 	isTouchTarget,
 	isTouchTargetTooClose,
 	isTouchTargetTooSmall,
@@ -204,6 +206,125 @@ describe("isTouchTargetTooClose", () => {
 		const other = fakeNode("b", { x: 52, y: 0, width: 44, height: 44 });
 
 		expect(isTouchTargetTooClose(node, [node, other])).toBe(false);
+	});
+});
+
+describe("getNearbyNodes", () => {
+	const node = fakeNode("a", { x: 0, y: 0, width: 44, height: 44 });
+
+	it("returns an empty array when the node has no bounding box", () => {
+		const boundsless = { id: "a" } as unknown as SceneNode;
+		const index = buildTouchTargetSpatialIndex([node]);
+
+		expect(getNearbyNodes(boundsless, index)).toEqual([]);
+	});
+
+	it("finds a node sharing a cell nearby", () => {
+		const other = fakeNode("b", { x: 49, y: 0, width: 44, height: 44 });
+		const index = buildTouchTargetSpatialIndex([node, other]);
+
+		expect(getNearbyNodes(node, index).map((n) => n.id)).toEqual(["b"]);
+	});
+
+	it("excludes nodes far enough away to land in unrelated cells", () => {
+		const far = fakeNode("far", { x: 5000, y: 5000, width: 44, height: 44 });
+		const index = buildTouchTargetSpatialIndex([node, far]);
+
+		expect(getNearbyNodes(node, index)).toEqual([]);
+	});
+
+	it("excludes the node itself even though it shares its own cells", () => {
+		const index = buildTouchTargetSpatialIndex([node]);
+
+		expect(getNearbyNodes(node, index)).toEqual([]);
+	});
+
+	it("does not return duplicates when a large node spans multiple shared cells", () => {
+		const big = fakeNode("big", { x: 0, y: 0, width: 500, height: 500 });
+		const index = buildTouchTargetSpatialIndex([node, big], 100);
+
+		const nearby = getNearbyNodes(node, index, 100);
+		const bigOccurrences = nearby.filter((n) => n.id === "big");
+
+		expect(bigOccurrences).toHaveLength(1);
+	});
+
+	it("skips indexing nodes without a bounding box", () => {
+		const boundsless = { id: "boundsless" } as unknown as SceneNode;
+		const index = buildTouchTargetSpatialIndex([node, boundsless]);
+
+		expect(getNearbyNodes(node, index).some((n) => n.id === "boundsless")).toBe(false);
+	});
+
+	it("agrees with the naive isTouchTargetTooClose result when passed the full node list vs. just the nearby subset", () => {
+		const close = fakeNode("close", { x: 49, y: 0, width: 44, height: 44 });
+		const far = fakeNode("far", { x: 5000, y: 5000, width: 44, height: 44 });
+		const allNodes = [node, close, far];
+		const index = buildTouchTargetSpatialIndex(allNodes);
+
+		expect(isTouchTargetTooClose(node, getNearbyNodes(node, index))).toBe(
+			isTouchTargetTooClose(node, allNodes),
+		);
+	});
+});
+
+describe("spatial index performance", () => {
+	it("finds the same spacing violations as the naive all-pairs check, dramatically faster on a large page", () => {
+		const NODE_COUNT = 4000;
+		const nodes: SceneNode[] = [];
+
+		// Spread nodes across a huge virtual page so most pairs are far apart -
+		// this mirrors a large multi-frame/multi-section design, the scenario
+		// that made the naive O(n^2) isTouchTargetTooClose freeze the plugin.
+		const gridStride = 500;
+		const columns = Math.ceil(Math.sqrt(NODE_COUNT));
+		for (let i = 0; i < NODE_COUNT; i++) {
+			const col = i % columns;
+			const row = Math.floor(i / columns);
+			nodes.push(
+				fakeNode(`n${i}`, {
+					x: col * gridStride,
+					y: row * gridStride,
+					width: 44,
+					height: 44,
+				}),
+			);
+		}
+
+		// Scatter in genuinely close pairs so both approaches still have real
+		// spacing violations to find, not just distant nodes.
+		for (let i = 0; i < 20; i++) {
+			nodes.push(
+				fakeNode(`close-a-${i}`, { x: i * 1000, y: 0, width: 44, height: 44 }),
+				fakeNode(`close-b-${i}`, { x: i * 1000 + 49, y: 0, width: 44, height: 44 }),
+			);
+		}
+
+		const index = buildTouchTargetSpatialIndex(nodes);
+
+		const indexedStart = performance.now();
+		let indexedViolationCount = 0;
+		for (const node of nodes) {
+			if (isTouchTargetTooClose(node, getNearbyNodes(node, index))) indexedViolationCount++;
+		}
+		const indexedDuration = performance.now() - indexedStart;
+
+		const naiveStart = performance.now();
+		let naiveViolationCount = 0;
+		for (const node of nodes) {
+			if (isTouchTargetTooClose(node, nodes)) naiveViolationCount++;
+		}
+		const naiveDuration = performance.now() - naiveStart;
+
+		// The index changes how fast violations are found, not which ones -
+		// same violation count either way.
+		expect(indexedViolationCount).toBe(naiveViolationCount);
+		expect(indexedViolationCount).toBeGreaterThan(0);
+
+		// A generous 3x margin avoids flakiness on slower machines while still
+		// catching a real algorithmic regression (e.g. someone accidentally
+		// widening the cell size enough to defeat the index).
+		expect(indexedDuration).toBeLessThan(naiveDuration / 3);
 	});
 });
 

@@ -5,6 +5,7 @@ import {
 	MIN_TOUCH_TARGET_SIZE_AAA,
 	MIN_TOUCH_TARGET_SPACING,
 	TOUCH_TARGET_KEYWORDS,
+	TOUCH_TARGET_SPATIAL_CELL_SIZE,
 } from "../constants";
 import {
 	BackgroundColorResult,
@@ -204,6 +205,106 @@ export const isTouchTargetTooClose = (node: SceneNode, allNodes: SceneNode[]): b
 		return false;
 	});
 };
+
+type BoundingBox = { x: number; y: number; width: number; height: number };
+
+/**
+ * Which spatial grid cells a bounding box overlaps, expanded by
+ * MIN_TOUCH_TARGET_SPACING on every side - two nodes can only ever trigger
+ * an isTouchTargetTooClose violation if they're within that distance of
+ * each other, so a node's "interesting" neighbourhood is its own bounds
+ * grown by that amount, not the whole page.
+ */
+function cellKeysForBounds(bounds: BoundingBox, cellSize: number): string[] {
+	const minCellX = Math.floor((bounds.x - MIN_TOUCH_TARGET_SPACING) / cellSize);
+	const maxCellX = Math.floor((bounds.x + bounds.width + MIN_TOUCH_TARGET_SPACING) / cellSize);
+	const minCellY = Math.floor((bounds.y - MIN_TOUCH_TARGET_SPACING) / cellSize);
+	const maxCellY = Math.floor((bounds.y + bounds.height + MIN_TOUCH_TARGET_SPACING) / cellSize);
+
+	const keys: string[] = [];
+	for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+		for (let cellY = minCellY; cellY <= maxCellY; cellY++) {
+			keys.push(`${cellX},${cellY}`);
+		}
+	}
+	return keys;
+}
+
+export type TouchTargetSpatialIndex = Map<string, SceneNode[]>;
+
+/**
+ * Buckets nodes into a spatial grid so isTouchTargetTooClose only has to
+ * compare a node against nearby candidates instead of every scannable node
+ * on the page. Naive all-pairs comparison is O(n^2) in page node count - a
+ * page with a handful of complex frames/sections easily reaches thousands
+ * of nodes, which turns into millions of bounding-box comparisons and can
+ * freeze the plugin. Building this index is close to O(n): most nodes only
+ * overlap a handful of cells (see TOUCH_TARGET_SPATIAL_CELL_SIZE) - the
+ * exception is a node whose bounds span most of the page (e.g. a full-page
+ * background rectangle), which is inserted into many cells, but that's rare
+ * enough (typically one or two per page) not to change the overall cost.
+ *
+ * @param {SceneNode[]} nodes - The nodes to index (skips any without a bounding box).
+ * @param {number} [cellSize] - Grid cell size in px.
+ * @returns {TouchTargetSpatialIndex} Map from cell key to the nodes overlapping that cell.
+ */
+export function buildTouchTargetSpatialIndex(
+	nodes: SceneNode[],
+	cellSize: number = TOUCH_TARGET_SPATIAL_CELL_SIZE,
+): TouchTargetSpatialIndex {
+	const index: TouchTargetSpatialIndex = new Map();
+
+	for (const node of nodes) {
+		if (!("absoluteBoundingBox" in node) || !node.absoluteBoundingBox) continue;
+
+		for (const key of cellKeysForBounds(node.absoluteBoundingBox, cellSize)) {
+			const bucket = index.get(key);
+			if (bucket) {
+				bucket.push(node);
+			} else {
+				index.set(key, [node]);
+			}
+		}
+	}
+
+	return index;
+}
+
+/**
+ * Returns the nodes sharing at least one spatial grid cell with `node` (see
+ * buildTouchTargetSpatialIndex) - the only nodes isTouchTargetTooClose could
+ * possibly need to compare `node` against, deduplicated and excluding
+ * `node` itself.
+ *
+ * @param {SceneNode} node - The node to find neighbours for.
+ * @param {TouchTargetSpatialIndex} index - An index built by buildTouchTargetSpatialIndex.
+ * @param {number} [cellSize] - Must match the cellSize the index was built with.
+ * @returns {SceneNode[]} Nearby nodes, or an empty array if `node` has no bounding box.
+ */
+export function getNearbyNodes(
+	node: SceneNode,
+	index: TouchTargetSpatialIndex,
+	cellSize: number = TOUCH_TARGET_SPATIAL_CELL_SIZE,
+): SceneNode[] {
+	if (!("absoluteBoundingBox" in node) || !node.absoluteBoundingBox) return [];
+
+	const seen = new Set<string>([node.id]);
+	const nearby: SceneNode[] = [];
+
+	for (const key of cellKeysForBounds(node.absoluteBoundingBox, cellSize)) {
+		const bucket = index.get(key);
+		if (!bucket) continue;
+
+		for (const candidate of bucket) {
+			if (!seen.has(candidate.id)) {
+				seen.add(candidate.id);
+				nearby.push(candidate);
+			}
+		}
+	}
+
+	return nearby;
+}
 
 /**
  * Creates a touch target issue object for the given node.
