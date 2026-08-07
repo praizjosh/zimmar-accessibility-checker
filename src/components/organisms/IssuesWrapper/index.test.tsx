@@ -187,6 +187,23 @@ describe("IssuesWrapper", () => {
 		expect(useIssuesStore.getState().currentRoute).toBe("TOUCH_TARGET_ISSUE_LIST_VIEW");
 	});
 
+	it("does not show a Contrast tab when the only contrast issues present aren't currently failing", async () => {
+		useIssuesStore.setState({
+			selectedType: "TOUCH_TARGET_SIZE",
+			issues: [touchTargetIssue, contrastAaOnlyIssue],
+			targetLevel: "AA",
+		});
+		const { rerender } = render(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(screen.queryByRole("tablist")).toBeNull();
+		expect(screen.queryByRole("tab", { name: "Switch to Contrast issues" })).toBeNull();
+
+		useIssuesStore.setState({ targetLevel: "AAA" });
+		rerender(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(screen.getByRole("tab", { name: "Switch to Contrast issues" })).toBeVisible();
+	});
+
 	it("shows the detection-info popover for types that have tooltip copy, not for TYPOGRAPHY", () => {
 		useIssuesStore.setState({ selectedType: "CONTRAST" });
 		const { rerender } = render(<IssuesWrapper>child</IssuesWrapper>);

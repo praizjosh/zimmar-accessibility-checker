@@ -8,10 +8,10 @@ import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
 	cn,
-	contrastFailsTargetLevel,
 	getContrastIssueDescription,
 	getRouteForIssueType,
 	getSeverityStyles,
+	isActiveIssue,
 } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
@@ -35,10 +35,7 @@ export default function IssuesOverviewList() {
 
 	const issuesGroupListRecords = issues.filter((issue) => {
 		if (!issue.type || !ISSUES_TYPES.includes(issue.type)) return false;
-		if (issue.type === "CONTRAST") {
-			return contrastFailsTargetLevel(issue.nodeData.contrastScore?.compliance, targetLevel);
-		}
-		return true;
+		return isActiveIssue(issue, targetLevel);
 	});
 
 	const hasContrastIssues = issues.some((issue) => issue.type === "CONTRAST");

@@ -9,7 +9,7 @@ import getIssueRecommendations from "@/lib/issueRecommendations";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, IssueX } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
-import { cn, getContrastIssueDescription, getRouteForIssueType } from "@/lib/utils";
+import { cn, getContrastIssueDescription, getRouteForIssueType, isActiveIssue } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -136,8 +136,15 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	// them from an issue that isn't the one on screen.
 	const activeIssue = issueGroupList.length === 0 ? singleIssue : currentIssue;
 	const { type } = activeIssue || {};
-	const availableTypes = ISSUES_DATA_SCHEMA.filter((issue) =>
-		issues.some((i) => i.type === issue.type),
+	// issues.some((i) => i.type === issue.type) alone isn't enough here - every
+	// scanned text node gets a CONTRAST issue object regardless of whether it
+	// currently passes (see isActiveIssue), so the Contrast tab would show up
+	// whenever the page has any text at all, even with zero currently-failing
+	// contrast issues.
+	const availableTypes = ISSUES_DATA_SCHEMA.filter((schemaIssue) =>
+		issues.some(
+			(issue) => issue.type === schemaIssue.type && isActiveIssue(issue, targetLevel),
+		),
 	);
 	const selectedTypeLabel = selectedType ? ISSUE_TYPE_LABELS[selectedType] : "";
 	const currentOrSelectedType = type ?? selectedType;

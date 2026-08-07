@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { MESSAGE_TYPES } from "../constants";
 import { postMessageToBackend } from "../figmaUtils";
 import { DeviceType, EnhancedIssuesStore, IssueType, IssueX, Routes, TargetLevel } from "../types";
-import { contrastFailsTargetLevel } from "../utils";
+import { isActiveIssue } from "../utils";
 
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	issues: [],
@@ -49,18 +49,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	getIssueGroupList: () => {
 		const { issues, selectedType, targetLevel } = get();
 
-		const response = issues.filter((issue) => {
-			if (issue.type && issue.type === selectedType) {
-				if (issue.type === "CONTRAST") {
-					return contrastFailsTargetLevel(
-						issue.nodeData.contrastScore?.compliance,
-						targetLevel,
-					);
-				}
-				return true;
-			}
-			return false;
-		});
+		const response = issues.filter(
+			(issue) => issue.type === selectedType && isActiveIssue(issue, targetLevel),
+		);
 
 		return response;
 	},
