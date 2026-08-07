@@ -405,7 +405,6 @@ describe("createContrastIssue", () => {
 		};
 
 		expect(createContrastIssue(node, contrastScore, [0, 0, 0], background, true)).toEqual({
-			description: "Text contrast is below WCAG AA standard.",
 			severity: "critical",
 			type: "CONTRAST",
 			nodeData: {
@@ -441,6 +440,18 @@ describe("createContrastIssue", () => {
 		expect(issue.nodeData.backgroundNodeName).toBeUndefined();
 		expect(issue.nodeData.backgroundSharedWithCount).toBeUndefined();
 		expect(issue.nodeData.isBold).toBe(false);
+	});
+
+	it("does not set a static description - contrastScore.compliance drives the description at render/report time instead", () => {
+		const issue = createContrastIssue(
+			fakeTextNode(),
+			{ compliance: "AA", ratio: 5 },
+			[0, 0, 0],
+			null,
+			false,
+		);
+
+		expect(issue.description).toBeUndefined();
 	});
 });
 
