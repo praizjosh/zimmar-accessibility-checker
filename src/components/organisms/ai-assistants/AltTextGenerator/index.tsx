@@ -118,6 +118,7 @@ export default function AltTextGenerator({ isExpanded, setIsExpanded }: AltTextG
 	return (
 		<div
 			role={!isExpanded ? "button" : "presentation"}
+			title={!isExpanded ? "Generate alternate text for selected images" : undefined}
 			aria-live={isExpanded ? "polite" : undefined}
 			tabIndex={0}
 			aria-label="Alt Text Generator"
