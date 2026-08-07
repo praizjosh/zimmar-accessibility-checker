@@ -131,13 +131,65 @@ export async function collectIssues(
 	return [...textNodeIssues, ...touchTargetIssues];
 }
 
+export type ExpandedSelectionEntry = {
+	node: SceneNode;
+	/** False for a node discovered by recursing into a selected container's descendants. */
+	isDirectSelection: boolean;
+};
+
+/**
+ * Expands a selection into itself plus every scannable descendant, for
+ * containers (frame/group/section/instance/etc. - anything exposing
+ * `findAll`). Selecting a frame previously only checked the frame node
+ * itself, not the text/touch-target layers inside it - close to useless for
+ * accessibility checking, since a frame rarely has its own contrast/
+ * touch-target issues.
+ *
+ * `isDirectSelection` distinguishes a node the user actually selected from
+ * one discovered by recursion - `detectIssuesInSelection` uses it to decide
+ * whether touch-target eligibility (`isTouchTarget`'s name/component
+ * matching) should gate the check. A directly selected node is checked
+ * unconditionally (the user picked it deliberately), but an auto-discovered
+ * descendant needs the same eligibility gate the full-page scan uses -
+ * otherwise expanding a frame would flag every small decorative icon or
+ * background rectangle inside it as a touch-target issue.
+ *
+ * No direct `figma.*` references - `findAll` is a method on the node
+ * itself, so this is fully unit-testable with plain fake `SceneNode`
+ * objects exposing a `findAll` function.
+ */
+export function expandSelectionWithDescendants(
+	selectedNodes: readonly SceneNode[],
+): ExpandedSelectionEntry[] {
+	return selectedNodes.flatMap((node) => {
+		const entries: ExpandedSelectionEntry[] = [{ node, isDirectSelection: true }];
+
+		if ("findAll" in node && typeof node.findAll === "function") {
+			const descendants = node.findAll((descendant) =>
+				isScannable(descendant),
+			) as SceneNode[];
+			entries.push(
+				...descendants.map((descendant) => ({
+					node: descendant,
+					isDirectSelection: false,
+				})),
+			);
+		}
+
+		return entries;
+	});
+}
+
 /**
  * Selection-scoped scan (used by quick-check mode): same checks as
- * `collectIssues`, but only against the nodes actually selected.
- * `candidateNodesForSpacing` is the pool touch-target spacing is checked
- * against - passed in explicitly (callers use `figma.currentPage.children`)
- * instead of read from `figma.currentPage` internally, so this function has
- * no direct `figma.*` references itself.
+ * `collectIssues`, but only against the nodes actually selected and their
+ * descendants (see `expandSelectionWithDescendants`). `candidateNodesForSpacing`
+ * is the additional pool touch-target spacing is checked against - passed in
+ * explicitly (callers use `figma.currentPage.children`) instead of read from
+ * `figma.currentPage` internally, so this function has no direct `figma.*`
+ * references itself. The expanded selection is also included in that pool,
+ * so descendants get checked against each other (e.g. two buttons inside
+ * the same selected frame), not just against top-level page siblings.
  */
 export async function detectIssuesInSelection(
 	selectedNodes: readonly SceneNode[],
@@ -148,19 +200,28 @@ export async function detectIssuesInSelection(
 	const issues: IssueX[] = [];
 	const minSize = TOUCH_TARGET_MIN_SIZE[targetLevel];
 
+	const expandedEntries = expandSelectionWithDescendants(selectedNodes);
+	const spacingCandidates = [
+		...candidateNodesForSpacing,
+		...expandedEntries.map((entry) => entry.node),
+	];
+
 	await Promise.all(
-		selectedNodes.map(async (node) => {
+		expandedEntries.map(async ({ node, isDirectSelection }) => {
 			if (deviceType === "touch") {
-				if (isTouchTargetTooSmall(node, minSize)) {
-					const issue = createTouchTargetIssue(node, "Size", minSize);
-					if (issue) {
-						issues.push(issue);
+				const eligible = isDirectSelection || (await isTouchTarget(node));
+				if (eligible) {
+					if (isTouchTargetTooSmall(node, minSize)) {
+						const issue = createTouchTargetIssue(node, "Size", minSize);
+						if (issue) {
+							issues.push(issue);
+						}
 					}
-				}
-				if (isTouchTargetTooClose(node, candidateNodesForSpacing)) {
-					const issue = createTouchTargetIssue(node, "Spacing", minSize);
-					if (issue) {
-						issues.push(issue);
+					if (isTouchTargetTooClose(node, spacingCandidates)) {
+						const issue = createTouchTargetIssue(node, "Spacing", minSize);
+						if (issue) {
+							issues.push(issue);
+						}
 					}
 				}
 			}
