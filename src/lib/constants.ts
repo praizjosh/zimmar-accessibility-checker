@@ -50,7 +50,25 @@ export const SIZE_LIMITS = {
 	MIN_TOUCH_TARGET_SPACING: 8,
 } as const;
 
-export const TOUCH_TARGET_KEYWORDS = ["btn", "button", "link", "touch"];
+export const TOUCH_TARGET_KEYWORDS = [
+	"btn",
+	"button",
+	"link",
+	"touch",
+	"toggle",
+	"switch",
+	"checkbox",
+	"radio",
+	"chip",
+	"fab",
+	"menu-item",
+	"nav-item",
+	"input",
+	"field",
+	"dropdown",
+	"select",
+	"close",
+];
 
 /**
  * Grid cell size (px) for the spatial index isTouchTargetTooClose's callers
