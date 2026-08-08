@@ -37,6 +37,22 @@ describe("App", () => {
 		expect(useIssuesStore.getState().targetLevel).toBe("AAA");
 	});
 
+	it("hydrates hasSeenFileScanOption from a LOAD_FILE_SCAN_OPTION_SEEN message", () => {
+		render(<App />);
+
+		dispatch(MESSAGE_TYPES.LOAD_FILE_SCAN_OPTION_SEEN, { seen: true });
+
+		expect(useIssuesStore.getState().hasSeenFileScanOption).toBe(true);
+	});
+
+	it("hydrates pageCount from a LOAD_PAGE_COUNT message", () => {
+		render(<App />);
+
+		dispatch(MESSAGE_TYPES.LOAD_PAGE_COUNT, { pageCount: 4 });
+
+		expect(useIssuesStore.getState().pageCount).toBe(4);
+	});
+
 	it("updates fileScanProgress from a SCAN_FILE_PROGRESS message", () => {
 		render(<App />);
 

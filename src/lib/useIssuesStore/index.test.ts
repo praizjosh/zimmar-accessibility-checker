@@ -288,6 +288,51 @@ describe("useIssuesStore.cancelPageScan", () => {
 	});
 });
 
+describe("useIssuesStore.markFileScanOptionSeen", () => {
+	it("sets hasSeenFileScanOption and posts MARK_FILE_SCAN_OPTION_SEEN the first time", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({ hasSeenFileScanOption: false });
+
+		useIssuesStore.getState().markFileScanOptionSeen();
+
+		expect(useIssuesStore.getState().hasSeenFileScanOption).toBe(true);
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.MARK_FILE_SCAN_OPTION_SEEN);
+	});
+
+	it("is idempotent - does not repost once already seen", () => {
+		useIssuesStore.setState({ hasSeenFileScanOption: true });
+		postMessageToBackend.mockClear();
+
+		useIssuesStore.getState().markFileScanOptionSeen();
+
+		expect(postMessageToBackend).not.toHaveBeenCalled();
+	});
+});
+
+describe("useIssuesStore.hydrateFileScanOptionSeen", () => {
+	it("restores the seen flag without posting a message", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({ hasSeenFileScanOption: false });
+
+		useIssuesStore.getState().hydrateFileScanOptionSeen(true);
+
+		expect(useIssuesStore.getState().hasSeenFileScanOption).toBe(true);
+		expect(postMessageToBackend).not.toHaveBeenCalled();
+	});
+});
+
+describe("useIssuesStore.hydratePageCount", () => {
+	it("restores the page count without posting a message", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({ pageCount: 1 });
+
+		useIssuesStore.getState().hydratePageCount(4);
+
+		expect(useIssuesStore.getState().pageCount).toBe(4);
+		expect(postMessageToBackend).not.toHaveBeenCalled();
+	});
+});
+
 describe("useIssuesStore.startFileScan", () => {
 	it("posts the current deviceType and targetLevel with the SCAN_FILE message", () => {
 		postMessageToBackend.mockClear();

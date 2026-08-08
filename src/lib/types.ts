@@ -111,6 +111,10 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	fileScanCancelled: boolean;
 	/** True once the user cancels an in-progress single-page scan, until the next scan starts. */
 	pageScanCancelled: boolean;
+	/** True once the user has opened the "scan entire file" caret menu at least once, ever - persisted via figma.clientStorage so the "new" badge doesn't reappear after reopening Figma. */
+	hasSeenFileScanOption: boolean;
+	/** Number of pages in the current file - drives whether "Scan entire file" is offered at all (meaningless on a single-page file). Defaults to 1 (hides the option) until LOAD_PAGE_COUNT arrives. */
+	pageCount: number;
 	setScanning: (isScanning: boolean) => void;
 	setSingleIssue: (newIssue: DetectedIssue | null) => void;
 	setSelectionIssues: (issues: DetectedIssue[]) => void;
@@ -129,6 +133,12 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	setFileScanProgress: (progress: FileScanProgress | null) => void;
 	/** Requests the in-progress single-page scan stop after its current phase; already-collected issues are still shown. */
 	cancelPageScan: () => void;
+	/** Marks the file-scan option as seen and persists it - idempotent, no-ops (and doesn't repost) once already true. */
+	markFileScanOptionSeen: () => void;
+	/** Applies a just-loaded seen flag from clientStorage - no repost, mirrors hydrateScanSettings. */
+	hydrateFileScanOptionSeen: (seen: boolean) => void;
+	/** Applies a just-broadcast page count - no repost, mirrors hydrateFileScanOptionSeen. */
+	hydratePageCount: (count: number) => void;
 }
 
 export type copyToClipboardProps = {

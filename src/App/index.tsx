@@ -9,7 +9,13 @@ import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 
 export default function App() {
-	const { currentRoute, hydrateScanSettings, setFileScanProgress } = useIssuesStore();
+	const {
+		currentRoute,
+		hydrateScanSettings,
+		setFileScanProgress,
+		hydrateFileScanOptionSeen,
+		hydratePageCount,
+	} = useIssuesStore();
 
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
@@ -24,6 +30,14 @@ export default function App() {
 			if (type === MESSAGE_TYPES.SCAN_FILE_PROGRESS) {
 				setFileScanProgress(data as FileScanProgress);
 			}
+
+			if (type === MESSAGE_TYPES.LOAD_FILE_SCAN_OPTION_SEEN) {
+				hydrateFileScanOptionSeen((data as { seen: boolean }).seen);
+			}
+
+			if (type === MESSAGE_TYPES.LOAD_PAGE_COUNT) {
+				hydratePageCount((data as { pageCount: number }).pageCount);
+			}
 		};
 
 		window.addEventListener("message", handleMessage);
@@ -31,7 +45,7 @@ export default function App() {
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [hydrateScanSettings, setFileScanProgress]);
+	}, [hydrateScanSettings, setFileScanProgress, hydrateFileScanOptionSeen, hydratePageCount]);
 
 	const RoutesMap: ROUTES_LIST = {
 		INDEX: <AccessibilityValidator />,

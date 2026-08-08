@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { MIN_TOUCH_TARGET_SIZE_AA, MIN_TOUCH_TARGET_SIZE_AAA } from "@/lib/constants";
+import { SIZE_LIMITS } from "@/lib/constants";
 import fakeSceneNode from "@/lib/test-utils/fakeSceneNode";
 import { DetectedIssue } from "@/lib/types";
 import {
@@ -60,7 +60,7 @@ describe("collectTouchTargetIssues", () => {
 
 		expect(issues).toHaveLength(1);
 		expect(issues[0].type).toBe("TOUCH_TARGET_SIZE");
-		expect(issues[0].nodeData.requiredSizePx).toBe(MIN_TOUCH_TARGET_SIZE_AAA);
+		expect(issues[0].nodeData.requiredSizePx).toBe(SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA);
 	});
 
 	it("does not flag an ineligible node even when it's too small", async () => {
@@ -102,7 +102,7 @@ describe("collectTouchTargetIssues", () => {
 
 		expect(aaaIssues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(true);
 		expect(aaIssues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(false);
-		expect(MIN_TOUCH_TARGET_SIZE_AA).toBe(24);
+		expect(SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AA).toBe(24);
 	});
 });
 

@@ -24,6 +24,8 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	fileScanProgress: null,
 	fileScanCancelled: false,
 	pageScanCancelled: false,
+	hasSeenFileScanOption: false,
+	pageCount: 1,
 	setScanning: (isScanning) =>
 		set({
 			scanning: isScanning,
@@ -53,6 +55,14 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 		set({ pageScanCancelled: true });
 		postMessageToBackend(MESSAGE_TYPES.CANCEL_SCAN);
 	},
+	markFileScanOptionSeen: () => {
+		const { hasSeenFileScanOption } = get();
+		if (hasSeenFileScanOption) return;
+		set({ hasSeenFileScanOption: true });
+		postMessageToBackend(MESSAGE_TYPES.MARK_FILE_SCAN_OPTION_SEEN);
+	},
+	hydrateFileScanOptionSeen: (seen: boolean) => set({ hasSeenFileScanOption: seen }),
+	hydratePageCount: (count: number) => set({ pageCount: count }),
 	setFileScanProgress: (progress) => set({ fileScanProgress: progress }),
 	setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
 	setSelectionIssues: (issues) => set({ selectionIssues: issues }),

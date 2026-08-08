@@ -1,5 +1,5 @@
 import { isLocked, isVisible } from "@create-figma-plugin/utilities";
-import { MIN_FONT_SIZE, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
+import { SIZE_LIMITS, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
 import { DeviceType, DetectedIssue, TargetLevel } from "@/lib/types";
 import {
 	analyzeTextNodeForContrastIssue,
@@ -97,7 +97,10 @@ export async function collectTextNodeIssues(allTextNodes: TextNode[]): Promise<D
 				const fontName = textNode.fontName as FontName;
 				await figma.loadFontAsync(fontName);
 
-				if (typeof textNode.fontSize === "number" && textNode.fontSize < MIN_FONT_SIZE) {
+				if (
+					typeof textNode.fontSize === "number" &&
+					textNode.fontSize < SIZE_LIMITS.MIN_FONT_SIZE
+				) {
 					issues.push(createTypographyIssue(textNode));
 				}
 
@@ -265,7 +268,7 @@ export async function detectIssuesInSelection(
 				node.type === "TEXT" &&
 				node.fontSize &&
 				typeof node.fontSize === "number" &&
-				node.fontSize < MIN_FONT_SIZE
+				node.fontSize < SIZE_LIMITS.MIN_FONT_SIZE
 			) {
 				issues.push(createTypographyIssue(node));
 			}

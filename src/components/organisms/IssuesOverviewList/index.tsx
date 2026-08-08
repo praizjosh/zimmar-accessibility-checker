@@ -2,12 +2,13 @@ import InfoPopover from "@/components/organisms/InfoPopover";
 import IssueBreakdownChart from "@/components/organisms/IssueBreakdownChart";
 import IssueListRow from "@/components/organisms/IssueListRow";
 import LoadingScreen from "@/components/organisms/LoadingScreen";
+import ScanSettingsReadout from "@/components/organisms/ScanSettingsReadout";
 import ScreenHeader from "@/components/organisms/ScreenHeader";
 import TargetLevelToggle from "@/components/organisms/TargetLevelToggle";
 import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DEVICE_TYPE_LABELS, ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
+import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, DetectedIssue } from "@/lib/types";
@@ -63,9 +64,6 @@ export default function IssuesOverviewList() {
 			if (type === MESSAGE_TYPES.LOAD_ISSUES) {
 				setDetectedIssues(data);
 				setScanning(false);
-				// Left as-is here (not reset) so a cancelled file scan's "partial
-				// results" banner below can still tell it was cancelled - cleared
-				// on the *next* scan instead (see startScan/startFileScan).
 				setFileScanProgress(null);
 			}
 		};
@@ -93,17 +91,13 @@ export default function IssuesOverviewList() {
 		}))
 		.filter((item) => item.count > 0);
 
-	// Convert issues to structured data for reporting
 	const formatIssuesForReport = () => {
 		return issuesGroupListRecords.map((issue) => {
 			const elementName =
 				issue.nodeData?.nodeType === "TEXT"
 					? issue.nodeData?.characters
 					: issue.nodeData?.name;
-			// Contrast's description depends on the live targetLevel, not just
-			// what was true at scan time - toggling AA/AAA doesn't rescan, so an
-			// issue exported while browsing at AAA needs different copy than the
-			// same issue exported while browsing at AA.
+
 			const description =
 				issue.type === "CONTRAST"
 					? getContrastIssueDescription(
@@ -125,7 +119,6 @@ export default function IssuesOverviewList() {
 		});
 	};
 
-	// Generate CSV report
 	const generateCSV = () => {
 		const formattedIssues = formatIssuesForReport();
 		const csvHeader =
@@ -147,13 +140,11 @@ export default function IssuesOverviewList() {
 		// Join the header and rows to form the CSV content
 		const csvContent = [csvHeader, ...csvRows].join("\n");
 
-		// Create a Blob for the CSV content
 		const csvBlob = new Blob([csvContent], { type: "text/csv" });
 
 		saveAs(csvBlob, "accessibility-issues-report.csv");
 	};
 
-	// Generate JSON report
 	const generateJSON = () => {
 		const formattedIssues = formatIssuesForReport();
 		const jsonBlob = new Blob([JSON.stringify(formattedIssues, null, 2)], {
@@ -192,9 +183,11 @@ export default function IssuesOverviewList() {
 					</div>
 				</ScreenHeader>
 
-				<p className="mb-2 text-right text-xs text-grey">
-					Scanning against {targetLevel} · {DEVICE_TYPE_LABELS[deviceType]}
-				</p>
+				<ScanSettingsReadout
+					targetLevel={targetLevel}
+					deviceType={deviceType}
+					className="mb-2"
+				/>
 
 				<Separator className="my-2 h-px bg-rose-50/10!" />
 			</div>

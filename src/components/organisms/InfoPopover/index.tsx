@@ -16,7 +16,7 @@ export default function InfoPopover({ title, content, align = "end" }: InfoPopov
 			<PopoverContent align={align} className="w-64">
 				<div className="space-y-2">
 					{title && <h5 className="text-base font-medium text-accent">{title}</h5>}
-					<p className="text-sm  text-pretty">{content}</p>
+					<p className="text-sm text-pretty">{content}</p>
 				</div>
 			</PopoverContent>
 		</Popover>

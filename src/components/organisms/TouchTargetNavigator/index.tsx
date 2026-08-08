@@ -1,6 +1,6 @@
 import IssueDetailRow from "@/components/organisms/IssueDetailRow";
 import IssuesWrapper from "@/components/organisms/IssuesWrapper";
-import { MIN_TOUCH_TARGET_SIZE_AAA } from "@/lib/constants";
+import { SIZE_LIMITS } from "@/lib/constants";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getSeverityStyles } from "@/lib/utils";
 import { Check, MoveHorizontal, OctagonAlert, Ruler, Target, X } from "lucide-react";
@@ -26,7 +26,7 @@ export default function TouchTargetNavigator() {
 		// requiredSizePx is the actual threshold this node was checked against
 		// at detection time (24 for AA, 44 for AAA) - falls back to the AAA
 		// value only for older stored issues that predate this field existing.
-		const minSize = requiredSizePx ?? MIN_TOUCH_TARGET_SIZE_AAA;
+		const minSize = requiredSizePx ?? SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA;
 		const isWidthFail = (width ?? 0) < minSize;
 		const isHeightFail = (height ?? 0) < minSize;
 

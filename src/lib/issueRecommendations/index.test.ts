@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_TOUCH_TARGET_SIZE_AAA } from "../constants";
+import { SIZE_LIMITS } from "../constants";
 import getIssueRecommendations from "./index";
 
 describe("getIssueRecommendations", () => {
@@ -31,7 +31,7 @@ describe("getIssueRecommendations", () => {
 		const recommendations = getIssueRecommendations("TOUCH_TARGET_SIZE", "AAA");
 
 		expect(recommendations?.[0]).toContain(
-			`at least ${MIN_TOUCH_TARGET_SIZE_AAA}x${MIN_TOUCH_TARGET_SIZE_AAA} pixels`,
+			`at least ${SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA}x${SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA} pixels`,
 		);
 	});
 

@@ -3,7 +3,7 @@
 import { convertHexColorToRgbColor } from "@create-figma-plugin/utilities";
 import { RGBColor } from "wcag-contrast";
 
-import { MESSAGE_TYPES, SCAN_SETTINGS_STORAGE_KEY } from "@/lib/constants";
+import { CLIENT_STORAGE_KEYS, MESSAGE_TYPES } from "@/lib/constants";
 import { postMessageToUI, replaceTopmostVisibleSolidFillColor } from "@/lib/figmaUtils";
 import {
 	collectIssues,
@@ -35,13 +35,36 @@ type ScanSettings = {
 figma.showUI(__html__);
 figma.ui.resize(375, 550);
 
+// Whether "Scan entire file (all pages)" should be offered at all - a
+// single-page file makes it identical to "Scan entire page", so the UI hides
+// it entirely rather than offer a redundant, confusing option. Re-broadcast
+// on every currentpagechange (not just once at startup) since creating,
+// duplicating, or deleting the current page all fire that event in Figma's
+// normal UI behaviour - a cheap proxy for "page count may have changed"
+// that doesn't need documentchange/loadAllPagesAsync (which would force
+// loading every page up front, the exact cost dynamic-page access exists to
+// avoid). Known gap: deleting a page other than the current one doesn't fire
+// currentpagechange, so that specific case stays stale until the next
+// plugin restart.
+function broadcastPageCount() {
+	postMessageToUI(MESSAGE_TYPES.LOAD_PAGE_COUNT, { pageCount: figma.root.children.length });
+}
+
+figma.on("currentpagechange", broadcastPageCount);
+
 // Restore the last-saved scan settings (if any) before the UI ever asks -
 // clientStorage is per-plugin-per-user and persists across files/restarts,
 // unlike the in-memory Zustand store the UI iframe gets recreated with
 // every time the plugin reopens.
 (async () => {
-	const stored = (await figma.clientStorage.getAsync(SCAN_SETTINGS_STORAGE_KEY)) as
-		{ deviceType?: DeviceType; targetLevel?: TargetLevel } | undefined;
+	const [stored, storedSeen] = await Promise.all([
+		figma.clientStorage.getAsync(CLIENT_STORAGE_KEYS.SCAN_SETTINGS) as Promise<
+			{ deviceType?: DeviceType; targetLevel?: TargetLevel } | undefined
+		>,
+		figma.clientStorage.getAsync(CLIENT_STORAGE_KEYS.FILE_SCAN_OPTION_SEEN) as Promise<
+			boolean | undefined
+		>,
+	]);
 
 	const settings = {
 		deviceType: stored?.deviceType ?? "touch",
@@ -50,6 +73,8 @@ figma.ui.resize(375, 550);
 
 	setScanSettings(settings);
 	postMessageToUI(MESSAGE_TYPES.LOAD_SCAN_SETTINGS, settings);
+	postMessageToUI(MESSAGE_TYPES.LOAD_FILE_SCAN_OPTION_SEEN, { seen: storedSeen ?? false });
+	broadcastPageCount();
 })();
 
 figma.ui.onmessage = async (message) => {
@@ -81,6 +106,10 @@ figma.ui.onmessage = async (message) => {
 
 			case MESSAGE_TYPES.SAVE_SCAN_SETTINGS:
 				await handleSaveScanSettings(message);
+				break;
+
+			case MESSAGE_TYPES.MARK_FILE_SCAN_OPTION_SEEN:
+				await handleMarkFileScanOptionSeen();
 				break;
 
 			case MESSAGE_TYPES.UPDATE_FONT_SIZE:
@@ -283,10 +312,14 @@ async function handleSaveScanSettings(message: ScanSettings) {
 	const deviceType = message.deviceType ?? "touch";
 	const targetLevel = message.targetLevel ?? "AA";
 	setScanSettings({ deviceType, targetLevel });
-	await figma.clientStorage.setAsync(SCAN_SETTINGS_STORAGE_KEY, {
+	await figma.clientStorage.setAsync(CLIENT_STORAGE_KEYS.SCAN_SETTINGS, {
 		deviceType,
 		targetLevel,
 	});
+}
+
+async function handleMarkFileScanOptionSeen() {
+	await figma.clientStorage.setAsync(CLIENT_STORAGE_KEYS.FILE_SCAN_OPTION_SEEN, true);
 }
 
 async function handleUpdateFontSize(message: { id: string; fontSize: number }) {

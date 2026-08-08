@@ -25,18 +25,30 @@ export const MESSAGE_TYPES = {
 	LOAD_ISSUES: "load-issues",
 	LOAD_SCAN_SETTINGS: "load-scan-settings",
 	SAVE_SCAN_SETTINGS: "save-scan-settings",
+	MARK_FILE_SCAN_OPTION_SEEN: "mark-file-scan-option-seen",
+	LOAD_FILE_SCAN_OPTION_SEEN: "load-file-scan-option-seen",
+	LOAD_PAGE_COUNT: "load-page-count",
 };
 
-/** figma.clientStorage key the persisted deviceType/targetLevel are saved under - see plugin/code.ts's SAVE_SCAN_SETTINGS handler. */
-export const SCAN_SETTINGS_STORAGE_KEY = "zimmar-scan-settings";
+export const CLIENT_STORAGE_KEYS = {
+	/** persisted deviceType/targetLevel - see plugin/code.ts's SAVE_SCAN_SETTINGS handler. */
+	SCAN_SETTINGS: "zimmar-scan-settings",
+	/** whether the user has ever opened the "scan entire file" caret menu - separate from SCAN_SETTINGS because this is UI-discovery state, not a scan criterion. */
+	FILE_SCAN_OPTION_SEEN: "zimmar-file-scan-option-seen",
+} as const;
 
 export const ISSUES_TYPES = Object.keys(ISSUE_TYPE_LABELS) as IssueType[];
 
-export const MIN_FONT_SIZE: number = 11;
-
-export const MIN_TOUCH_TARGET_SIZE_AA: number = 24;
-export const MIN_TOUCH_TARGET_SIZE_AAA: number = 44;
-export const MIN_TOUCH_TARGET_SPACING: number = 8;
+export const SIZE_LIMITS = {
+	/** Minimum readable font size in px - text below this triggers a TYPOGRAPHY issue. */
+	MIN_FONT_SIZE: 11,
+	/** Minimum touch target size in px per WCAG 2.5.8 Target Size (Minimum, AA). */
+	MIN_TOUCH_TARGET_SIZE_AA: 24,
+	/** Minimum touch target size in px per WCAG 2.5.5 Target Size (Enhanced, AAA) - the value this app checked against before device/level awareness existed. */
+	MIN_TOUCH_TARGET_SIZE_AAA: 44,
+	/** Minimum spacing in px between adjacent touch targets before flagging a spacing violation. */
+	MIN_TOUCH_TARGET_SPACING: 8,
+} as const;
 
 export const TOUCH_TARGET_KEYWORDS = ["btn", "button", "link", "touch"];
 
@@ -44,7 +56,7 @@ export const TOUCH_TARGET_KEYWORDS = ["btn", "button", "link", "touch"];
  * Grid cell size (px) for the spatial index isTouchTargetTooClose's callers
  * use to avoid comparing every scannable node against every other one - see
  * buildTouchTargetSpatialIndex (figmaUtils). Two nodes can only ever trigger
- * a spacing violation if they're within MIN_TOUCH_TARGET_SPACING of each
+ * a spacing violation if they're within SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING of each
  * other, so cells only need to be roughly "typical touch target" sized:
  * big enough that most elements span 1-4 cells (keeping the index cheap to
  * build), small enough that a busy row of icons doesn't collapse into one
@@ -61,8 +73,8 @@ export const TARGET_LEVELS: readonly TargetLevel[] = ["AA", "AAA"] as const;
  * meaningful when deviceType is "touch" - see DeviceType's doc comment.
  */
 export const TOUCH_TARGET_MIN_SIZE: Record<TargetLevel, number> = {
-	AA: MIN_TOUCH_TARGET_SIZE_AA,
-	AAA: MIN_TOUCH_TARGET_SIZE_AAA,
+	AA: SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AA,
+	AAA: SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA,
 };
 
 export const DEVICE_TYPES: readonly DeviceType[] = ["touch", "pointer"] as const;

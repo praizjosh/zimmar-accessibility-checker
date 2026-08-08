@@ -3,7 +3,7 @@ import IssueDetailRow from "@/components/organisms/IssueDetailRow";
 import IssuesWrapper from "@/components/organisms/IssuesWrapper";
 import Input from "@/components/ui/input";
 import { ColorFixDirection, ColorFixSuggestion, suggestAccessibleColor } from "@/lib/colorFix";
-import { MESSAGE_TYPES, MIN_FONT_SIZE } from "@/lib/constants";
+import { MESSAGE_TYPES, SIZE_LIMITS } from "@/lib/constants";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import { DetectedIssue, TargetLevel } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
@@ -84,7 +84,7 @@ export default function IssuesNavigator() {
 			isBold,
 		} = issue.nodeData ?? {};
 		const getFontSize = () => fontSize ?? singleIssue?.nodeData?.fontSize ?? 0;
-		const fontSizeIsValid = getFontSize() >= MIN_FONT_SIZE;
+		const fontSizeIsValid = getFontSize() >= SIZE_LIMITS.MIN_FONT_SIZE;
 
 		const isContrastFail =
 			type === "CONTRAST" &&
@@ -254,7 +254,7 @@ export default function IssuesNavigator() {
 						}
 						tooltip={
 							!fontSizeIsValid &&
-							`The text size is below recommended standards for readability. Consider increasing it to at least ${MIN_FONT_SIZE}px to ensure better legibility.`
+							`The text size is below recommended standards for readability. Consider increasing it to at least ${SIZE_LIMITS.MIN_FONT_SIZE}px to ensure better legibility.`
 						}
 					/>
 
