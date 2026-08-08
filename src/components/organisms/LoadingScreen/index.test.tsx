@@ -14,4 +14,15 @@ describe("LoadingScreen", () => {
 
 		expect(container.querySelector("p")).toBeNull();
 	});
+
+	it("renders children below the message", () => {
+		render(
+			<LoadingScreen message="Scanning page 2 of 5">
+				<button type="button">Cancel</button>
+			</LoadingScreen>,
+		);
+
+		expect(screen.getByText("Scanning page 2 of 5")).toBeVisible();
+		expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
+	});
 });

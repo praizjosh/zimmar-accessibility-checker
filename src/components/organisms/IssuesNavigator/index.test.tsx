@@ -153,6 +153,45 @@ describe("IssuesNavigator", () => {
 		expect(screen.queryByText("Contrast ratio:")).toBeNull();
 	});
 
+	describe("Severity row", () => {
+		it("shows the issue's actual severity for a genuinely failing contrast issue", () => {
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				detectedIssues: [contrastIssue],
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.getByText("Severity:")).toBeVisible();
+			expect(screen.getByText("critical")).toBeVisible();
+		});
+
+		it("shows Pass instead of the static severity for a contrast issue that isn't currently failing", () => {
+			// getIssueGroupList already filters out non-failing CONTRAST issues, so
+			// this can only be reached via singleIssue (quick-check mode selecting
+			// a layer directly, which bypasses that filter) - not via detectedIssues.
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				detectedIssues: [],
+				singleIssue: aaPassingAaaFailingContrastIssue,
+				targetLevel: "AA",
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.getByText("Pass")).toBeVisible();
+			expect(screen.queryByText("critical")).toBeNull();
+		});
+
+		it("still shows the static severity for a non-CONTRAST issue", () => {
+			useIssuesStore.setState({
+				selectedType: "TYPOGRAPHY",
+				detectedIssues: [typographyIssue],
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.getByText("major")).toBeVisible();
+		});
+	});
+
 	describe("Suggested fixes card", () => {
 		function getDisplayedRatio(label: string): number {
 			const text = screen.getByText(new RegExp(`^${label}$`)).parentElement;

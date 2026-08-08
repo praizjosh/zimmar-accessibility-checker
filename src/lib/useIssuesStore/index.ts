@@ -14,12 +14,16 @@ import { isActiveIssue } from "../utils";
 const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	detectedIssues: [],
 	singleIssue: null,
+	selectionIssues: [],
 	currentIssueIndex: 0,
 	currentRoute: "INDEX", // Default route
 	selectedType: "",
 	scanning: false,
 	targetLevel: "AA",
 	deviceType: "touch",
+	fileScanProgress: null,
+	fileScanCancelled: false,
+	pageScanCancelled: false,
 	setScanning: (isScanning) =>
 		set({
 			scanning: isScanning,
@@ -27,10 +31,31 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	startScan: () => {
 		const { setScanning, navigateTo, deviceType, targetLevel } = get();
 		setScanning(true);
+		// Clears cancelled flags left over from a previous scan - e.g. "Rescan"
+		// after cancelling a file scan runs a plain single-page scan, which
+		// shouldn't inherit the earlier cancellation's "partial results" banner.
+		set({ fileScanCancelled: false, pageScanCancelled: false });
 		postMessageToBackend(MESSAGE_TYPES.SCAN, { deviceType, targetLevel });
 		navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
 	},
+	startFileScan: () => {
+		const { setScanning, navigateTo, deviceType, targetLevel } = get();
+		setScanning(true);
+		set({ fileScanProgress: null, fileScanCancelled: false, pageScanCancelled: false });
+		postMessageToBackend(MESSAGE_TYPES.SCAN_FILE, { deviceType, targetLevel });
+		navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
+	},
+	cancelFileScan: () => {
+		set({ fileScanCancelled: true });
+		postMessageToBackend(MESSAGE_TYPES.CANCEL_SCAN_FILE);
+	},
+	cancelPageScan: () => {
+		set({ pageScanCancelled: true });
+		postMessageToBackend(MESSAGE_TYPES.CANCEL_SCAN);
+	},
+	setFileScanProgress: (progress) => set({ fileScanProgress: progress }),
 	setSingleIssue: (newIssue) => set({ singleIssue: newIssue }),
+	setSelectionIssues: (issues) => set({ selectionIssues: issues }),
 	setDetectedIssues: (newIssues: DetectedIssue[]) => {
 		set({ detectedIssues: newIssues });
 	},
@@ -77,6 +102,7 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 		if (index >= 0 && index < issueGroupList.length) {
 			postMessageToBackend(MESSAGE_TYPES.NAVIGATE, {
 				id: issueGroupList[index].nodeData.id,
+				pageId: issueGroupList[index].nodeData.pageId,
 			});
 			set({ currentIssueIndex: index });
 		}

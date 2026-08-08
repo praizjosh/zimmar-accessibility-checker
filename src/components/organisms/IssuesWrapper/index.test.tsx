@@ -57,9 +57,20 @@ const contrastAaOnlyIssue: DetectedIssue = {
 	},
 };
 
+const touchTargetIssue2: DetectedIssue = {
+	...touchTargetIssue,
+	nodeData: { ...touchTargetIssue.nodeData, id: "tt2", name: "Btn 2" },
+};
+
+const touchTargetIssue3: DetectedIssue = {
+	...touchTargetIssue,
+	nodeData: { ...touchTargetIssue.nodeData, id: "tt3", name: "Btn 3" },
+};
+
 const defaultState = {
 	detectedIssues: [] as DetectedIssue[],
 	singleIssue: null,
+	selectionIssues: [] as DetectedIssue[],
 	currentIssueIndex: 0,
 	currentRoute: "INDEX" as const,
 	selectedType: "" as const,
@@ -84,7 +95,10 @@ describe("IssuesWrapper", () => {
 
 	it("cancels the quick check and returns to INDEX when quick-check is active", async () => {
 		const user = userEvent.setup();
-		useIssuesStore.setState({ selectedType: "TYPOGRAPHY" });
+		useIssuesStore.setState({
+			selectedType: "TYPOGRAPHY",
+			selectionIssues: [touchTargetIssue, touchTargetIssue2],
+		});
 		render(<IssuesWrapper>child</IssuesWrapper>);
 
 		dispatch(MESSAGE_TYPES.QUICKCHECK_ACTIVE, true);
@@ -95,6 +109,7 @@ describe("IssuesWrapper", () => {
 		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.CANCEL_QUICKCHECK);
 		expect(useIssuesStore.getState().currentRoute).toBe("INDEX");
 		expect(useIssuesStore.getState().singleIssue).toBeNull();
+		expect(useIssuesStore.getState().selectionIssues).toEqual([]);
 	});
 
 	it("sets singleIssue to the detected issue matching the selected type", async () => {
@@ -276,5 +291,94 @@ describe("IssuesWrapper", () => {
 		render(<IssuesWrapper>child</IssuesWrapper>);
 
 		expect(screen.getByText("Text size is too small for readability.")).toBeVisible();
+	});
+
+	describe("multi-match quick-check list", () => {
+		it("shows a list when the selection produces more than one matching issue", async () => {
+			useIssuesStore.setState({ selectedType: "TOUCH_TARGET_SIZE" });
+			render(<IssuesWrapper>Row content</IssuesWrapper>);
+
+			dispatch(MESSAGE_TYPES.DETECTED_ISSUE, [
+				touchTargetIssue,
+				touchTargetIssue2,
+				touchTargetIssue3,
+			]);
+
+			expect(await screen.findByRole("button", { name: "Btn" })).toBeVisible();
+			expect(screen.getByRole("button", { name: "Btn 2" })).toBeVisible();
+			expect(screen.getByRole("button", { name: "Btn 3" })).toBeVisible();
+			expect(screen.queryByText("Row content")).toBeNull();
+			expect(useIssuesStore.getState().singleIssue).toBeNull();
+			expect(useIssuesStore.getState().selectionIssues).toHaveLength(3);
+		});
+
+		it("still shows the single-issue detail view when exactly one issue matches (regression guard)", async () => {
+			useIssuesStore.setState({ selectedType: "TOUCH_TARGET_SIZE" });
+			render(<IssuesWrapper>Row content</IssuesWrapper>);
+
+			dispatch(MESSAGE_TYPES.DETECTED_ISSUE, [touchTargetIssue]);
+
+			await waitFor(() =>
+				expect(useIssuesStore.getState().singleIssue?.nodeData.id).toBe("tt1"),
+			);
+			expect(screen.getByText("Row content")).toBeVisible();
+			expect(screen.queryByRole("button", { name: "Back to list" })).toBeNull();
+			expect(useIssuesStore.getState().selectionIssues).toEqual([]);
+		});
+
+		it("clicking a row posts NAVIGATE with that issue's node id and shows its detail view", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({ selectedType: "TOUCH_TARGET_SIZE" });
+			render(<IssuesWrapper>Row content</IssuesWrapper>);
+
+			dispatch(MESSAGE_TYPES.DETECTED_ISSUE, [touchTargetIssue, touchTargetIssue2]);
+			await screen.findByRole("button", { name: "Btn 2" });
+			postMessageToBackend.mockClear();
+
+			await user.click(screen.getByRole("button", { name: "Btn 2" }));
+
+			expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.NAVIGATE, {
+				id: "tt2",
+			});
+			expect(useIssuesStore.getState().singleIssue?.nodeData.id).toBe("tt2");
+			expect(screen.getByText("Row content")).toBeVisible();
+			expect(screen.getByRole("button", { name: "Back to list" })).toBeVisible();
+		});
+
+		it("returns to the list and re-selects every element in it when Back to list is clicked, without a single-element NAVIGATE call", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({ selectedType: "TOUCH_TARGET_SIZE" });
+			render(<IssuesWrapper>Row content</IssuesWrapper>);
+
+			dispatch(MESSAGE_TYPES.DETECTED_ISSUE, [touchTargetIssue, touchTargetIssue2]);
+			await user.click(await screen.findByRole("button", { name: "Btn 2" }));
+			postMessageToBackend.mockClear();
+
+			await user.click(screen.getByRole("button", { name: "Back to list" }));
+
+			expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SELECT_MULTIPLE, {
+				ids: ["tt1", "tt2"],
+			});
+			expect(postMessageToBackend).not.toHaveBeenCalledWith(
+				MESSAGE_TYPES.NAVIGATE,
+				expect.anything(),
+			);
+			expect(useIssuesStore.getState().singleIssue).toBeNull();
+			expect(useIssuesStore.getState().selectionIssues).toHaveLength(2);
+			expect(screen.getByRole("button", { name: "Btn" })).toBeVisible();
+			expect(screen.getByRole("button", { name: "Btn 2" })).toBeVisible();
+		});
+
+		it("clears the selection list on NO_SELECTION", async () => {
+			useIssuesStore.setState({ selectedType: "TOUCH_TARGET_SIZE" });
+			render(<IssuesWrapper>Row content</IssuesWrapper>);
+
+			dispatch(MESSAGE_TYPES.DETECTED_ISSUE, [touchTargetIssue, touchTargetIssue2]);
+			await screen.findByRole("button", { name: "Btn" });
+
+			dispatch(MESSAGE_TYPES.NO_SELECTION, true);
+
+			await waitFor(() => expect(useIssuesStore.getState().selectionIssues).toEqual([]));
+		});
 	});
 });

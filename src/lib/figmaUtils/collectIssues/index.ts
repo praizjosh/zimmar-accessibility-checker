@@ -76,8 +76,13 @@ export async function collectTouchTargetIssues(
  * - `figma.loadFontAsync`/`figma.mixed` (via `analyzeTextNodeForContrastIssue`)
  * have no vitest equivalent, so this needs manual verification in Figma dev
  * mode rather than unit tests.
+ *
+ * Exported (unlike the rest of collectIssues's internals) so handleScan
+ * (plugin/code.ts) can run this phase and the touch-target phase
+ * sequentially with a cancel-check between them, instead of collectIssues's
+ * concurrent Promise.all - the single-page scan's only cancellation point.
  */
-async function collectTextNodeIssues(allTextNodes: TextNode[]): Promise<DetectedIssue[]> {
+export async function collectTextNodeIssues(allTextNodes: TextNode[]): Promise<DetectedIssue[]> {
 	const issues: DetectedIssue[] = [];
 
 	await Promise.all(
@@ -131,6 +136,27 @@ export async function collectIssues(
 	return [...textNodeIssues, ...touchTargetIssues];
 }
 
+/**
+ * Merges page identity into every issue's `nodeData`, as a post-processing
+ * step rather than threading `pageId`/`pageName` through `collectIssues`
+ * and the issue builders themselves - keeps those signatures untouched for
+ * the (far more common) single-page scan and selection-scan callers, which
+ * have no page context to attach. Used by plugin/code.ts's handleScanFile
+ * once per page, after that page's `collectIssues` call resolves.
+ *
+ * No `figma.*` references - pure data merge, fully unit-testable.
+ */
+export function tagIssuesWithPage(
+	issues: DetectedIssue[],
+	pageId: string,
+	pageName: string,
+): DetectedIssue[] {
+	return issues.map((issue) => ({
+		...issue,
+		nodeData: { ...issue.nodeData, pageId, pageName },
+	}));
+}
+
 export type ExpandedSelectionEntry = {
 	node: SceneNode;
 	/** False for a node discovered by recursing into a selected container's descendants. */
@@ -148,11 +174,13 @@ export type ExpandedSelectionEntry = {
  * `isDirectSelection` distinguishes a node the user actually selected from
  * one discovered by recursion - `detectIssuesInSelection` uses it to decide
  * whether touch-target eligibility (`isTouchTarget`'s name/component
- * matching) should gate the check. A directly selected node is checked
- * unconditionally (the user picked it deliberately), but an auto-discovered
- * descendant needs the same eligibility gate the full-page scan uses -
- * otherwise expanding a frame would flag every small decorative icon or
- * background rectangle inside it as a touch-target issue.
+ * matching) should gate the check. A directly selected node skips that
+ * name/component check (the user picked it deliberately), but an
+ * auto-discovered descendant needs the same eligibility gate the full-page
+ * scan uses - otherwise expanding a frame would flag every small decorative
+ * icon or background rectangle inside it as a touch-target issue. Either
+ * way, a TEXT node is never touch-target eligible - a text label isn't a
+ * control under WCAG 2.5.5/2.5.8, regardless of how it was selected.
  *
  * No direct `figma.*` references - `findAll` is a method on the node
  * itself, so this is fully unit-testable with plain fake `SceneNode`
@@ -209,7 +237,14 @@ export async function detectIssuesInSelection(
 	await Promise.all(
 		expandedEntries.map(async ({ node, isDirectSelection }) => {
 			if (deviceType === "touch") {
-				const eligible = isDirectSelection || (await isTouchTarget(node));
+				// A text label can never legitimately be a touch target (WCAG
+				// 2.5.5/2.5.8 govern interactive controls, not static text) - excluded
+				// ahead of isDirectSelection so directly selecting a text layer
+				// (e.g. as part of a multi-select alongside real buttons) doesn't
+				// override this the way it's meant to override the name/component
+				// keyword heuristic for non-text nodes.
+				const eligible =
+					node.type !== "TEXT" && (isDirectSelection || (await isTouchTarget(node)));
 				if (eligible) {
 					if (isTouchTargetTooSmall(node, minSize)) {
 						const issue = createTouchTargetIssue(node, "Size", minSize);

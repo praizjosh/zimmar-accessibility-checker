@@ -385,17 +385,30 @@ export default function IssuesNavigator() {
 					<IssueDetailRow
 						label="Severity:"
 						value={
-							<span
-								className={cn("text-base font-bold capitalize", {
-									"text-rose-600": severity === "critical",
-									"text-orange-500": severity === "major",
-									"text-amber-500": severity === "minor",
-								})}
-							>
-								{severity}
-							</span>
+							type === "CONTRAST" && !isContrastFail ? (
+								<span className="text-base font-bold text-green-500">Pass</span>
+							) : (
+								<span
+									className={cn("text-base font-bold capitalize", {
+										"text-rose-600": severity === "critical",
+										"text-orange-500": severity === "major",
+										"text-amber-500": severity === "minor",
+									})}
+								>
+									{severity}
+								</span>
+							)
 						}
-						icon={<OctagonAlert aria-hidden="true" className="mr-3 size-5" />}
+						icon={
+							type === "CONTRAST" && !isContrastFail ? (
+								<Check
+									aria-hidden="true"
+									className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
+								/>
+							) : (
+								<OctagonAlert aria-hidden="true" className="mr-3 size-5" />
+							)
+						}
 					/>
 				</div>
 

@@ -55,6 +55,27 @@ describe("useIssuesStore.navigateToIssue", () => {
 		expect(postMessageToBackend).not.toHaveBeenCalled();
 		expect(useIssuesStore.getState().currentIssueIndex).toBe(0);
 	});
+
+	it("includes the issue's pageId when it came from a full-file scan", () => {
+		useIssuesStore.setState({
+			detectedIssues: [
+				{
+					type: "TYPOGRAPHY",
+					severity: "major",
+					nodeData: { id: "node-3", name: "Label C", nodeType: "TEXT", pageId: "page-2" },
+				},
+			],
+			selectedType: "TYPOGRAPHY",
+			currentIssueIndex: 0,
+		});
+
+		useIssuesStore.getState().navigateToIssue(0);
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.NAVIGATE, {
+			id: "node-3",
+			pageId: "page-2",
+		});
+	});
 });
 
 function fakeContrastIssue(id: string, compliance: string): DetectedIssue {
@@ -236,5 +257,91 @@ describe("useIssuesStore.startScan", () => {
 			deviceType: "pointer",
 			targetLevel: "AAA",
 		});
+	});
+
+	it("clears a leftover fileScanCancelled from a previously cancelled file scan", () => {
+		useIssuesStore.setState({ fileScanCancelled: true });
+
+		useIssuesStore.getState().startScan();
+
+		expect(useIssuesStore.getState().fileScanCancelled).toBe(false);
+	});
+
+	it("clears a leftover pageScanCancelled from a previously cancelled page scan", () => {
+		useIssuesStore.setState({ pageScanCancelled: true });
+
+		useIssuesStore.getState().startScan();
+
+		expect(useIssuesStore.getState().pageScanCancelled).toBe(false);
+	});
+});
+
+describe("useIssuesStore.cancelPageScan", () => {
+	it("sets pageScanCancelled and posts CANCEL_SCAN", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({ pageScanCancelled: false });
+
+		useIssuesStore.getState().cancelPageScan();
+
+		expect(useIssuesStore.getState().pageScanCancelled).toBe(true);
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.CANCEL_SCAN);
+	});
+});
+
+describe("useIssuesStore.startFileScan", () => {
+	it("posts the current deviceType and targetLevel with the SCAN_FILE message", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({ deviceType: "pointer", targetLevel: "AAA" });
+
+		useIssuesStore.getState().startFileScan();
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN_FILE, {
+			deviceType: "pointer",
+			targetLevel: "AAA",
+		});
+	});
+
+	it("resets any leftover progress/cancelled state from a previous file scan", () => {
+		useIssuesStore.setState({
+			fileScanProgress: { pageIndex: 2, pageCount: 3, pageName: "Old page" },
+			fileScanCancelled: true,
+		});
+
+		useIssuesStore.getState().startFileScan();
+
+		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
+		expect(useIssuesStore.getState().fileScanCancelled).toBe(false);
+	});
+});
+
+describe("useIssuesStore.cancelFileScan", () => {
+	it("sets fileScanCancelled and posts CANCEL_SCAN_FILE", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({ fileScanCancelled: false });
+
+		useIssuesStore.getState().cancelFileScan();
+
+		expect(useIssuesStore.getState().fileScanCancelled).toBe(true);
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.CANCEL_SCAN_FILE);
+	});
+});
+
+describe("useIssuesStore.setFileScanProgress", () => {
+	it("updates fileScanProgress", () => {
+		const progress = { pageIndex: 1, pageCount: 4, pageName: "Home" };
+
+		useIssuesStore.getState().setFileScanProgress(progress);
+
+		expect(useIssuesStore.getState().fileScanProgress).toEqual(progress);
+	});
+
+	it("can be cleared back to null", () => {
+		useIssuesStore.setState({
+			fileScanProgress: { pageIndex: 1, pageCount: 4, pageName: "Home" },
+		});
+
+		useIssuesStore.getState().setFileScanProgress(null);
+
+		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
 	});
 });

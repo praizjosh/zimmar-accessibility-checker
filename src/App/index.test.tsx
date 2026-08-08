@@ -37,6 +37,22 @@ describe("App", () => {
 		expect(useIssuesStore.getState().targetLevel).toBe("AAA");
 	});
 
+	it("updates fileScanProgress from a SCAN_FILE_PROGRESS message", () => {
+		render(<App />);
+
+		dispatch(MESSAGE_TYPES.SCAN_FILE_PROGRESS, {
+			pageIndex: 2,
+			pageCount: 5,
+			pageName: "About",
+		});
+
+		expect(useIssuesStore.getState().fileScanProgress).toEqual({
+			pageIndex: 2,
+			pageCount: 5,
+			pageName: "About",
+		});
+	});
+
 	it("ignores an unrelated message type", () => {
 		render(<App />);
 

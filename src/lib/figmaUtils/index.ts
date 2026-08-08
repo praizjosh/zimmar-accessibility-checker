@@ -117,7 +117,6 @@ export const createTypographyIssue = (node: TextNode): DetectedIssue => ({
  */
 export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
 	if (!node) return false;
-	// if (node.type === "TextNode") return false;
 
 	if ("name" in node && node.type !== "TEXT") {
 		const lowerCaseName = node.name.toLowerCase();

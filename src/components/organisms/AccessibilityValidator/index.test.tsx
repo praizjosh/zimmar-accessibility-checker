@@ -63,6 +63,26 @@ describe("AccessibilityValidator", () => {
 		expect(screen.getByRole("button", { name: "Scan entire page" })).toBeDisabled();
 	});
 
+	it("starts a full-file scan and navigates to the overview when 'Scan entire file' is clicked", async () => {
+		const user = userEvent.setup();
+		render(<AccessibilityValidator />);
+
+		await user.click(screen.getByRole("button", { name: "Scan entire file (all pages)" }));
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN_FILE, {
+			deviceType: "touch",
+			targetLevel: "AA",
+		});
+		expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_OVERVIEW_LIST_VIEW");
+	});
+
+	it("disables the scan-entire-file button while a scan is already in progress", () => {
+		useIssuesStore.setState({ scanning: true });
+		render(<AccessibilityValidator />);
+
+		expect(screen.getByRole("button", { name: "Scan entire file (all pages)" })).toBeDisabled();
+	});
+
 	it.each([
 		["Contrast", "CONTRAST", "ISSUE_LIST_VIEW"],
 		["Typography", "TYPOGRAPHY", "ISSUE_LIST_VIEW"],
@@ -122,5 +142,25 @@ describe("AccessibilityValidator", () => {
 		render(<AccessibilityValidator />);
 
 		expect(screen.getByTestId("alt-text-generator")).toHaveAttribute("data-expanded", "false");
+	});
+
+	it("shows the current target level and device type before scanning", () => {
+		useIssuesStore.setState({ targetLevel: "AAA", deviceType: "pointer" });
+		render(<AccessibilityValidator />);
+
+		expect(screen.getByText(/Scanning against.*AAA.*Pointer/)).toBeVisible();
+	});
+
+	it("updates the readout when the popover's toggles are used", async () => {
+		const user = userEvent.setup();
+		render(<AccessibilityValidator />);
+
+		expect(screen.getByText(/Scanning against.*AA.*Touch/)).toBeVisible();
+
+		await user.click(screen.getByLabelText("Scan settings"));
+		await user.click(screen.getByRole("radio", { name: "AAA" }));
+		await user.click(screen.getByRole("radio", { name: "Pointer" }));
+
+		expect(screen.getByText(/Scanning against.*AAA.*Pointer/)).toBeVisible();
 	});
 });

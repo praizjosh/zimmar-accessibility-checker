@@ -1,7 +1,13 @@
+import InfoPopover from "@/components/organisms/InfoPopover";
+import IssueBreakdownChart from "@/components/organisms/IssueBreakdownChart";
+import IssueListRow from "@/components/organisms/IssueListRow";
+import LoadingScreen from "@/components/organisms/LoadingScreen";
+import ScreenHeader from "@/components/organisms/ScreenHeader";
 import TargetLevelToggle from "@/components/organisms/TargetLevelToggle";
 import { Button } from "@/components/ui/button";
+import Separator from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
+import { DEVICE_TYPE_LABELS, ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, DetectedIssue } from "@/lib/types";
@@ -14,11 +20,8 @@ import {
 	isActiveIssue,
 } from "@/lib/utils";
 import { saveAs } from "file-saver";
-import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { useEffect } from "react";
-import Separator from "@/components/ui/separator";
-import IssueBreakdownChart from "@/components/organisms/IssueBreakdownChart";
-import LoadingScreen from "@/components/organisms/LoadingScreen";
 
 export default function IssuesOverviewList() {
 	const {
@@ -31,6 +34,13 @@ export default function IssuesOverviewList() {
 		rescanIssues,
 		targetLevel,
 		setTargetLevel,
+		deviceType,
+		fileScanProgress,
+		fileScanCancelled,
+		cancelFileScan,
+		setFileScanProgress,
+		pageScanCancelled,
+		cancelPageScan,
 	} = useIssuesStore();
 
 	const issuesGroupListRecords = detectedIssues.filter((issue) => {
@@ -53,6 +63,10 @@ export default function IssuesOverviewList() {
 			if (type === MESSAGE_TYPES.LOAD_ISSUES) {
 				setDetectedIssues(data);
 				setScanning(false);
+				// Left as-is here (not reset) so a cancelled file scan's "partial
+				// results" banner below can still tell it was cancelled - cleared
+				// on the *next* scan instead (see startScan/startFileScan).
+				setFileScanProgress(null);
 			}
 		};
 
@@ -61,7 +75,7 @@ export default function IssuesOverviewList() {
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [setDetectedIssues, setScanning]);
+	}, [setDetectedIssues, setScanning, setFileScanProgress]);
 
 	const handleIssuesListClick = (type: IssueType) => {
 		setSelectedType(type);
@@ -151,27 +165,12 @@ export default function IssuesOverviewList() {
 	return (
 		<div className="flex size-full flex-col">
 			<div className="grid">
-				<div className="flex w-full items-center justify-between gap-x-0.5">
-					<div className="group inline-flex items-center justify-start gap-x-0.5">
-						<Button
-							title="Go back"
-							variant="nude"
-							size={"icon"}
-							className="w-fit! gap-0.5 group-hover:text-accent"
-							onClick={() => {
-								navigateTo("INDEX");
-								setDetectedIssues([]);
-							}}
-						>
-							<ChevronLeft
-								strokeWidth={1.5}
-								aria-hidden="true"
-								className="size-6! transition-transform delay-100 ease-in-out group-hover:-translate-x-0.5!"
-							/>
-							<span className="text-base">Back</span>
-						</Button>
-					</div>
-
+				<ScreenHeader
+					onBack={() => {
+						navigateTo("INDEX");
+						setDetectedIssues([]);
+					}}
+				>
 					<div className="inline-flex items-center">
 						{!scanning && (
 							<Button
@@ -191,13 +190,23 @@ export default function IssuesOverviewList() {
 
 						<span className="font-medium tracking-wide capitalize">Scan Results</span>
 					</div>
-				</div>
+				</ScreenHeader>
+
+				<p className="mb-2 text-right text-xs text-grey">
+					Scanning against {targetLevel} · {DEVICE_TYPE_LABELS[deviceType]}
+				</p>
 
 				<Separator className="my-2 h-px bg-rose-50/10!" />
 			</div>
 
 			{!scanning ? (
 				<div className="flex size-full flex-col">
+					{(fileScanCancelled || pageScanCancelled) && (
+						<p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-500">
+							Scan cancelled - showing results collected before you cancelled.
+						</p>
+					)}
+
 					{hasContrastIssues && (
 						<TargetLevelToggle
 							value={targetLevel}
@@ -215,11 +224,21 @@ export default function IssuesOverviewList() {
 						</TabsList>
 
 						<TabsContent value="issues">
-							<h3
-								className={`text-base font-medium tracking-wide text-grey ${detectedIssues.length > 0 ? "mb-1" : "mb-4"}`}
+							<div
+								className={`flex items-center ${detectedIssues.length > 0 ? "mb-1" : "mb-4"}`}
 							>
-								Identified Issues
-							</h3>
+								<h3 className="text-base font-medium tracking-wide text-grey">
+									Identified Issues
+								</h3>
+
+								{deviceType === "pointer" && (
+									<InfoPopover
+										title="Touch Target Checks Skipped"
+										content="Touch target checks are skipped while designing for Pointer - there's no WCAG-defined minimum touch target size for desktop/mouse-driven interfaces."
+										align="center"
+									/>
+								)}
+							</div>
 
 							{issuesGroupListRecords.length > 0 && (
 								<p className="mb-4 font-open-sans text-sm">
@@ -241,69 +260,45 @@ export default function IssuesOverviewList() {
 										const label = ISSUE_TYPE_LABELS[issue.type as IssueType];
 
 										return (
-											<li
+											<IssueListRow
 												key={issue.id}
 												title={`View all ${label} issues`}
-												className="group flex items-center justify-between rounded-xl border border-rose-50/10 bg-dark-shade text-grey transition-all duration-200 ease-in-out hover:cursor-pointer hover:ring-1 hover:ring-accent"
-											>
-												<button
-													className="flex w-full flex-col gap-y-2 px-4 py-3.5 text-left"
-													aria-label={label}
-													onClick={() =>
-														handleIssuesListClick(
-															issue.type as IssueType,
-														)
-													}
-												>
-													<div className="flex w-full items-center justify-between gap-x-2">
-														<div className="flex w-full items-center justify-start space-x-2.5 text-xs">
-															{issue.icon}
-
-															<span className="group-hover:text-accent">
-																{label}
-															</span>
-														</div>
-
-														<div className="flex w-auto items-center justify-end space-x-2">
-															<span
-																className={cn(
-																	"rounded px-1.5 py-0.5 text-xs tracking-wide",
-																	getSeverityStyles(
-																		issue.severity,
-																		{
-																			isBadge: true,
-																		},
-																	),
-																)}
-															>
-																{issueCount}
-															</span>
-															<span
-																className={cn(
-																	"text-xs capitalize!",
-																	getSeverityStyles(
-																		issue.severity,
-																	),
-																)}
-															>
-																{issue.severity}
-															</span>
-														</div>
-													</div>
-
-													<div className="flex w-full items-center justify-between gap-3">
-														<span className="w-full max-w-62.5 text-sm font-medium text-pretty group-hover:text-white">
-															{issue.description}
+												ariaLabel={label}
+												description={issue.description}
+												onClick={() =>
+													handleIssuesListClick(issue.type as IssueType)
+												}
+												leading={
+													<>
+														{issue.icon}
+														<span className="group-hover:text-accent">
+															{label}
 														</span>
-
-														<ChevronRight
-															strokeWidth={1.5}
-															aria-hidden="true"
-															className="size-5 shrink-0 text-rose-50/55 transition-transform delay-100 ease-in-out group-hover:translate-x-1 group-hover:text-accent"
-														/>
-													</div>
-												</button>
-											</li>
+													</>
+												}
+												trailing={
+													<>
+														<span
+															className={cn(
+																"rounded px-1.5 py-0.5 text-xs tracking-wide",
+																getSeverityStyles(issue.severity, {
+																	isBadge: true,
+																}),
+															)}
+														>
+															{issueCount}
+														</span>
+														<span
+															className={cn(
+																"text-xs capitalize!",
+																getSeverityStyles(issue.severity),
+															)}
+														>
+															{issue.severity}
+														</span>
+													</>
+												}
+											/>
 										);
 									})}
 								</ul>
@@ -350,8 +345,30 @@ export default function IssuesOverviewList() {
 						</TabsContent>
 					</Tabs>
 				</div>
+			) : fileScanProgress ? (
+				<LoadingScreen
+					message={`Scanning page ${fileScanProgress.pageIndex} of ${fileScanProgress.pageCount}: ${fileScanProgress.pageName}`}
+				>
+					<Button
+						title="Cancel scan"
+						variant="ghost"
+						className="mt-4 border border-rose-50/10"
+						onClick={cancelFileScan}
+					>
+						Cancel
+					</Button>
+				</LoadingScreen>
 			) : (
-				<LoadingScreen message="Scanning for issues..." />
+				<LoadingScreen message="Scanning for issues...">
+					<Button
+						title="Cancel scan"
+						variant="ghost"
+						className="mt-4 border border-rose-50/10"
+						onClick={cancelPageScan}
+					>
+						Cancel
+					</Button>
+				</LoadingScreen>
 			)}
 		</div>
 	);

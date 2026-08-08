@@ -91,6 +91,8 @@ export function isActiveIssue(issue: DetectedIssue, targetLevel: TargetLevel): b
 // Global state
 const state = {
 	IsQuickCheckModeActive: false,
+	isFileScanCancelled: false,
+	isPageScanCancelled: false,
 	scanSettings: { deviceType: "touch", targetLevel: "AA" } as {
 		deviceType: DeviceType;
 		targetLevel: TargetLevel;
@@ -100,6 +102,30 @@ const state = {
 export const getIsQuickCheckModeActive = (): boolean => state.IsQuickCheckModeActive;
 export const setIsQuickCheckModeActive = (value: boolean) => {
 	state.IsQuickCheckModeActive = value;
+};
+
+/**
+ * Checked between pages during a full-file scan (plugin/code.ts's
+ * handleScanFile) - a boolean gate, not a true mid-page abort, matching the
+ * same granularity CANCEL_QUICKCHECK already uses in this codebase.
+ */
+export const getIsFileScanCancelled = (): boolean => state.isFileScanCancelled;
+export const setIsFileScanCancelled = (value: boolean) => {
+	state.isFileScanCancelled = value;
+};
+
+/**
+ * Checked once, between the text-node and touch-target phases of a
+ * single-page scan (plugin/code.ts's handleScan) - the only yield point in
+ * that scan today, since collectIssues runs each phase as one uninterrupted
+ * Promise.all pass rather than a loop like handleScanFile's per-page work
+ * has. Coarser granularity than the file scan's between-page cancellation,
+ * but still lets a large page's (often slower) touch-target phase be
+ * skipped if the text-node phase already finished and the user cancelled.
+ */
+export const getIsPageScanCancelled = (): boolean => state.isPageScanCancelled;
+export const setIsPageScanCancelled = (value: boolean) => {
+	state.isPageScanCancelled = value;
 };
 
 /**

@@ -1,20 +1,21 @@
 import ScanSettingsPopover from "@/components/organisms/ScanSettingsPopover";
 import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
 import { Button } from "@/components/ui/button";
-import { MESSAGE_TYPES } from "@/lib/constants";
+import { DEVICE_TYPE_LABELS, MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getRouteForIssueType } from "@/lib/utils";
-import { Bot, ChevronRight, Radar } from "lucide-react";
+import { Bot, ChevronRight, Files, Radar } from "lucide-react";
 import { useState } from "react";
 
 export default function AccessibilityValidator() {
 	const {
 		scanning,
 		startScan,
+		startFileScan,
 		setSelectedType,
 		navigateTo,
 		targetLevel,
@@ -53,6 +54,21 @@ export default function AccessibilityValidator() {
 					onDeviceTypeChange={setDeviceType}
 				/>
 			</div>
+
+			<Button
+				variant="ghost"
+				className="w-full border border-rose-50/10"
+				title="Scan every page in this file for accessibility issues"
+				onClick={startFileScan}
+				disabled={scanning}
+			>
+				<Files aria-hidden="true" className="size-4" />
+				<span>Scan entire file (all pages)</span>
+			</Button>
+
+			<p className="-mt-3 text-right text-xs text-grey">
+				Scanning against {targetLevel} · {DEVICE_TYPE_LABELS[deviceType]}
+			</p>
 
 			<div className="relative m-4">
 				<div className="absolute inset-0 flex items-center">

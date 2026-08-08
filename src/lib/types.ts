@@ -64,6 +64,9 @@ export type NodeDataType = {
 	nodeType: NodeType | NodeType[];
 	requiredSize?: string;
 	requiredSizePx?: number;
+	/** Only set on issues from a full-file (all-pages) scan - see tagIssuesWithPage (figmaUtils/collectIssues). */
+	pageId?: string;
+	pageName?: string;
 };
 
 export interface DetectedIssue {
@@ -83,17 +86,34 @@ export interface IssuesStore {
 	navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }
 
+export type FileScanProgress = {
+	pageIndex: number;
+	pageCount: number;
+	pageName: string;
+};
+
 export interface EnhancedIssuesStore extends IssuesStore {
 	/** An instance of a detected issue. */
 	singleIssue: DetectedIssue | null;
+	/** All type-matching issues in the current quick-check selection - populated
+	 * only when there's more than one, so the UI can show a pick-list instead of
+	 * silently dropping every match but the first. */
+	selectionIssues: DetectedIssue[];
 	scanning: boolean;
 	/** Selected issue type. Empty string (`""`) means no scan has run yet. */
 	selectedType: IssueType | "";
 	currentRoute: Routes;
 	targetLevel: TargetLevel;
 	deviceType: DeviceType;
+	/** Non-null only while a full-file (all-pages) scan is in progress - see startFileScan. */
+	fileScanProgress: FileScanProgress | null;
+	/** True once the user cancels an in-progress file scan, until the next scan starts. */
+	fileScanCancelled: boolean;
+	/** True once the user cancels an in-progress single-page scan, until the next scan starts. */
+	pageScanCancelled: boolean;
 	setScanning: (isScanning: boolean) => void;
 	setSingleIssue: (newIssue: DetectedIssue | null) => void;
+	setSelectionIssues: (issues: DetectedIssue[]) => void;
 	navigateTo: (route: Routes) => void;
 	setSelectedType: (type: IssueType) => void;
 	setTargetLevel: (level: TargetLevel) => void;
@@ -102,6 +122,13 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	updateIssue: (id: string, updates: Partial<DetectedIssue>) => void;
 	getIssueGroupList: () => DetectedIssue[];
 	rescanIssues: () => void;
+	/** Scans every page in the file, not just the current one - see plugin/code.ts's handleScanFile. */
+	startFileScan: () => void;
+	/** Requests the in-progress file scan stop after its current page; already-collected issues are still shown. */
+	cancelFileScan: () => void;
+	setFileScanProgress: (progress: FileScanProgress | null) => void;
+	/** Requests the in-progress single-page scan stop after its current phase; already-collected issues are still shown. */
+	cancelPageScan: () => void;
 }
 
 export type copyToClipboardProps = {
