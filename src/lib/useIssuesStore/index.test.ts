@@ -274,6 +274,14 @@ describe("useIssuesStore.startScan", () => {
 
 		expect(useIssuesStore.getState().pageScanCancelled).toBe(false);
 	});
+
+	it("clears isFileScan left over from a previous file scan", () => {
+		useIssuesStore.setState({ isFileScan: true });
+
+		useIssuesStore.getState().startScan();
+
+		expect(useIssuesStore.getState().isFileScan).toBe(false);
+	});
 });
 
 describe("useIssuesStore.cancelPageScan", () => {
@@ -356,6 +364,40 @@ describe("useIssuesStore.startFileScan", () => {
 
 		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
 		expect(useIssuesStore.getState().fileScanCancelled).toBe(false);
+	});
+
+	it("sets isFileScan to true", () => {
+		useIssuesStore.setState({ isFileScan: false });
+
+		useIssuesStore.getState().startFileScan();
+
+		expect(useIssuesStore.getState().isFileScan).toBe(true);
+	});
+
+	it("clears any leftover detectedIssues from a previous scan before starting", () => {
+		useIssuesStore.setState({ detectedIssues: issues });
+
+		useIssuesStore.getState().startFileScan();
+
+		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
+	});
+});
+
+describe("useIssuesStore.appendDetectedIssues", () => {
+	it("appends to existing detectedIssues without replacing them", () => {
+		useIssuesStore.setState({ detectedIssues: [issues[0]] });
+
+		useIssuesStore.getState().appendDetectedIssues([issues[1]]);
+
+		expect(useIssuesStore.getState().detectedIssues).toEqual([issues[0], issues[1]]);
+	});
+
+	it("appends onto an empty array", () => {
+		useIssuesStore.setState({ detectedIssues: [] });
+
+		useIssuesStore.getState().appendDetectedIssues(issues);
+
+		expect(useIssuesStore.getState().detectedIssues).toEqual(issues);
 	});
 });
 

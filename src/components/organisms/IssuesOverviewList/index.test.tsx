@@ -61,6 +61,7 @@ const defaultState = {
 	targetLevel: "AA" as const,
 	deviceType: "touch" as const,
 	fileScanProgress: null,
+	isFileScan: false,
 	fileScanCancelled: false,
 	pageScanCancelled: false,
 };
@@ -106,15 +107,34 @@ describe("IssuesOverviewList", () => {
 		expect(screen.getByText(/Scan cancelled/)).toBeVisible();
 	});
 
-	it("shows file-scan progress and a cancel button instead of the plain loading message during a file scan", () => {
+	it("shows a blocking loading screen (not the results view) before the first page of a file scan finishes", () => {
 		useIssuesStore.setState({
 			scanning: true,
-			fileScanProgress: { pageIndex: 2, pageCount: 5, pageName: "About" },
+			isFileScan: true,
+			fileScanProgress: null,
+			pageCount: 5,
 		});
 		render(<IssuesOverviewList />);
 
-		expect(screen.getByText("Scanning page 2 of 5: About")).toBeVisible();
+		expect(screen.getByText("Scanning page 1 of 5...")).toBeVisible();
 		expect(screen.queryByText("Scanning for issues...")).toBeNull();
+		expect(screen.queryByRole("tablist")).toBeNull();
+		expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
+	});
+
+	it("shows the results view with an in-progress banner once the first page of a file scan lands", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			isFileScan: true,
+			fileScanProgress: { pageIndex: 2, pageCount: 5, pageName: "About" },
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		expect(
+			screen.getByText(/Scanning page 2 of 5: About\. Results below update/),
+		).toBeVisible();
+		expect(screen.getByRole("tablist")).toBeVisible();
 		expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
 	});
 
@@ -122,6 +142,7 @@ describe("IssuesOverviewList", () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
 			scanning: true,
+			isFileScan: true,
 			fileScanProgress: { pageIndex: 1, pageCount: 3, pageName: "Home" },
 		});
 		render(<IssuesOverviewList />);
@@ -130,6 +151,21 @@ describe("IssuesOverviewList", () => {
 
 		expect(useIssuesStore.getState().fileScanCancelled).toBe(true);
 		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.CANCEL_SCAN_FILE);
+	});
+
+	it("shows a 'Finishing up' banner with no cancel button once the scan is cancelled but the last page hasn't landed yet", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			isFileScan: true,
+			fileScanCancelled: true,
+			fileScanProgress: { pageIndex: 3, pageCount: 5, pageName: "Contact" },
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByText("Finishing up - page 3 of 5...")).toBeVisible();
+		expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+		expect(screen.queryByText(/Scan cancelled/)).toBeNull();
 	});
 
 	it("shows a partial-results banner after a cancelled file scan's results arrive", () => {
@@ -146,19 +182,55 @@ describe("IssuesOverviewList", () => {
 		expect(screen.queryByText(/Scan cancelled/)).toBeNull();
 	});
 
-	it("clears fileScanProgress once LOAD_ISSUES arrives, leaving fileScanCancelled for the banner", () => {
+	it("clears fileScanProgress once SCAN_FILE_COMPLETE arrives, leaving fileScanCancelled for the banner", () => {
 		useIssuesStore.setState({
 			scanning: true,
+			isFileScan: true,
 			fileScanCancelled: true,
 			fileScanProgress: { pageIndex: 2, pageCount: 3, pageName: "About" },
+			detectedIssues: [typographyIssue],
 		});
 		render(<IssuesOverviewList />);
 
-		dispatch(MESSAGE_TYPES.LOAD_ISSUES, [typographyIssue]);
+		dispatch(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: true });
 
 		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
 		expect(useIssuesStore.getState().fileScanCancelled).toBe(true);
 		expect(useIssuesStore.getState().scanning).toBe(false);
+	});
+
+	it("appends streamed-in page issues via SCAN_FILE_PAGE_ISSUES without replacing existing ones", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			isFileScan: true,
+			fileScanProgress: { pageIndex: 1, pageCount: 2, pageName: "Home" },
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		dispatch(MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES, [contrastFailIssue]);
+
+		expect(useIssuesStore.getState().detectedIssues).toEqual([
+			typographyIssue,
+			contrastFailIssue,
+		]);
+		expect(useIssuesStore.getState().scanning).toBe(true);
+	});
+
+	it("stops scanning and clears progress via SCAN_FILE_COMPLETE without a cancellation", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			isFileScan: true,
+			fileScanProgress: { pageIndex: 2, pageCount: 2, pageName: "About" },
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		dispatch(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: false });
+
+		expect(useIssuesStore.getState().scanning).toBe(false);
+		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
+		expect(useIssuesStore.getState().fileScanCancelled).toBe(false);
 	});
 
 	it("loads issues from a LOAD_ISSUES message and stops scanning", async () => {
@@ -246,7 +318,7 @@ describe("IssuesOverviewList", () => {
 		});
 		render(<IssuesOverviewList />);
 
-		expect(screen.getByText("There are 2 issues detected on this screen.")).toBeVisible();
+		expect(screen.getByText("There are 2 issues detected on this page.")).toBeVisible();
 
 		const contrastRow = screen.getByRole("button", { name: "Contrast" });
 		expect(contrastRow).toHaveTextContent("1");
@@ -255,6 +327,17 @@ describe("IssuesOverviewList", () => {
 
 		expect(useIssuesStore.getState().selectedType).toBe("TYPOGRAPHY");
 		expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_LIST_VIEW");
+	});
+
+	it("says 'across this file', not 'on this page', when the issues came from a file scan", () => {
+		useIssuesStore.setState({
+			isFileScan: true,
+			detectedIssues: [typographyIssue, contrastFailIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByText("There are 2 issues detected across this file.")).toBeVisible();
+		expect(screen.queryByText(/on this page/)).toBeNull();
 	});
 
 	it("does not show the WCAG target toggle when there are no contrast issues", () => {
@@ -281,12 +364,12 @@ describe("IssuesOverviewList", () => {
 		});
 		render(<IssuesOverviewList />);
 
-		expect(screen.getByText("There are 1 issues detected on this screen.")).toBeVisible();
+		expect(screen.getByText("There are 1 issues detected on this page.")).toBeVisible();
 
 		await user.click(screen.getByRole("radio", { name: "AAA" }));
 
 		expect(useIssuesStore.getState().targetLevel).toBe("AAA");
-		expect(screen.getByText("There are 2 issues detected on this screen.")).toBeVisible();
+		expect(screen.getByText("There are 2 issues detected on this page.")).toBeVisible();
 	});
 
 	it("shows the category breakdown chart on the Report tab only when there are counted issues", async () => {
