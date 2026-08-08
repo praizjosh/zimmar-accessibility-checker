@@ -27,6 +27,11 @@ describe("AccessibilityValidator", () => {
 			selectedType: "",
 			targetLevel: "AA",
 			deviceType: "touch",
+			hasSeenFileScanOption: false,
+			// Multi-page by default so the existing file-scan/caret tests below
+			// keep testing that behavior unchanged - the single-page-hides-it
+			// case gets its own dedicated tests further down.
+			pageCount: 2,
 		});
 	});
 
@@ -61,6 +66,62 @@ describe("AccessibilityValidator", () => {
 		render(<AccessibilityValidator />);
 
 		expect(screen.getByRole("button", { name: "Scan entire page" })).toBeDisabled();
+	});
+
+	it("starts a full-file scan and navigates to the overview when 'Scan entire file' is chosen from the caret menu", async () => {
+		const user = userEvent.setup();
+		render(<AccessibilityValidator />);
+
+		await user.click(screen.getByRole("button", { name: "More scan options" }));
+		await user.click(screen.getByRole("button", { name: "Scan entire file" }));
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN_FILE, {
+			deviceType: "touch",
+			targetLevel: "AA",
+		});
+		expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_OVERVIEW_LIST_VIEW");
+	});
+
+	it("disables the caret trigger (and so the file-scan option) while a scan is already in progress", () => {
+		useIssuesStore.setState({ scanning: true });
+		render(<AccessibilityValidator />);
+
+		expect(screen.getByRole("button", { name: "More scan options" })).toBeDisabled();
+	});
+
+	it("marks the file-scan option as seen (and posts it) the first time the caret menu opens", async () => {
+		const user = userEvent.setup();
+		render(<AccessibilityValidator />);
+
+		await user.click(screen.getByRole("button", { name: "More scan options" }));
+
+		expect(useIssuesStore.getState().hasSeenFileScanOption).toBe(true);
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.MARK_FILE_SCAN_OPTION_SEEN);
+	});
+
+	describe("on a single-page file", () => {
+		beforeEach(() => {
+			useIssuesStore.setState({ pageCount: 1 });
+		});
+
+		it("does not offer 'Scan entire file' at all", () => {
+			render(<AccessibilityValidator />);
+
+			expect(screen.queryByRole("button", { name: "More scan options" })).toBeNull();
+			expect(screen.queryByRole("button", { name: "Scan entire file" })).toBeNull();
+		});
+
+		it("still starts a plain scan normally from 'Scan entire page'", async () => {
+			const user = userEvent.setup();
+			render(<AccessibilityValidator />);
+
+			await user.click(screen.getByRole("button", { name: "Scan entire page" }));
+
+			expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN, {
+				deviceType: "touch",
+				targetLevel: "AA",
+			});
+		});
 	});
 
 	it.each([
@@ -122,5 +183,25 @@ describe("AccessibilityValidator", () => {
 		render(<AccessibilityValidator />);
 
 		expect(screen.getByTestId("alt-text-generator")).toHaveAttribute("data-expanded", "false");
+	});
+
+	it("shows the current target level and device type before scanning", () => {
+		useIssuesStore.setState({ targetLevel: "AAA", deviceType: "pointer" });
+		render(<AccessibilityValidator />);
+
+		expect(screen.getByText(/Scanning against.*AAA.*Pointer/)).toBeVisible();
+	});
+
+	it("updates the readout when the popover's toggles are used", async () => {
+		const user = userEvent.setup();
+		render(<AccessibilityValidator />);
+
+		expect(screen.getByText(/Scanning against.*AA.*Touch/)).toBeVisible();
+
+		await user.click(screen.getByLabelText("Scan settings"));
+		await user.click(screen.getByRole("radio", { name: "AAA" }));
+		await user.click(screen.getByRole("radio", { name: "Pointer" }));
+
+		expect(screen.getByText(/Scanning against.*AAA.*Pointer/)).toBeVisible();
 	});
 });

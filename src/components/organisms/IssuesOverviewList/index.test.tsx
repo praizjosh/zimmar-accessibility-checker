@@ -60,6 +60,9 @@ const defaultState = {
 	selectedType: "" as const,
 	targetLevel: "AA" as const,
 	deviceType: "touch" as const,
+	fileScanProgress: null,
+	fileScanCancelled: false,
+	pageScanCancelled: false,
 };
 
 describe("IssuesOverviewList", () => {
@@ -76,6 +79,86 @@ describe("IssuesOverviewList", () => {
 		expect(screen.getByText("Scanning for issues...")).toBeVisible();
 		expect(screen.queryByRole("tablist")).toBeNull();
 		expect(screen.queryByRole("button", { name: "Rescan for issues" })).toBeNull();
+	});
+
+	it("shows a cancel button during a plain single-page scan", () => {
+		useIssuesStore.setState({ scanning: true });
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
+	});
+
+	it("cancels the page scan when the cancel button is clicked during a plain scan", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ scanning: true });
+		render(<IssuesOverviewList />);
+
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		expect(useIssuesStore.getState().pageScanCancelled).toBe(true);
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.CANCEL_SCAN);
+	});
+
+	it("shows a partial-results banner after a cancelled single-page scan's results arrive", () => {
+		useIssuesStore.setState({ pageScanCancelled: true, detectedIssues: [typographyIssue] });
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByText(/Scan cancelled/)).toBeVisible();
+	});
+
+	it("shows file-scan progress and a cancel button instead of the plain loading message during a file scan", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			fileScanProgress: { pageIndex: 2, pageCount: 5, pageName: "About" },
+		});
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByText("Scanning page 2 of 5: About")).toBeVisible();
+		expect(screen.queryByText("Scanning for issues...")).toBeNull();
+		expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
+	});
+
+	it("cancels the file scan when the cancel button is clicked", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({
+			scanning: true,
+			fileScanProgress: { pageIndex: 1, pageCount: 3, pageName: "Home" },
+		});
+		render(<IssuesOverviewList />);
+
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		expect(useIssuesStore.getState().fileScanCancelled).toBe(true);
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.CANCEL_SCAN_FILE);
+	});
+
+	it("shows a partial-results banner after a cancelled file scan's results arrive", () => {
+		useIssuesStore.setState({ fileScanCancelled: true, detectedIssues: [typographyIssue] });
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByText(/Scan cancelled/)).toBeVisible();
+	});
+
+	it("does not show the partial-results banner when the last scan wasn't cancelled", () => {
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
+		render(<IssuesOverviewList />);
+
+		expect(screen.queryByText(/Scan cancelled/)).toBeNull();
+	});
+
+	it("clears fileScanProgress once LOAD_ISSUES arrives, leaving fileScanCancelled for the banner", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			fileScanCancelled: true,
+			fileScanProgress: { pageIndex: 2, pageCount: 3, pageName: "About" },
+		});
+		render(<IssuesOverviewList />);
+
+		dispatch(MESSAGE_TYPES.LOAD_ISSUES, [typographyIssue]);
+
+		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
+		expect(useIssuesStore.getState().fileScanCancelled).toBe(true);
+		expect(useIssuesStore.getState().scanning).toBe(false);
 	});
 
 	it("loads issues from a LOAD_ISSUES message and stops scanning", async () => {
@@ -237,5 +320,64 @@ describe("IssuesOverviewList", () => {
 		expect(content[0].description).toBe(
 			"Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.",
 		);
+	});
+
+	describe("active settings readout", () => {
+		it("shows the current target level and device type", () => {
+			useIssuesStore.setState({ targetLevel: "AAA", deviceType: "pointer" });
+			render(<IssuesOverviewList />);
+
+			expect(screen.getByText(/Scanning against.*AAA.*Pointer/)).toBeVisible();
+		});
+
+		it("updates when the settings change", () => {
+			useIssuesStore.setState({ targetLevel: "AA", deviceType: "touch" });
+			const { rerender } = render(<IssuesOverviewList />);
+
+			expect(screen.getByText(/Scanning against.*AA.*Touch/)).toBeVisible();
+
+			useIssuesStore.setState({ deviceType: "pointer" });
+			rerender(<IssuesOverviewList />);
+
+			expect(screen.getByText(/Scanning against.*AA.*Pointer/)).toBeVisible();
+			expect(screen.queryByText(/Scanning against.*Touch/)).toBeNull();
+		});
+
+		it("is visible while scanning too, not just after results arrive", () => {
+			useIssuesStore.setState({ scanning: true, targetLevel: "AAA", deviceType: "touch" });
+			render(<IssuesOverviewList />);
+
+			expect(screen.getByText(/Scanning against.*AAA.*Touch/)).toBeVisible();
+		});
+	});
+
+	describe("touch-target-skipped note", () => {
+		it("shows an info popover explaining touch-target checks are skipped when designing for Pointer", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({ deviceType: "pointer", detectedIssues: [typographyIssue] });
+			render(<IssuesOverviewList />);
+
+			const trigger = screen.getByLabelText("About Touch Target Checks Skipped");
+			expect(trigger).toBeVisible();
+
+			await user.click(trigger);
+
+			expect(screen.getByText(/Touch target checks are skipped/)).toBeVisible();
+		});
+
+		it("shows the popover trigger even when there are no issues at all", () => {
+			useIssuesStore.setState({ deviceType: "pointer", detectedIssues: [] });
+			render(<IssuesOverviewList />);
+
+			expect(screen.getByLabelText("About Touch Target Checks Skipped")).toBeVisible();
+			expect(screen.getByText("No issues found")).toBeVisible();
+		});
+
+		it("does not show the popover trigger when designing for Touch", () => {
+			useIssuesStore.setState({ deviceType: "touch", detectedIssues: [typographyIssue] });
+			render(<IssuesOverviewList />);
+
+			expect(screen.queryByLabelText("About Touch Target Checks Skipped")).toBeNull();
+		});
 	});
 });

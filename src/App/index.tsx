@@ -3,13 +3,19 @@ import IssuesNavigator from "@/components/organisms/IssuesNavigator";
 import IssuesOverviewList from "@/components/organisms/IssuesOverviewList";
 import TouchTargetNavigator from "@/components/organisms/TouchTargetNavigator";
 import { MESSAGE_TYPES } from "@/lib/constants";
-import { DeviceType, ROUTES_LIST, TargetLevel } from "@/lib/types";
+import { DeviceType, FileScanProgress, ROUTES_LIST, TargetLevel } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 
 export default function App() {
-	const { currentRoute, hydrateScanSettings } = useIssuesStore();
+	const {
+		currentRoute,
+		hydrateScanSettings,
+		setFileScanProgress,
+		hydrateFileScanOptionSeen,
+		hydratePageCount,
+	} = useIssuesStore();
 
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
@@ -20,6 +26,18 @@ export default function App() {
 			if (type === MESSAGE_TYPES.LOAD_SCAN_SETTINGS) {
 				hydrateScanSettings(data as { deviceType: DeviceType; targetLevel: TargetLevel });
 			}
+
+			if (type === MESSAGE_TYPES.SCAN_FILE_PROGRESS) {
+				setFileScanProgress(data as FileScanProgress);
+			}
+
+			if (type === MESSAGE_TYPES.LOAD_FILE_SCAN_OPTION_SEEN) {
+				hydrateFileScanOptionSeen((data as { seen: boolean }).seen);
+			}
+
+			if (type === MESSAGE_TYPES.LOAD_PAGE_COUNT) {
+				hydratePageCount((data as { pageCount: number }).pageCount);
+			}
 		};
 
 		window.addEventListener("message", handleMessage);
@@ -27,7 +45,7 @@ export default function App() {
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [hydrateScanSettings]);
+	}, [hydrateScanSettings, setFileScanProgress, hydrateFileScanOptionSeen, hydratePageCount]);
 
 	const RoutesMap: ROUTES_LIST = {
 		INDEX: <AccessibilityValidator />,

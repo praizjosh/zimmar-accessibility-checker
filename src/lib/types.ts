@@ -64,6 +64,9 @@ export type NodeDataType = {
 	nodeType: NodeType | NodeType[];
 	requiredSize?: string;
 	requiredSizePx?: number;
+	/** Only set on issues from a full-file (all-pages) scan - see tagIssuesWithPage (figmaUtils/collectIssues). */
+	pageId?: string;
+	pageName?: string;
 };
 
 export interface DetectedIssue {
@@ -83,17 +86,38 @@ export interface IssuesStore {
 	navigateToIssue: (index: number) => void; // Navigate to a specific issue
 }
 
+export type FileScanProgress = {
+	pageIndex: number;
+	pageCount: number;
+	pageName: string;
+};
+
 export interface EnhancedIssuesStore extends IssuesStore {
 	/** An instance of a detected issue. */
 	singleIssue: DetectedIssue | null;
+	/** All type-matching issues in the current quick-check selection - populated
+	 * only when there's more than one, so the UI can show a pick-list instead of
+	 * silently dropping every match but the first. */
+	selectionIssues: DetectedIssue[];
 	scanning: boolean;
 	/** Selected issue type. Empty string (`""`) means no scan has run yet. */
 	selectedType: IssueType | "";
 	currentRoute: Routes;
 	targetLevel: TargetLevel;
 	deviceType: DeviceType;
+	/** Non-null only while a full-file (all-pages) scan is in progress - see startFileScan. */
+	fileScanProgress: FileScanProgress | null;
+	/** True once the user cancels an in-progress file scan, until the next scan starts. */
+	fileScanCancelled: boolean;
+	/** True once the user cancels an in-progress single-page scan, until the next scan starts. */
+	pageScanCancelled: boolean;
+	/** True once the user has opened the "scan entire file" caret menu at least once, ever - persisted via figma.clientStorage so the "new" badge doesn't reappear after reopening Figma. */
+	hasSeenFileScanOption: boolean;
+	/** Number of pages in the current file - drives whether "Scan entire file" is offered at all (meaningless on a single-page file). Defaults to 1 (hides the option) until LOAD_PAGE_COUNT arrives. */
+	pageCount: number;
 	setScanning: (isScanning: boolean) => void;
 	setSingleIssue: (newIssue: DetectedIssue | null) => void;
+	setSelectionIssues: (issues: DetectedIssue[]) => void;
 	navigateTo: (route: Routes) => void;
 	setSelectedType: (type: IssueType) => void;
 	setTargetLevel: (level: TargetLevel) => void;
@@ -102,6 +126,19 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	updateIssue: (id: string, updates: Partial<DetectedIssue>) => void;
 	getIssueGroupList: () => DetectedIssue[];
 	rescanIssues: () => void;
+	/** Scans every page in the file, not just the current one - see plugin/code.ts's handleScanFile. */
+	startFileScan: () => void;
+	/** Requests the in-progress file scan stop after its current page; already-collected issues are still shown. */
+	cancelFileScan: () => void;
+	setFileScanProgress: (progress: FileScanProgress | null) => void;
+	/** Requests the in-progress single-page scan stop after its current phase; already-collected issues are still shown. */
+	cancelPageScan: () => void;
+	/** Marks the file-scan option as seen and persists it - idempotent, no-ops (and doesn't repost) once already true. */
+	markFileScanOptionSeen: () => void;
+	/** Applies a just-loaded seen flag from clientStorage - no repost, mirrors hydrateScanSettings. */
+	hydrateFileScanOptionSeen: (seen: boolean) => void;
+	/** Applies a just-broadcast page count - no repost, mirrors hydrateFileScanOptionSeen. */
+	hydratePageCount: (count: number) => void;
 }
 
 export type copyToClipboardProps = {

@@ -2,8 +2,7 @@ import { contrastScore, DetectedIssue } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
 import {
 	MESSAGE_TYPES,
-	MIN_TOUCH_TARGET_SIZE_AAA,
-	MIN_TOUCH_TARGET_SPACING,
+	SIZE_LIMITS,
 	TOUCH_TARGET_KEYWORDS,
 	TOUCH_TARGET_SPATIAL_CELL_SIZE,
 } from "../constants";
@@ -117,7 +116,6 @@ export const createTypographyIssue = (node: TextNode): DetectedIssue => ({
  */
 export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
 	if (!node) return false;
-	// if (node.type === "TextNode") return false;
 
 	if ("name" in node && node.type !== "TEXT") {
 		const lowerCaseName = node.name.toLowerCase();
@@ -150,7 +148,7 @@ export const isTouchTarget = async (node: SceneNode): Promise<boolean> => {
  */
 export const isTouchTargetTooSmall = (
 	node: SceneNode,
-	minSize: number = MIN_TOUCH_TARGET_SIZE_AAA,
+	minSize: number = SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA,
 ): boolean => {
 	return "width" in node && "height" in node && (node.width < minSize || node.height < minSize);
 };
@@ -191,7 +189,7 @@ export const isTouchTargetTooClose = (node: SceneNode, allNodes: SceneNode[]): b
 				Math.abs(nodeBounds.x - (otherBounds.x + otherBounds.width)),
 				Math.abs(otherBounds.x - (nodeBounds.x + nodeBounds.width)),
 			);
-			if (horizontalDistance < MIN_TOUCH_TARGET_SPACING) return true;
+			if (horizontalDistance < SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING) return true;
 		}
 
 		if (overlapHorizontal > 0) {
@@ -199,7 +197,7 @@ export const isTouchTargetTooClose = (node: SceneNode, allNodes: SceneNode[]): b
 				Math.abs(nodeBounds.y - (otherBounds.y + otherBounds.height)),
 				Math.abs(otherBounds.y - (nodeBounds.y + nodeBounds.height)),
 			);
-			if (verticalDistance < MIN_TOUCH_TARGET_SPACING) return true;
+			if (verticalDistance < SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING) return true;
 		}
 
 		return false;
@@ -210,16 +208,20 @@ type BoundingBox = { x: number; y: number; width: number; height: number };
 
 /**
  * Which spatial grid cells a bounding box overlaps, expanded by
- * MIN_TOUCH_TARGET_SPACING on every side - two nodes can only ever trigger
+ * SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING on every side - two nodes can only ever trigger
  * an isTouchTargetTooClose violation if they're within that distance of
  * each other, so a node's "interesting" neighbourhood is its own bounds
  * grown by that amount, not the whole page.
  */
 function cellKeysForBounds(bounds: BoundingBox, cellSize: number): string[] {
-	const minCellX = Math.floor((bounds.x - MIN_TOUCH_TARGET_SPACING) / cellSize);
-	const maxCellX = Math.floor((bounds.x + bounds.width + MIN_TOUCH_TARGET_SPACING) / cellSize);
-	const minCellY = Math.floor((bounds.y - MIN_TOUCH_TARGET_SPACING) / cellSize);
-	const maxCellY = Math.floor((bounds.y + bounds.height + MIN_TOUCH_TARGET_SPACING) / cellSize);
+	const minCellX = Math.floor((bounds.x - SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING) / cellSize);
+	const maxCellX = Math.floor(
+		(bounds.x + bounds.width + SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING) / cellSize,
+	);
+	const minCellY = Math.floor((bounds.y - SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING) / cellSize);
+	const maxCellY = Math.floor(
+		(bounds.y + bounds.height + SIZE_LIMITS.MIN_TOUCH_TARGET_SPACING) / cellSize,
+	);
 
 	const keys: string[] = [];
 	for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
@@ -317,7 +319,7 @@ export function getNearbyNodes(
 export const createTouchTargetIssue = (
 	node: SceneNode,
 	issueType: "Size" | "Spacing",
-	minSize: number = MIN_TOUCH_TARGET_SIZE_AAA,
+	minSize: number = SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA,
 ): DetectedIssue | null => {
 	if (!node || typeof node !== "object" || !node.id || !node.name) {
 		console.error("Invalid node passed to createTouchTargetIssue:", node);

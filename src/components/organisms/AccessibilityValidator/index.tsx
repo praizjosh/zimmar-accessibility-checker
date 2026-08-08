@@ -1,6 +1,7 @@
+import ScanModeSplitButton from "@/components/organisms/ScanModeSplitButton";
 import ScanSettingsPopover from "@/components/organisms/ScanSettingsPopover";
+import ScanSettingsReadout from "@/components/organisms/ScanSettingsReadout";
 import AltTextGenerator from "@/components/organisms/ai-assistants/AltTextGenerator";
-import { Button } from "@/components/ui/button";
 import { MESSAGE_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import { postMessageToBackend } from "@/lib/figmaUtils";
@@ -8,19 +9,23 @@ import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getRouteForIssueType } from "@/lib/utils";
-import { Bot, ChevronRight, Radar } from "lucide-react";
+import { Bot, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 export default function AccessibilityValidator() {
 	const {
 		scanning,
 		startScan,
+		startFileScan,
 		setSelectedType,
 		navigateTo,
 		targetLevel,
 		setTargetLevel,
 		deviceType,
 		setDeviceType,
+		hasSeenFileScanOption,
+		markFileScanOptionSeen,
+		pageCount,
 	} = useIssuesStore();
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -36,15 +41,14 @@ export default function AccessibilityValidator() {
 	return (
 		<div className="flex size-full flex-col space-y-5">
 			<div className="flex gap-2 pt-2">
-				<Button
-					className="h-full flex-1 bg-accent"
-					title="Scan design for accessibility issues"
-					onClick={startScan}
-					disabled={scanning}
-				>
-					<Radar aria-hidden="true" />
-					<span>Scan entire page</span>
-				</Button>
+				<ScanModeSplitButton
+					scanning={scanning}
+					onScanPage={startScan}
+					onScanFile={startFileScan}
+					hasSeenFileScanOption={hasSeenFileScanOption}
+					onOpenMenu={markFileScanOptionSeen}
+					showFileScanOption={pageCount > 1}
+				/>
 
 				<ScanSettingsPopover
 					targetLevel={targetLevel}
@@ -53,6 +57,8 @@ export default function AccessibilityValidator() {
 					onDeviceTypeChange={setDeviceType}
 				/>
 			</div>
+
+			<ScanSettingsReadout targetLevel={targetLevel} deviceType={deviceType} />
 
 			<div className="relative m-4">
 				<div className="absolute inset-0 flex items-center">

@@ -1,4 +1,4 @@
-import { MIN_FONT_SIZE, MIN_TOUCH_TARGET_SIZE_AAA } from "../constants";
+import { SIZE_LIMITS } from "../constants";
 import ISSUE_TYPE_LABELS from "../issueTypeLabels";
 import { IssueRecommendations, IssueType, TargetLevel } from "../types";
 
@@ -11,7 +11,7 @@ import { IssueRecommendations, IssueType, TargetLevel } from "../types";
 const ISSUE_RECOMMENDATIONS: IssueRecommendations[] = [
 	{
 		typography: [
-			`Ensure font size is at least ${MIN_FONT_SIZE}px to enhance readability and comply with WCAG "AA" standards.`,
+			`Ensure font size is at least ${SIZE_LIMITS.MIN_FONT_SIZE}px to enhance readability and comply with WCAG "AA" standards.`,
 			"Use a minimum font size of 16px for body text and 14px for buttons and other interactive elements.",
 		],
 	},
@@ -57,7 +57,7 @@ export default function getIssueRecommendations(
 	}
 
 	if (issueType === "TOUCH_TARGET_SIZE") {
-		const minSize = requiredSizePx ?? MIN_TOUCH_TARGET_SIZE_AAA;
+		const minSize = requiredSizePx ?? SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA;
 		return [
 			`Increase the touch target size to at least ${minSize}x${minSize} pixels to ensure better accessibility on mobile devices. Maintain adequate spacing between interactive elements.`,
 		];

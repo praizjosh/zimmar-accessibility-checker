@@ -13,10 +13,10 @@ export default function InfoPopover({ title, content, align = "end" }: InfoPopov
 			<PopoverTrigger aria-label={title ? `About ${title}` : "More info"}>
 				<Info aria-hidden="true" className="ml-2 size-5 text-grey hover:text-accent" />
 			</PopoverTrigger>
-			<PopoverContent align={align} className="w-64 text-pretty">
+			<PopoverContent align={align} className="w-64">
 				<div className="space-y-2">
-					{title && <h5 className="font-medium text-accent">{title}</h5>}
-					<p className="text-sm">{content}</p>
+					{title && <h5 className="text-base font-medium text-accent">{title}</h5>}
+					<p className="text-sm text-pretty">{content}</p>
 				</div>
 			</PopoverContent>
 		</Popover>

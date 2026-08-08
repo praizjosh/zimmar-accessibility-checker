@@ -1,12 +1,14 @@
-import { describe, expect, it } from "vitest";
-import { MIN_TOUCH_TARGET_SIZE_AA, MIN_TOUCH_TARGET_SIZE_AAA } from "@/lib/constants";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { SIZE_LIMITS } from "@/lib/constants";
 import fakeSceneNode from "@/lib/test-utils/fakeSceneNode";
+import { DetectedIssue } from "@/lib/types";
 import {
 	collectIssues,
 	collectTouchTargetIssues,
 	detectIssuesInSelection,
 	expandSelectionWithDescendants,
 	isScannable,
+	tagIssuesWithPage,
 } from "./index";
 
 function fakeTouchTargetNode(
@@ -58,7 +60,7 @@ describe("collectTouchTargetIssues", () => {
 
 		expect(issues).toHaveLength(1);
 		expect(issues[0].type).toBe("TOUCH_TARGET_SIZE");
-		expect(issues[0].nodeData.requiredSizePx).toBe(MIN_TOUCH_TARGET_SIZE_AAA);
+		expect(issues[0].nodeData.requiredSizePx).toBe(SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA);
 	});
 
 	it("does not flag an ineligible node even when it's too small", async () => {
@@ -100,7 +102,7 @@ describe("collectTouchTargetIssues", () => {
 
 		expect(aaaIssues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(true);
 		expect(aaIssues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(false);
-		expect(MIN_TOUCH_TARGET_SIZE_AA).toBe(24);
+		expect(SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AA).toBe(24);
 	});
 });
 
@@ -152,6 +154,46 @@ describe("expandSelectionWithDescendants", () => {
 		const entries = expandSelectionWithDescendants([containerA, containerB]);
 
 		expect(entries.map((entry) => entry.node.id)).toEqual(["a", "a-child", "b", "b-child"]);
+	});
+});
+
+describe("tagIssuesWithPage", () => {
+	function fakeIssue(id: string): DetectedIssue {
+		return {
+			type: "TYPOGRAPHY",
+			severity: "major",
+			nodeData: { id, name: "Label", nodeType: "TEXT" },
+		};
+	}
+
+	it("merges pageId/pageName into every issue's nodeData", () => {
+		const tagged = tagIssuesWithPage([fakeIssue("a"), fakeIssue("b")], "page-1", "Home");
+
+		expect(tagged.map((issue) => issue.nodeData.pageId)).toEqual(["page-1", "page-1"]);
+		expect(tagged.map((issue) => issue.nodeData.pageName)).toEqual(["Home", "Home"]);
+	});
+
+	it("preserves the rest of each issue's fields unchanged", () => {
+		const issue = fakeIssue("a");
+
+		const [tagged] = tagIssuesWithPage([issue], "page-1", "Home");
+
+		expect(tagged.type).toBe("TYPOGRAPHY");
+		expect(tagged.severity).toBe("major");
+		expect(tagged.nodeData.id).toBe("a");
+		expect(tagged.nodeData.name).toBe("Label");
+	});
+
+	it("returns an empty array unchanged", () => {
+		expect(tagIssuesWithPage([], "page-1", "Home")).toEqual([]);
+	});
+
+	it("does not mutate the original issues", () => {
+		const issue = fakeIssue("a");
+
+		tagIssuesWithPage([issue], "page-1", "Home");
+
+		expect(issue.nodeData.pageId).toBeUndefined();
 	});
 });
 
@@ -225,6 +267,36 @@ describe("detectIssuesInSelection", () => {
 		const issues = await detectIssuesInSelection([node], "touch", "AAA", []);
 
 		expect(issues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(true);
+	});
+
+	describe("a directly selected TEXT node", () => {
+		// A text label can never legitimately be a touch target (WCAG
+		// 2.5.5/2.5.8 govern interactive controls, not static text) - regression
+		// guard for a bug where multi-selecting a text layer alongside real
+		// buttons (e.g. "ORBITO" swept up with "btn"/"icon button") got it
+		// flagged too, because direct selection otherwise overrides eligibility
+		// unconditionally. Needs a minimal figma stub since a TEXT node also
+		// runs through the (figma-runtime-only) contrast-analysis path.
+		beforeAll(() => {
+			vi.stubGlobal("figma", { loadFontAsync: vi.fn().mockResolvedValue(undefined) });
+		});
+
+		afterAll(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it("is not flagged as a touch target, unlike a same-size non-text node", async () => {
+			const textNode = fakeSceneNode(
+				"orbito",
+				{ x: 0, y: 0, width: 20, height: 20 },
+				{ name: "ORBITO", type: "TEXT" },
+			);
+
+			const issues = await detectIssuesInSelection([textNode], "touch", "AAA", []);
+
+			expect(issues.some((issue) => issue.type === "TOUCH_TARGET_SIZE")).toBe(false);
+			expect(issues.some((issue) => issue.type === "TOUCH_TARGET_SPACING")).toBe(false);
+		});
 	});
 
 	it("recurses into a selected container and flags an eligible descendant", async () => {

@@ -1,5 +1,7 @@
 import InfoPopover from "@/components/organisms/InfoPopover";
 import Recommendations from "@/components/organisms/Recommendations";
+import ScreenHeader from "@/components/organisms/ScreenHeader";
+import SelectionIssuesList from "@/components/organisms/SelectionIssuesList";
 import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
 import { MESSAGE_TYPES } from "@/lib/constants";
@@ -39,15 +41,17 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	const [hasBackground, setHasBackground] = useState("");
 	const [hasForeground, setHasForeground] = useState("");
 	const {
-		currentIssueIndex,
-		detectedIssues,
+		currentIssueIndex: currentIndex,
+		detectedIssues: issues,
 		singleIssue,
+		selectionIssues,
 		selectedType,
 		targetLevel,
 		navigateTo,
-		setCurrentIssueIndex,
+		setCurrentIssueIndex: setCurrentIndex,
 		setSelectedType,
 		setSingleIssue,
+		setSelectionIssues,
 		navigateToIssue,
 		getIssueGroupList,
 	} = useIssuesStore();
@@ -61,12 +65,14 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 					(issue: DetectedIssue) => issue.type === selectedType,
 				);
 
-				if (matchingIssues.length === 0) {
-					setSingleIssue(null);
+				if (matchingIssues.length <= 1) {
+					setSingleIssue(matchingIssues[0] ?? null);
+					setSelectionIssues([]);
 					return;
 				}
 
-				setSingleIssue(matchingIssues[0] || data[0] || null);
+				setSelectionIssues(matchingIssues);
+				setSingleIssue(null);
 			}
 
 			if (type === MESSAGE_TYPES.LAYER_SELECTED && data) {
@@ -75,6 +81,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 
 			if (type === MESSAGE_TYPES.NO_SELECTION && data) {
 				setSingleIssue(null);
+				setSelectionIssues([]);
 				setIsSelection(false);
 			}
 
@@ -96,7 +103,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [selectedType, setSingleIssue]);
+	}, [selectedType, setSingleIssue, setSelectionIssues]);
 
 	useEffect(() => {
 		navigateToIssue(0);
@@ -106,31 +113,44 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		if (isQuickCheckActive) {
 			navigateTo("INDEX");
 			setSingleIssue(null);
+			setSelectionIssues([]);
 			postMessageToBackend(MESSAGE_TYPES.CANCEL_QUICKCHECK);
 		} else {
 			navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
 		}
 	};
 
+	const handleDrillIntoIssue = (issue: DetectedIssue) => {
+		setSingleIssue(issue);
+		postMessageToBackend(MESSAGE_TYPES.NAVIGATE, { id: issue.nodeData.id });
+	};
+
+	const handleBackToList = () => {
+		setSingleIssue(null);
+		postMessageToBackend(MESSAGE_TYPES.SELECT_MULTIPLE, {
+			ids: selectionIssues.map((issue) => issue.nodeData.id),
+		});
+	};
+
 	const handleNavigation = (direction: "prev" | "next") => {
-		if (direction === "prev" && currentIssueIndex > 0) {
-			navigateToIssue(currentIssueIndex - 1);
+		if (direction === "prev" && currentIndex > 0) {
+			navigateToIssue(currentIndex - 1);
 		}
-		if (direction === "next" && currentIssueIndex < issueGroupList.length - 1) {
-			navigateToIssue(currentIssueIndex + 1);
+		if (direction === "next" && currentIndex < issueGroupList.length - 1) {
+			navigateToIssue(currentIndex + 1);
 		}
 	};
 
 	const handleSwitchType = (nextType: IssueType) => {
 		if (nextType === selectedType) return;
 		setSelectedType(nextType);
-		setCurrentIssueIndex(0);
+		setCurrentIndex(0);
 		navigateTo(getRouteForIssueType(nextType));
 		navigateToIssue(0);
 	};
 
 	const issueGroupList = getIssueGroupList();
-	const currentIssue = issueGroupList[currentIssueIndex];
+	const currentIssue = issueGroupList[currentIndex];
 	// The issue actually being rendered below (see renderWrapper's call site) -
 	// singleIssue in quick-check mode, currentIssue when paging a scanned
 	// list. description/suggestions need to derive from whichever one that
@@ -144,7 +164,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 	// whenever the page has any text at all, even with zero currently-failing
 	// contrast issues.
 	const availableTypes = ISSUES_DATA_SCHEMA.filter((schemaIssue) =>
-		detectedIssues.some(
+		issues.some(
 			(issue) => issue.type === schemaIssue.type && isActiveIssue(issue, targetLevel),
 		),
 	);
@@ -202,7 +222,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		return (
 			<>
 				{description && (
-					<p className="px-3 font-open-sans font-medium text-grey">{description}</p>
+					<p className="font-open-sans font-medium text-grey">{description}</p>
 				)}
 
 				{children}
@@ -212,25 +232,44 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		);
 	};
 
+	const showSelectionIssuesList = selectionIssues.length > 1 && !singleIssue;
+	const showBackToListAffordance = selectionIssues.length > 1 && !!singleIssue;
+
+	const quickCheckContent = () => {
+		if (showSelectionIssuesList) {
+			return (
+				<SelectionIssuesList
+					issues={selectionIssues}
+					targetLevel={targetLevel}
+					onSelectIssue={handleDrillIntoIssue}
+				/>
+			);
+		}
+
+		return (
+			<>
+				{showBackToListAffordance && (
+					<Button
+						title="Back to list"
+						variant="ghost"
+						size="sm"
+						className="self-start px-0 text-xs text-grey hover:bg-transparent hover:text-accent"
+						onClick={handleBackToList}
+					>
+						<ChevronLeft strokeWidth={1.5} aria-hidden="true" className="size-4" />
+						Back to list
+					</Button>
+				)}
+
+				{renderWrapper(singleIssue)}
+			</>
+		);
+	};
+
 	return (
 		<div className="flex size-full flex-col items-start gap-y-4 last:pb-5!">
 			<div className="grid w-full">
-				<div className="flex w-full items-center justify-between gap-x-0.5">
-					<Button
-						title="Go back"
-						variant="nude"
-						size={"icon"}
-						className="w-fit! gap-0.5 group-hover:text-accent"
-						onClick={handleBackBtnClick}
-					>
-						<ChevronLeft
-							strokeWidth={1.5}
-							aria-hidden="true"
-							className="size-6! transition-transform delay-100 ease-in-out group-hover:-translate-x-0.5!"
-						/>
-						<span className="text-base">Back</span>
-					</Button>
-
+				<ScreenHeader onBack={handleBackBtnClick}>
 					<div className="inline-flex items-center gap-x-1">
 						<span className="font-medium tracking-wide capitalize">{headerLabel}</span>
 						{tooltipData[selectedType] && (
@@ -240,7 +279,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 							/>
 						)}
 					</div>
-				</div>
+				</ScreenHeader>
 
 				{availableTypes.length > 1 && (
 					<div
@@ -278,20 +317,20 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 							variant="ghost"
 							size="icon"
 							onClick={() => handleNavigation("prev")}
-							disabled={currentIssueIndex === 0}
+							disabled={currentIndex === 0}
 							className="p-2.5"
 						>
 							<ChevronLeft strokeWidth={1.5} aria-hidden="true" className="size-6!" />
 						</Button>
 						<span className="text-sm text-slate-200">
-							Issue {currentIssueIndex + 1} of {issueGroupList.length}
+							Issue {currentIndex + 1} of {issueGroupList.length}
 						</span>
 						<Button
 							title="Goto next issue"
 							variant="ghost"
 							size="icon"
 							onClick={() => handleNavigation("next")}
-							disabled={currentIssueIndex === issueGroupList.length - 1}
+							disabled={currentIndex === issueGroupList.length - 1}
 							className="p-2.5"
 						>
 							<ChevronRight
@@ -304,7 +343,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 				)}
 			</div>
 
-			{issueGroupList.length === 0 ? renderWrapper(singleIssue) : renderWrapper(currentIssue)}
+			{issueGroupList.length === 0 ? quickCheckContent() : renderWrapper(currentIssue)}
 		</div>
 	);
 }

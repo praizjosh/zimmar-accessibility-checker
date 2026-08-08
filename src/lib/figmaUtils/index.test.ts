@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MIN_TOUCH_TARGET_SIZE_AAA, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
+import { SIZE_LIMITS, TOUCH_TARGET_MIN_SIZE } from "@/lib/constants";
 import fakeSceneNode from "@/lib/test-utils/fakeSceneNode";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
@@ -18,7 +18,7 @@ import {
 describe("TOUCH_TARGET_MIN_SIZE", () => {
 	it("maps AA to the WCAG 2.5.8 24px minimum and AAA to the existing 44px value", () => {
 		expect(TOUCH_TARGET_MIN_SIZE.AA).toBe(24);
-		expect(TOUCH_TARGET_MIN_SIZE.AAA).toBe(MIN_TOUCH_TARGET_SIZE_AAA);
+		expect(TOUCH_TARGET_MIN_SIZE.AAA).toBe(SIZE_LIMITS.MIN_TOUCH_TARGET_SIZE_AAA);
 	});
 });
 
