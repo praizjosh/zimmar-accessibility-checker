@@ -336,7 +336,7 @@ export default function IssuesNavigator() {
 								}
 								tooltip={
 									isContrastFail &&
-									"The color contrast between the text and the background on this screen is insufficient to meet the enhanced contrast requirements. In some edge cases, the test may fail when the background element is a “GROUP,” “COMPONENT,” or “INSTANCE. Other times, a background couldn't be detected."
+									"The color contrast between the text and the background on this page is insufficient to meet the enhanced contrast requirements. In some edge cases, the test may fail when the background element is a “GROUP,” “COMPONENT,” or “INSTANCE. Other times, a background couldn't be detected."
 								}
 							/>
 

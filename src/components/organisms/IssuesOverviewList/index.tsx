@@ -29,6 +29,7 @@ export default function IssuesOverviewList() {
 		scanning,
 		detectedIssues,
 		setDetectedIssues,
+		appendDetectedIssues,
 		setScanning,
 		setSelectedType,
 		navigateTo,
@@ -37,11 +38,13 @@ export default function IssuesOverviewList() {
 		setTargetLevel,
 		deviceType,
 		fileScanProgress,
+		isFileScan,
 		fileScanCancelled,
 		cancelFileScan,
 		setFileScanProgress,
 		pageScanCancelled,
 		cancelPageScan,
+		pageCount,
 	} = useIssuesStore();
 
 	const issuesGroupListRecords = detectedIssues.filter((issue) => {
@@ -66,6 +69,15 @@ export default function IssuesOverviewList() {
 				setScanning(false);
 				setFileScanProgress(null);
 			}
+
+			if (type === MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES) {
+				appendDetectedIssues(data);
+			}
+
+			if (type === MESSAGE_TYPES.SCAN_FILE_COMPLETE) {
+				setScanning(false);
+				setFileScanProgress(null);
+			}
 		};
 
 		window.addEventListener("message", handleMessage);
@@ -73,7 +85,7 @@ export default function IssuesOverviewList() {
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [setDetectedIssues, setScanning, setFileScanProgress]);
+	}, [setDetectedIssues, appendDetectedIssues, setScanning, setFileScanProgress]);
 
 	const handleIssuesListClick = (type: IssueType) => {
 		setSelectedType(type);
@@ -153,6 +165,15 @@ export default function IssuesOverviewList() {
 		saveAs(jsonBlob, "accessibility-issues-report.json");
 	};
 
+	// True once there's something worth showing - either the scan is fully
+	// done, or it's a file scan whose first page has already streamed in.
+	// fileScanProgress only ever becomes non-null after a page's progress
+	// message arrives, and that page's SCAN_FILE_PAGE_ISSUES is always sent
+	// (and processed, given in-order postMessage delivery) before its
+	// SCAN_FILE_PROGRESS - so this is a reliable "first page already landed"
+	// signal without needing a separate counter.
+	const showResults = !scanning || (isFileScan && fileScanProgress !== null);
+
 	return (
 		<div className="flex size-full flex-col">
 			<div className="grid">
@@ -193,9 +214,29 @@ export default function IssuesOverviewList() {
 				<Separator className="my-2 h-px bg-rose-50/10!" />
 			</div>
 
-			{!scanning ? (
+			{showResults ? (
 				<div className="flex size-full flex-col">
-					{(fileScanCancelled || pageScanCancelled) && (
+					{scanning && isFileScan && fileScanProgress && (
+						<div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-rose-50/10 bg-dark-shade px-3 py-2 text-xs text-grey">
+							<span>
+								{fileScanCancelled
+									? `Finishing up - page ${fileScanProgress.pageIndex} of ${fileScanProgress.pageCount}...`
+									: `Scanning page ${fileScanProgress.pageIndex} of ${fileScanProgress.pageCount}: ${fileScanProgress.pageName}. Results below update as more pages finish.`}
+							</span>
+							{!fileScanCancelled && (
+								<Button
+									title="Cancel scan"
+									variant="ghost"
+									className="shrink-0 border border-rose-50/10"
+									onClick={cancelFileScan}
+								>
+									Cancel
+								</Button>
+							)}
+						</div>
+					)}
+
+					{!scanning && (fileScanCancelled || pageScanCancelled) && (
 						<p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-500">
 							Scan cancelled - showing results collected before you cancelled.
 						</p>
@@ -236,8 +277,8 @@ export default function IssuesOverviewList() {
 
 							{issuesGroupListRecords.length > 0 && (
 								<p className="mb-4 font-open-sans text-sm">
-									There are {issuesGroupListRecords.length} issues detected on
-									this screen.
+									There are {issuesGroupListRecords.length} issues detected{" "}
+									{isFileScan ? "across this file" : "on this page"}.
 								</p>
 							)}
 
@@ -339,10 +380,8 @@ export default function IssuesOverviewList() {
 						</TabsContent>
 					</Tabs>
 				</div>
-			) : fileScanProgress ? (
-				<LoadingScreen
-					message={`Scanning page ${fileScanProgress.pageIndex} of ${fileScanProgress.pageCount}: ${fileScanProgress.pageName}`}
-				>
+			) : scanning && isFileScan ? (
+				<LoadingScreen message={`Scanning page 1 of ${pageCount}...`}>
 					<Button
 						title="Cancel scan"
 						variant="ghost"

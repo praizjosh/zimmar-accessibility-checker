@@ -8,6 +8,8 @@ export const MESSAGE_TYPES = {
 	CANCEL_SCAN: "cancel-scan",
 	SCAN_FILE: "scan-file",
 	SCAN_FILE_PROGRESS: "scan-file-progress",
+	SCAN_FILE_PAGE_ISSUES: "scan-file-page-issues",
+	SCAN_FILE_COMPLETE: "scan-file-complete",
 	CANCEL_SCAN_FILE: "cancel-scan-file",
 	UPDATE_FONT_SIZE: "update-font-size",
 	UPDATE_FILL_COLOR: "update-fill-color",

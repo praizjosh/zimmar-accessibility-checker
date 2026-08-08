@@ -14,7 +14,7 @@ import {
 	tagIssuesWithPage,
 } from "@/lib/figmaUtils/collectIssues";
 import generateAltTextForLayer from "@/lib/helpers/generateAltTextForLayer";
-import { DeviceType, DetectedIssue, TargetLevel } from "@/lib/types";
+import { DeviceType, TargetLevel } from "@/lib/types";
 import {
 	figmaRGBtoHex,
 	getIsFileScanCancelled,
@@ -268,8 +268,14 @@ async function handleScanFile(message: ScanSettings) {
 	setScanSettings({ deviceType, targetLevel });
 	setIsFileScanCancelled(false);
 
-	const pages = figma.root.children;
-	const allIssues: DetectedIssue[] = [];
+	// Scan the page the user is currently looking at first, then the rest of
+	// the file in file order - this is what makes streaming worthwhile, since
+	// the first results to land are for the page the user is actually on.
+	const currentPage = figma.currentPage;
+	const pages = [
+		currentPage,
+		...figma.root.children.filter((page) => page.id !== currentPage.id),
+	];
 
 	for (let i = 0; i < pages.length; i++) {
 		if (getIsFileScanCancelled()) break;
@@ -283,7 +289,14 @@ async function handleScanFile(message: ScanSettings) {
 		const allPageNodes = page.findAll((node) => isScannable(node)) as SceneNode[];
 
 		const pageIssues = await collectIssues(allTextNodes, allPageNodes, deviceType, targetLevel);
-		allIssues.push(...tagIssuesWithPage(pageIssues, page.id, page.name));
+		const taggedPageIssues = tagIssuesWithPage(pageIssues, page.id, page.name);
+
+		// Stream this page's results immediately instead of accumulating them
+		// in memory - each page's own array is naturally already a bounded
+		// chunk, so this is both progressive delivery and chunking at once.
+		if (taggedPageIssues.length > 0) {
+			postMessageToUI(MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES, taggedPageIssues);
+		}
 
 		postMessageToUI(MESSAGE_TYPES.SCAN_FILE_PROGRESS, {
 			pageIndex: i + 1,
@@ -291,13 +304,15 @@ async function handleScanFile(message: ScanSettings) {
 			pageName: page.name,
 		});
 
-		// Yield to the event loop so the progress message above actually
-		// flushes to the UI, and so a CANCEL_SCAN_FILE message sent while this
-		// page was being scanned gets processed before the next page starts.
+		// Yield to the event loop so the messages above actually flush to the
+		// UI, and so a CANCEL_SCAN_FILE message sent while this page was being
+		// scanned gets processed before the next page starts.
 		await new Promise((resolve) => setTimeout(resolve, 0));
 	}
 
-	postMessageToUI(MESSAGE_TYPES.LOAD_ISSUES, allIssues);
+	// Unconditional, same as the old final LOAD_ISSUES send - tells the UI the
+	// scan is over whether it finished naturally or was cancelled partway.
+	postMessageToUI(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: getIsFileScanCancelled() });
 }
 
 // Requests the loop above stop after its current page - a boolean gate

@@ -107,6 +107,8 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	deviceType: DeviceType;
 	/** Non-null only while a full-file (all-pages) scan is in progress - see startFileScan. */
 	fileScanProgress: FileScanProgress | null;
+	/** True only while a *file* scan (not a plain single-page scan) is in flight - disambiguates the "scanning: true, fileScanProgress: null" window (before the first page's progress arrives) from a single-page scan, which looks identical otherwise. */
+	isFileScan: boolean;
 	/** True once the user cancels an in-progress file scan, until the next scan starts. */
 	fileScanCancelled: boolean;
 	/** True once the user cancels an in-progress single-page scan, until the next scan starts. */
@@ -139,6 +141,8 @@ export interface EnhancedIssuesStore extends IssuesStore {
 	hydrateFileScanOptionSeen: (seen: boolean) => void;
 	/** Applies a just-broadcast page count - no repost, mirrors hydrateFileScanOptionSeen. */
 	hydratePageCount: (count: number) => void;
+	/** Appends to detectedIssues rather than replacing it - for streamed-in SCAN_FILE_PAGE_ISSUES chunks. */
+	appendDetectedIssues: (newIssues: DetectedIssue[]) => void;
 }
 
 export type copyToClipboardProps = {

@@ -22,6 +22,7 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	targetLevel: "AA",
 	deviceType: "touch",
 	fileScanProgress: null,
+	isFileScan: false,
 	fileScanCancelled: false,
 	pageScanCancelled: false,
 	hasSeenFileScanOption: false,
@@ -36,14 +37,24 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 		// Clears cancelled flags left over from a previous scan - e.g. "Rescan"
 		// after cancelling a file scan runs a plain single-page scan, which
 		// shouldn't inherit the earlier cancellation's "partial results" banner.
-		set({ fileScanCancelled: false, pageScanCancelled: false });
+		set({ fileScanCancelled: false, pageScanCancelled: false, isFileScan: false });
 		postMessageToBackend(MESSAGE_TYPES.SCAN, { deviceType, targetLevel });
 		navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
 	},
 	startFileScan: () => {
-		const { setScanning, navigateTo, deviceType, targetLevel } = get();
+		const { setScanning, setDetectedIssues, navigateTo, deviceType, targetLevel } = get();
+		// Clears any leftover issues from a previous scan - unlike rescanIssues
+		// (which does this before starting a plain scan), a file scan streams
+		// issues in progressively, so a stale array here would sit underneath
+		// the first streamed-in chunk instead of being replaced by it.
+		setDetectedIssues([]);
 		setScanning(true);
-		set({ fileScanProgress: null, fileScanCancelled: false, pageScanCancelled: false });
+		set({
+			fileScanProgress: null,
+			fileScanCancelled: false,
+			pageScanCancelled: false,
+			isFileScan: true,
+		});
 		postMessageToBackend(MESSAGE_TYPES.SCAN_FILE, { deviceType, targetLevel });
 		navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
 	},
@@ -68,6 +79,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	setSelectionIssues: (issues) => set({ selectionIssues: issues }),
 	setDetectedIssues: (newIssues: DetectedIssue[]) => {
 		set({ detectedIssues: newIssues });
+	},
+	appendDetectedIssues: (newIssues: DetectedIssue[]) => {
+		set((state) => ({ detectedIssues: [...state.detectedIssues, ...newIssues] }));
 	},
 	setSelectedType: (type: IssueType) => set({ selectedType: type }),
 	setTargetLevel: (level: TargetLevel) => {
