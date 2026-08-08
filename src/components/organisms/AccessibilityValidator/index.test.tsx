@@ -73,7 +73,7 @@ describe("AccessibilityValidator", () => {
 		render(<AccessibilityValidator />);
 
 		await user.click(screen.getByRole("button", { name: "More scan options" }));
-		await user.click(screen.getByRole("button", { name: "Scan entire file (all pages)" }));
+		await user.click(screen.getByRole("button", { name: "Scan entire file" }));
 
 		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN_FILE, {
 			deviceType: "touch",
@@ -108,9 +108,7 @@ describe("AccessibilityValidator", () => {
 			render(<AccessibilityValidator />);
 
 			expect(screen.queryByRole("button", { name: "More scan options" })).toBeNull();
-			expect(
-				screen.queryByRole("button", { name: "Scan entire file (all pages)" }),
-			).toBeNull();
+			expect(screen.queryByRole("button", { name: "Scan entire file" })).toBeNull();
 		});
 
 		it("still starts a plain scan normally from 'Scan entire page'", async () => {

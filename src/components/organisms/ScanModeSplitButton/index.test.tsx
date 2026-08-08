@@ -136,12 +136,10 @@ describe("ScanModeSplitButton", () => {
 		);
 
 		await user.click(screen.getByRole("button", { name: "More scan options" }));
-		await user.click(screen.getByRole("button", { name: "Scan entire file (all pages)" }));
+		await user.click(screen.getByRole("button", { name: "Scan entire file" }));
 
 		expect(onScanFile).toHaveBeenCalledTimes(1);
-		expect(
-			screen.queryByRole("button", { name: "Scan entire file (all pages)" }),
-		).not.toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Scan entire file" })).not.toBeInTheDocument();
 	});
 
 	describe("when showFileScanOption is false (single-page file)", () => {
@@ -173,9 +171,7 @@ describe("ScanModeSplitButton", () => {
 				/>,
 			);
 
-			expect(
-				screen.queryByRole("button", { name: "Scan entire file (all pages)" }),
-			).toBeNull();
+			expect(screen.queryByRole("button", { name: "Scan entire file" })).toBeNull();
 		});
 
 		it("never shows the 'new' badge - there's nothing to discover", () => {
