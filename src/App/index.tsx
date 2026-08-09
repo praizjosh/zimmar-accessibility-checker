@@ -3,7 +3,7 @@ import IssuesNavigator from "@/components/organisms/IssuesNavigator";
 import IssuesOverviewList from "@/components/organisms/IssuesOverviewList";
 import TouchTargetNavigator from "@/components/organisms/TouchTargetNavigator";
 import { MESSAGE_TYPES } from "@/lib/constants";
-import { DeviceType, FileScanProgress, ROUTES_LIST, TargetLevel } from "@/lib/types";
+import { DetectedIssue, DeviceType, FileScanProgress, ROUTES_LIST, TargetLevel } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -15,11 +15,17 @@ export default function App() {
 		setFileScanProgress,
 		hydrateFileScanOptionSeen,
 		hydratePageCount,
+		setDetectedIssues,
+		appendDetectedIssues,
+		setScanning,
 	} = useIssuesStore();
 
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
-			if (!event.data || !event.data.pluginMessage) return;
+			if (!event.data || !event.data.pluginMessage) {
+				console.error("Invalid message format:", event.data);
+				return;
+			}
 
 			const { type, data } = event.data.pluginMessage;
 
@@ -38,6 +44,30 @@ export default function App() {
 			if (type === MESSAGE_TYPES.LOAD_PAGE_COUNT) {
 				hydratePageCount((data as { pageCount: number }).pageCount);
 			}
+
+			// Handled here rather than inside IssuesOverviewList: a scan can
+			// keep running in the background while the user is on a different
+			// screen entirely (e.g. drilled into an issue's detail view mid
+			// file-scan), which unmounts IssuesOverviewList and, with it, any
+			// listener it registered. postMessage doesn't replay missed
+			// messages, so a listener that only exists while that one screen
+			// is mounted can permanently miss SCAN_FILE_COMPLETE and leave
+			// `scanning` stuck true forever. App never unmounts, so this is
+			// the one place these are guaranteed not to be dropped.
+			if (type === MESSAGE_TYPES.LOAD_ISSUES) {
+				setDetectedIssues(data as DetectedIssue[]);
+				setScanning(false);
+				setFileScanProgress(null);
+			}
+
+			if (type === MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES) {
+				appendDetectedIssues(data as DetectedIssue[]);
+			}
+
+			if (type === MESSAGE_TYPES.SCAN_FILE_COMPLETE) {
+				setScanning(false);
+				setFileScanProgress(null);
+			}
 		};
 
 		window.addEventListener("message", handleMessage);
@@ -45,7 +75,15 @@ export default function App() {
 		return () => {
 			window.removeEventListener("message", handleMessage);
 		};
-	}, [hydrateScanSettings, setFileScanProgress, hydrateFileScanOptionSeen, hydratePageCount]);
+	}, [
+		hydrateScanSettings,
+		setFileScanProgress,
+		hydrateFileScanOptionSeen,
+		hydratePageCount,
+		setDetectedIssues,
+		appendDetectedIssues,
+		setScanning,
+	]);
 
 	const RoutesMap: ROUTES_LIST = {
 		INDEX: <AccessibilityValidator />,

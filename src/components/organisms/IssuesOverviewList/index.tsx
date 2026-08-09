@@ -8,7 +8,7 @@ import TargetLevelToggle from "@/components/organisms/TargetLevelToggle";
 import { Button } from "@/components/ui/button";
 import Separator from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ISSUES_TYPES, MESSAGE_TYPES } from "@/lib/constants";
+import { ISSUES_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, DetectedIssue } from "@/lib/types";
@@ -22,15 +22,12 @@ import {
 } from "@/lib/utils";
 import { saveAs } from "file-saver";
 import { RefreshCcw } from "lucide-react";
-import { useEffect } from "react";
 
 export default function IssuesOverviewList() {
 	const {
 		scanning,
 		detectedIssues,
 		setDetectedIssues,
-		appendDetectedIssues,
-		setScanning,
 		setSelectedType,
 		navigateTo,
 		rescanIssues,
@@ -41,7 +38,6 @@ export default function IssuesOverviewList() {
 		isFileScan,
 		fileScanCancelled,
 		cancelFileScan,
-		setFileScanProgress,
 		pageScanCancelled,
 		cancelPageScan,
 		pageCount,
@@ -53,39 +49,6 @@ export default function IssuesOverviewList() {
 	});
 
 	const hasContrastIssues = detectedIssues.some((issue) => issue.type === "CONTRAST");
-
-	// Listen for messages from the backend
-	useEffect(() => {
-		const handleMessage = (event: MessageEvent) => {
-			if (!event.data || !event.data.pluginMessage) {
-				console.error("Invalid message format:", event.data);
-				return;
-			}
-
-			const { type, data } = event.data.pluginMessage;
-
-			if (type === MESSAGE_TYPES.LOAD_ISSUES) {
-				setDetectedIssues(data);
-				setScanning(false);
-				setFileScanProgress(null);
-			}
-
-			if (type === MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES) {
-				appendDetectedIssues(data);
-			}
-
-			if (type === MESSAGE_TYPES.SCAN_FILE_COMPLETE) {
-				setScanning(false);
-				setFileScanProgress(null);
-			}
-		};
-
-		window.addEventListener("message", handleMessage);
-
-		return () => {
-			window.removeEventListener("message", handleMessage);
-		};
-	}, [setDetectedIssues, appendDetectedIssues, setScanning, setFileScanProgress]);
 
 	const handleIssuesListClick = (type: IssueType) => {
 		setSelectedType(type);
