@@ -161,6 +161,7 @@ export default function IssuesOverviewList() {
 						navigateTo("INDEX");
 						setDetectedIssues([]);
 					}}
+					disabled={scanning}
 				>
 					<div className="inline-flex items-center">
 						{!scanning && (
