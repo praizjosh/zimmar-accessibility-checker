@@ -34,9 +34,9 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 	startScan: () => {
 		const { setScanning, navigateTo, deviceType, targetLevel } = get();
 		setScanning(true);
-		// Clears cancelled flags left over from a previous scan - e.g. "Rescan"
-		// after cancelling a file scan runs a plain single-page scan, which
-		// shouldn't inherit the earlier cancellation's "partial results" banner.
+		// Clears cancelled flags left over from a previous scan, so a fresh
+		// scan started from the landing screen doesn't inherit a stale
+		// "partial results" banner from an earlier, different-type scan.
 		set({ fileScanCancelled: false, pageScanCancelled: false, isFileScan: false });
 		postMessageToBackend(MESSAGE_TYPES.SCAN, { deviceType, targetLevel });
 		navigateTo("ISSUE_OVERVIEW_LIST_VIEW");
@@ -135,7 +135,14 @@ const useIssuesStore = create<EnhancedIssuesStore>((set, get) => ({
 		set({ currentRoute: route });
 	},
 	rescanIssues: () => {
-		const { startScan, setDetectedIssues } = get();
+		const { isFileScan, startScan, startFileScan, setDetectedIssues } = get();
+		// Repeats whichever scan type produced the results currently shown -
+		// startFileScan already clears detectedIssues itself (see its own
+		// comment above), so only the plain-scan path needs to do it here.
+		if (isFileScan) {
+			startFileScan();
+			return;
+		}
 		setDetectedIssues([]);
 		startScan();
 	},

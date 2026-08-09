@@ -228,6 +228,24 @@ describe("IssuesOverviewList", () => {
 		expect(useIssuesStore.getState().scanning).toBe(true);
 	});
 
+	it("rescans with a file scan, not a plain page scan, when the current results came from a file scan", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ isFileScan: true, detectedIssues: [typographyIssue] });
+		render(<IssuesOverviewList />);
+
+		await user.click(screen.getByRole("button", { name: "Rescan for issues" }));
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN_FILE, {
+			deviceType: "touch",
+			targetLevel: "AA",
+		});
+		expect(postMessageToBackend).not.toHaveBeenCalledWith(
+			MESSAGE_TYPES.SCAN,
+			expect.anything(),
+		);
+		expect(useIssuesStore.getState().scanning).toBe(true);
+	});
+
 	it("shows 'No issues found' when there are no issues", () => {
 		render(<IssuesOverviewList />);
 
