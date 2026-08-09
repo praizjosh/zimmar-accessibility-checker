@@ -194,6 +194,31 @@ describe("IssuesOverviewList", () => {
 		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
 	});
 
+	it("disables the back button while a scan is in progress", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({
+			scanning: true,
+			currentRoute: "ISSUE_OVERVIEW_LIST_VIEW",
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		const backButton = screen.getByRole("button", { name: "Back" });
+		expect(backButton).toBeDisabled();
+
+		await user.click(backButton);
+
+		expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_OVERVIEW_LIST_VIEW");
+		expect(useIssuesStore.getState().detectedIssues).toEqual([typographyIssue]);
+	});
+
+	it("re-enables the back button once scanning finishes", () => {
+		useIssuesStore.setState({ scanning: false });
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
+	});
+
 	it("rescans by clearing issues and starting a new scan", async () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
