@@ -383,6 +383,53 @@ describe("useIssuesStore.startFileScan", () => {
 	});
 });
 
+describe("useIssuesStore.rescanIssues", () => {
+	it("repeats a plain page scan (posts SCAN) when the current results came from a page scan", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({
+			isFileScan: false,
+			detectedIssues: issues,
+			deviceType: "pointer",
+			targetLevel: "AAA",
+		});
+
+		useIssuesStore.getState().rescanIssues();
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN, {
+			deviceType: "pointer",
+			targetLevel: "AAA",
+		});
+		expect(postMessageToBackend).not.toHaveBeenCalledWith(
+			MESSAGE_TYPES.SCAN_FILE,
+			expect.anything(),
+		);
+		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
+	});
+
+	it("repeats a file scan (posts SCAN_FILE) when the current results came from a file scan", () => {
+		postMessageToBackend.mockClear();
+		useIssuesStore.setState({
+			isFileScan: true,
+			detectedIssues: issues,
+			deviceType: "touch",
+			targetLevel: "AA",
+		});
+
+		useIssuesStore.getState().rescanIssues();
+
+		expect(postMessageToBackend).toHaveBeenCalledWith(MESSAGE_TYPES.SCAN_FILE, {
+			deviceType: "touch",
+			targetLevel: "AA",
+		});
+		expect(postMessageToBackend).not.toHaveBeenCalledWith(
+			MESSAGE_TYPES.SCAN,
+			expect.anything(),
+		);
+		expect(useIssuesStore.getState().isFileScan).toBe(true);
+		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
+	});
+});
+
 describe("useIssuesStore.appendDetectedIssues", () => {
 	it("appends to existing detectedIssues without replacing them", () => {
 		useIssuesStore.setState({ detectedIssues: [issues[0]] });
