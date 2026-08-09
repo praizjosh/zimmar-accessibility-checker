@@ -21,7 +21,7 @@ export default function AltTextGenerator({ isExpanded, setIsExpanded }: AltTextG
 
 	useEffect(() => {
 		const handleMessage = async (event: MessageEvent) => {
-			const { type, data } = event.data.pluginMessage || {};
+			const { type, data } = event.data?.pluginMessage || {};
 
 			if (type === MESSAGE_TYPES.GENERATE_ALT_TEXT) {
 				try {

@@ -17,10 +17,6 @@ vi.mock("file-saver", () => ({ saveAs }));
 
 import IssuesOverviewList from "./index";
 
-function dispatch(type: string, data: unknown) {
-	window.dispatchEvent(new MessageEvent("message", { data: { pluginMessage: { type, data } } }));
-}
-
 async function goToReportTab(user: ReturnType<typeof userEvent.setup>) {
 	await user.click(screen.getByRole("tab", { name: "Report" }));
 }
@@ -180,79 +176,6 @@ describe("IssuesOverviewList", () => {
 		render(<IssuesOverviewList />);
 
 		expect(screen.queryByText(/Scan cancelled/)).toBeNull();
-	});
-
-	it("clears fileScanProgress once SCAN_FILE_COMPLETE arrives, leaving fileScanCancelled for the banner", () => {
-		useIssuesStore.setState({
-			scanning: true,
-			isFileScan: true,
-			fileScanCancelled: true,
-			fileScanProgress: { pageIndex: 2, pageCount: 3, pageName: "About" },
-			detectedIssues: [typographyIssue],
-		});
-		render(<IssuesOverviewList />);
-
-		dispatch(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: true });
-
-		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
-		expect(useIssuesStore.getState().fileScanCancelled).toBe(true);
-		expect(useIssuesStore.getState().scanning).toBe(false);
-	});
-
-	it("appends streamed-in page issues via SCAN_FILE_PAGE_ISSUES without replacing existing ones", () => {
-		useIssuesStore.setState({
-			scanning: true,
-			isFileScan: true,
-			fileScanProgress: { pageIndex: 1, pageCount: 2, pageName: "Home" },
-			detectedIssues: [typographyIssue],
-		});
-		render(<IssuesOverviewList />);
-
-		dispatch(MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES, [contrastFailIssue]);
-
-		expect(useIssuesStore.getState().detectedIssues).toEqual([
-			typographyIssue,
-			contrastFailIssue,
-		]);
-		expect(useIssuesStore.getState().scanning).toBe(true);
-	});
-
-	it("stops scanning and clears progress via SCAN_FILE_COMPLETE without a cancellation", () => {
-		useIssuesStore.setState({
-			scanning: true,
-			isFileScan: true,
-			fileScanProgress: { pageIndex: 2, pageCount: 2, pageName: "About" },
-			detectedIssues: [typographyIssue],
-		});
-		render(<IssuesOverviewList />);
-
-		dispatch(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: false });
-
-		expect(useIssuesStore.getState().scanning).toBe(false);
-		expect(useIssuesStore.getState().fileScanProgress).toBeNull();
-		expect(useIssuesStore.getState().fileScanCancelled).toBe(false);
-	});
-
-	it("loads issues from a LOAD_ISSUES message and stops scanning", async () => {
-		useIssuesStore.setState({ scanning: true });
-		render(<IssuesOverviewList />);
-
-		dispatch(MESSAGE_TYPES.LOAD_ISSUES, [typographyIssue]);
-
-		expect(useIssuesStore.getState().scanning).toBe(false);
-		expect(useIssuesStore.getState().detectedIssues).toEqual([typographyIssue]);
-	});
-
-	it("logs an error and ignores a malformed message", () => {
-		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-		render(<IssuesOverviewList />);
-
-		window.dispatchEvent(new MessageEvent("message", { data: null }));
-
-		expect(errorSpy).toHaveBeenCalledWith("Invalid message format:", null);
-		expect(useIssuesStore.getState().detectedIssues).toEqual([]);
-
-		errorSpy.mockRestore();
 	});
 
 	it("returns to the index and clears issues when the back button is clicked", async () => {

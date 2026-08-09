@@ -78,6 +78,24 @@ describe("AltTextGenerator", () => {
 		expect(setIsExpanded).toHaveBeenCalledWith(false);
 	});
 
+	// Regression guard: event.data can be null (e.g. some non-plugin message
+	// event landing on this window), and the handler used to do
+	// `event.data.pluginMessage` with no null check, throwing synchronously
+	// inside an async handler - which surfaces as an unhandled promise
+	// rejection, not a synchronous throw this test can catch with
+	// expect(...).toThrow(). The real signal here is `vitest run` itself:
+	// jsdom doesn't reliably re-dispatch `unhandledrejection` on `window` in
+	// this setup, but Vitest's own unhandled-rejection detection still fails
+	// the whole test run if this regresses, even though the test below
+	// "passes" - confirmed by deliberately reintroducing the bug locally.
+	it("ignores a message with no event.data at all", () => {
+		render(<AltTextGenerator isExpanded setIsExpanded={vi.fn()} />);
+
+		window.dispatchEvent(new MessageEvent("message", { data: null }));
+
+		expect(postMessageToBackend).not.toHaveBeenCalled();
+	});
+
 	it("does not expose the collapse button while collapsed", () => {
 		render(<AltTextGenerator isExpanded={false} setIsExpanded={vi.fn()} />);
 
