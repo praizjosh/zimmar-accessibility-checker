@@ -93,6 +93,30 @@ describe("IssuesWrapper", () => {
 		expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_OVERVIEW_LIST_VIEW");
 	});
 
+	it("returns to the overview, not INDEX, when the back button is clicked mid-file-scan (regression guard)", async () => {
+		// A file scan streams results in on the App-level listener regardless of
+		// which screen is mounted (see App/index.tsx), so it's safe for this
+		// screen's back button to stay unguarded during a scan - unlike
+		// IssuesOverviewList's back button (which does go to INDEX and is
+		// disabled while scanning, see ScreenHeader's disabled prop), this one
+		// only ever navigates to ISSUE_OVERVIEW_LIST_VIEW outside quick-check
+		// mode, so detectedIssues/scanning are never at risk of being lost here.
+		const user = userEvent.setup();
+		useIssuesStore.setState({
+			selectedType: "TYPOGRAPHY",
+			scanning: true,
+			isFileScan: true,
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesWrapper>child</IssuesWrapper>);
+
+		await user.click(screen.getByRole("button", { name: "Back" }));
+
+		expect(useIssuesStore.getState().currentRoute).toBe("ISSUE_OVERVIEW_LIST_VIEW");
+		expect(useIssuesStore.getState().scanning).toBe(true);
+		expect(useIssuesStore.getState().detectedIssues).toEqual([typographyIssue]);
+	});
+
 	it("cancels the quick check and returns to INDEX when quick-check is active", async () => {
 		const user = userEvent.setup();
 		useIssuesStore.setState({
