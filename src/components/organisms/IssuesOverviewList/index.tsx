@@ -15,6 +15,7 @@ import { IssueType, DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
 	cn,
+	contrastMethodsDisagree,
 	getContrastIssueDescription,
 	getRouteForIssueType,
 	getSeverityStyles,
@@ -89,6 +90,23 @@ export default function IssuesOverviewList() {
 				type: (issue.type && ISSUE_TYPE_LABELS[issue.type]) || issue.type,
 				wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
 				contrastRatio: issue.nodeData?.contrastScore?.ratio.toFixed(2) || "N/A",
+				apcaLc: issue.nodeData?.apcaScore
+					? Math.round(Math.abs(issue.nodeData.apcaScore.lc))
+					: "N/A",
+				apcaMeetsMinimum: issue.nodeData?.apcaScore
+					? issue.nodeData.apcaScore.meetsMinimum
+						? "Pass"
+						: "Fail"
+					: "N/A",
+				wcagApcaDisagree: issue.nodeData?.apcaScore
+					? contrastMethodsDisagree(
+							issue.nodeData.contrastScore?.compliance,
+							targetLevel,
+							issue.nodeData.apcaScore.meetsMinimum,
+						)
+						? "Yes"
+						: "No"
+					: "N/A",
 				fontSize: issue.nodeData?.fontSize || "N/A",
 			};
 		});
@@ -97,7 +115,7 @@ export default function IssuesOverviewList() {
 	const generateCSV = () => {
 		const formattedIssues = formatIssuesForReport();
 		const csvHeader =
-			"Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,Font Size";
+			"Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,APCA Lc,APCA Meets Minimum,WCAG/APCA Disagree,Font Size";
 
 		const csvRows = formattedIssues.map((issue) => {
 			return [
@@ -108,6 +126,9 @@ export default function IssuesOverviewList() {
 				`"${issue.severity || "N/A"}"`, // Severity
 				`"${issue.wcagContrastScore || "N/A"}"`, // WCAG Score
 				`"${issue.contrastRatio || "N/A"}"`, // Contrast ratio
+				`"${issue.apcaLc}"`, // APCA Lc
+				`"${issue.apcaMeetsMinimum}"`, // APCA Meets Minimum
+				`"${issue.wcagApcaDisagree}"`, // WCAG/APCA Disagree
 				`"${issue.fontSize || "N/A"}"`, // Font Size
 			].join(",");
 		});

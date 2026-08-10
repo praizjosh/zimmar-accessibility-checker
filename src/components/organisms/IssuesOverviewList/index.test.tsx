@@ -49,6 +49,15 @@ const contrastPassIssue: DetectedIssue = {
 	},
 };
 
+const contrastFailIssueWithApca: DetectedIssue = {
+	...contrastFailIssue,
+	nodeData: {
+		...contrastFailIssue.nodeData,
+		id: "c3",
+		apcaScore: { lc: -80, tier: "body", requiredLc: 75, maxLc: null, meetsMinimum: true },
+	},
+};
+
 const defaultState = {
 	detectedIssues: [] as DetectedIssue[],
 	scanning: false,
@@ -369,6 +378,63 @@ describe("IssuesOverviewList", () => {
 		expect(content[0].description).toBe(
 			"Text contrast meets WCAG AA but is below the stricter WCAG AAA standard.",
 		);
+	});
+
+	it("includes APCA Lc, meets-minimum, and disagreement columns in the CSV export", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({
+			detectedIssues: [contrastFailIssueWithApca],
+			targetLevel: "AA",
+		});
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download CSV" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = await blob.text();
+		const [header, firstRow] = content.split("\n");
+
+		expect(header).toContain("APCA Lc,APCA Meets Minimum,WCAG/APCA Disagree");
+		// WCAG fails ("Fail") but APCA meets its minimum (lc: -80, magnitude 80) - a disagreement.
+		expect(firstRow).toContain('"80"');
+		expect(firstRow).toContain('"Pass"');
+		expect(firstRow).toContain('"Yes"');
+	});
+
+	it("includes the same APCA fields in the JSON export", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({
+			detectedIssues: [contrastFailIssueWithApca],
+			targetLevel: "AA",
+		});
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download JSON" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = JSON.parse(await blob.text());
+
+		expect(content[0].apcaLc).toBe(80);
+		expect(content[0].apcaMeetsMinimum).toBe("Pass");
+		expect(content[0].wcagApcaDisagree).toBe("Yes");
+	});
+
+	it("reports 'N/A' for the APCA columns on a non-CONTRAST issue", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download JSON" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = JSON.parse(await blob.text());
+
+		expect(content[0].apcaLc).toBe("N/A");
+		expect(content[0].apcaMeetsMinimum).toBe("N/A");
+		expect(content[0].wcagApcaDisagree).toBe("N/A");
 	});
 
 	describe("active settings readout", () => {
