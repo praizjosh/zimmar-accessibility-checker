@@ -222,7 +222,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		return (
 			<>
 				{description && (
-					<p className="font-open-sans font-medium text-grey">{description}</p>
+					<p className="-mt-2! font-open-sans font-medium text-grey">{description}</p>
 				)}
 
 				{children}
