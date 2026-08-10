@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MESSAGE_TYPES } from "@/lib/constants";
-import { DetectedIssue } from "@/lib/types";
+import { ApcaScore, DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 
 const { postMessageToBackend } = vi.hoisted(() => ({
@@ -151,6 +151,195 @@ describe("IssuesNavigator", () => {
 
 		expect(screen.queryByText("WCAG score:")).toBeNull();
 		expect(screen.queryByText("Contrast ratio:")).toBeNull();
+	});
+
+	describe("APCA score row", () => {
+		const apcaMeetsMinimum: ApcaScore = {
+			lc: 78.72,
+			tier: "body",
+			requiredLc: 75,
+			maxLc: null,
+			meetsMinimum: true,
+		};
+		const apcaBelowMinimum: ApcaScore = {
+			lc: 60,
+			tier: "body",
+			requiredLc: 75,
+			maxLc: null,
+			meetsMinimum: false,
+		};
+
+		it("shows the APCA score row only for a CONTRAST issue", () => {
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				detectedIssues: [
+					{
+						...contrastIssue,
+						nodeData: { ...contrastIssue.nodeData, apcaScore: apcaBelowMinimum },
+					},
+				],
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.getByText("APCA score:")).toBeVisible();
+			expect(screen.getByText("Lc 60")).toBeVisible();
+		});
+
+		it("does not show the APCA row for a non-CONTRAST issue", () => {
+			useIssuesStore.setState({
+				selectedType: "TYPOGRAPHY",
+				detectedIssues: [typographyIssue],
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.queryByText("APCA score:")).toBeNull();
+		});
+
+		it("omits the APCA row when nodeData has no apcaScore", () => {
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				detectedIssues: [contrastIssue],
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.queryByText("APCA score:")).toBeNull();
+		});
+
+		it("shows the rounded magnitude of the Lc value, not the raw signed number", () => {
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				detectedIssues: [
+					{
+						...contrastIssue,
+						nodeData: {
+							...contrastIssue.nodeData,
+							apcaScore: { ...apcaMeetsMinimum, lc: -78.72 },
+						},
+					},
+				],
+			});
+			render(<IssuesNavigator />);
+
+			expect(screen.getByText("Lc 79")).toBeVisible();
+		});
+
+		it("shows a disagreement explanation when WCAG passes but APCA is below its minimum", async () => {
+			// getIssueGroupList filters out non-failing CONTRAST issues from
+			// detectedIssues, so a WCAG-passing issue can only reach the detail
+			// view via singleIssue (quick-check mode), same as the existing
+			// "shows Pass instead of the static severity..." test above.
+			const user = userEvent.setup();
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				targetLevel: "AA",
+				detectedIssues: [],
+				singleIssue: {
+					...contrastIssue,
+					nodeData: {
+						...contrastIssue.nodeData,
+						contrastScore: { compliance: "AAA", ratio: 10 },
+						apcaScore: apcaBelowMinimum,
+					},
+				},
+			});
+			render(<IssuesNavigator />);
+
+			await user.click(screen.getAllByLabelText("More info").at(-1)!);
+
+			expect(
+				await screen.findByText(
+					/WCAG passes but APCA's Bronze Simple Mode minimum isn't met/,
+				),
+			).toBeVisible();
+		});
+
+		it("shows a disagreement explanation when WCAG fails but APCA meets its minimum", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				targetLevel: "AA",
+				detectedIssues: [
+					{
+						...contrastIssue,
+						nodeData: {
+							...contrastIssue.nodeData,
+							contrastScore: { compliance: "Fail", ratio: 1.2 },
+							apcaScore: apcaMeetsMinimum,
+						},
+					},
+				],
+			});
+			render(<IssuesNavigator />);
+
+			await user.click(screen.getAllByLabelText("More info").at(-1)!);
+
+			expect(
+				await screen.findByText(/WCAG fails but APCA's Bronze Simple Mode minimum is met/),
+			).toBeVisible();
+		});
+
+		it("does not show a disagreement explanation when both methods agree", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				targetLevel: "AA",
+				detectedIssues: [
+					{
+						...contrastIssue,
+						nodeData: {
+							...contrastIssue.nodeData,
+							contrastScore: { compliance: "Fail", ratio: 1.2 },
+							apcaScore: apcaBelowMinimum,
+						},
+					},
+				],
+			});
+			render(<IssuesNavigator />);
+
+			await user.click(screen.getAllByLabelText("More info").at(-1)!);
+
+			expect(
+				await screen.findByText(/Unlike WCAG's fixed ratio, APCA accounts for font size\./),
+			).toBeVisible();
+			expect(screen.queryByText(/disagree on this pair/)).toBeNull();
+		});
+
+		it("recomputes the disagreement explanation when the AA/AAA target level changes", async () => {
+			// AA-passing WCAG compliance ("AA") + an APCA score that meets its
+			// minimum: at target AA this agrees (both pass); at target AAA this
+			// disagrees (WCAG now fails, APCA still passes). Uses singleIssue
+			// throughout - see the note in the test above on why a WCAG-passing
+			// issue can't be reached via detectedIssues.
+			const user = userEvent.setup();
+			const issue = {
+				...contrastIssue,
+				nodeData: {
+					...contrastIssue.nodeData,
+					contrastScore: { compliance: "AA", ratio: 4.54 },
+					apcaScore: apcaMeetsMinimum,
+				},
+			};
+
+			useIssuesStore.setState({
+				selectedType: "CONTRAST",
+				targetLevel: "AA",
+				detectedIssues: [],
+				singleIssue: issue,
+			});
+			const { unmount } = render(<IssuesNavigator />);
+			await user.click(screen.getAllByLabelText("More info").at(-1)!);
+			expect(
+				await screen.findByText(/Unlike WCAG's fixed ratio, APCA accounts for font size\./),
+			).toBeVisible();
+			unmount();
+
+			useIssuesStore.setState({ targetLevel: "AAA" });
+			render(<IssuesNavigator />);
+			await user.click(screen.getAllByLabelText("More info").at(-1)!);
+			expect(
+				await screen.findByText(/WCAG fails but APCA's Bronze Simple Mode minimum is met/),
+			).toBeVisible();
+		});
 	});
 
 	describe("Severity row", () => {

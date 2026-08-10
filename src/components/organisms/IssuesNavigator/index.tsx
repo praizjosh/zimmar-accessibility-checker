@@ -10,11 +10,12 @@ import useIssuesStore from "@/lib/useIssuesStore";
 import {
 	cn,
 	contrastFailsTargetLevel,
+	contrastMethodsDisagree,
 	figmaRGBtoHex,
 	getContrastCompliance,
 	getSeverityStyles,
 } from "@/lib/utils";
-import { CaseSensitive, Check, OctagonAlert, Palette, X } from "lucide-react";
+import { AlertTriangle, CaseSensitive, Check, OctagonAlert, Palette, X } from "lucide-react";
 import { useState } from "react";
 
 export default function IssuesNavigator() {
@@ -75,6 +76,7 @@ export default function IssuesNavigator() {
 			characters,
 			fontSize,
 			contrastScore,
+			apcaScore,
 			id,
 			foregroundColor,
 			backgroundColor,
@@ -89,6 +91,14 @@ export default function IssuesNavigator() {
 		const isContrastFail =
 			type === "CONTRAST" &&
 			contrastFailsTargetLevel(contrastScore?.compliance, detectionTargetLevel);
+		const contrastMethodsAreInDisagreement =
+			type === "CONTRAST" &&
+			apcaScore != null &&
+			contrastMethodsDisagree(
+				contrastScore?.compliance,
+				detectionTargetLevel,
+				apcaScore.meetsMinimum,
+			);
 		const foregroundSuggestion =
 			isContrastFail && foregroundColor && backgroundColor
 				? suggestAccessibleColor(
@@ -379,6 +389,63 @@ export default function IssuesNavigator() {
 									</span>
 								}
 							/>
+
+							{apcaScore && (
+								<IssueDetailRow
+									icon={
+										apcaScore.meetsMinimum ? (
+											<Check
+												aria-hidden="true"
+												className="mr-3 size-5 rounded-full bg-green-500 p-1 text-dark-shade"
+											/>
+										) : (
+											<X
+												aria-hidden="true"
+												className={cn(
+													getSeverityStyles(severity, { isIcon: true }),
+												)}
+											/>
+										)
+									}
+									label={
+										<span
+											className={cn(
+												"text-sm",
+												!apcaScore.meetsMinimum &&
+													getSeverityStyles(severity, { isBold: true }),
+											)}
+										>
+											APCA score:
+											{contrastMethodsAreInDisagreement && (
+												<AlertTriangle
+													aria-hidden="true"
+													className="ml-1 inline size-3.5 text-amber-500"
+												/>
+											)}
+										</span>
+									}
+									value={
+										<span
+											className={cn(
+												"ml-2.5 text-base font-bold",
+												!apcaScore.meetsMinimum &&
+													getSeverityStyles(severity, { isBold: true }),
+											)}
+										>
+											Lc {Math.round(Math.abs(apcaScore.lc))}
+										</span>
+									}
+									tooltip={
+										contrastMethodsAreInDisagreement
+											? `WCAG 2.x and APCA disagree on this pair: ${
+													apcaScore.meetsMinimum
+														? "WCAG fails but APCA's Bronze Simple Mode minimum is met"
+														: "WCAG passes but APCA's Bronze Simple Mode minimum isn't met"
+												} (requires Lc ${apcaScore.requiredLc}${apcaScore.maxLc ? `-${apcaScore.maxLc}` : "+"} for this text's size).`
+											: `APCA requires Lc ${apcaScore.requiredLc}${apcaScore.maxLc ? ` (max ${apcaScore.maxLc})` : ""} for this text's size tier (Bronze Simple Mode). Unlike WCAG's fixed ratio, APCA accounts for font size.`
+									}
+								/>
+							)}
 						</>
 					)}
 
