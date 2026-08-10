@@ -9,6 +9,29 @@ Two version numbers appear in this project and they are **not** the same thing:
 
 Versions 2-10's descriptions are transcribed as originally published on Figma - full commit-level detail for that period isn't available since this changelog was only introduced retroactively (06/08/2026).
 
+## [1.3.0] - Figma Version 14 (provisional - Figma's version number auto-increments on publish, confirm once actually published) - 10/08/2026
+
+### Added
+
+- Full-file (all-pages) scan: scan every page in the file, not just the current one, with progress feedback and a cancel button. Results now stream in progressively as each page finishes scanning, current page first, so you see results almost immediately instead of waiting for the whole file. (#56, #57)
+- Contrast issues are now scored against both WCAG 2.x and APCA, the perceptually-uniform contrast algorithm under evaluation for WCAG 3, with a note when the two disagree on whether a pair passes. (#61)
+- Selecting a container (frame, group, section) during quick-check now recurses into its descendants and, if more than one matching issue is found, shows all of them in a list instead of silently keeping only the first. (#51, #56)
+
+### Changed
+
+- "Scan entire file" moved into a split-button option off the primary "Scan entire page" action, and is hidden entirely on single-page files where it would be redundant. A dismissible "new" badge marks the option until you've opened it once. (#56)
+- A cancel button was added to the single-page scan flow too - previously only file scans had one. (#56)
+- Rescan now repeats whichever scan type produced the results currently on screen (page or file) instead of always defaulting to a page scan. (#57)
+- Issue recommendation and description copy is now target-level aware (AA vs AAA) instead of always describing the AA standard. (#52)
+- Issue-type tabs with no currently-active issues are now hidden instead of shown empty. (#53)
+
+### Fixed
+
+- The Back button on the results screen is now disabled while a scan is running, so navigating away mid-scan can no longer lose in-progress results. (#58)
+- File-scan progress could be silently dropped if you navigated to an issue's detail view mid-scan and back; results and progress now update correctly regardless of which screen you're on. (#57)
+- Touch-target checks no longer incorrectly flag a directly-selected text layer, which can never legitimately be a touch target. (#56)
+- A contrast issue's Severity row now reflects its live pass/fail state instead of staying on a stale value after a fix is applied. (#56)
+
 ## [1.2.0] - Figma Version 13 - 07/08/2026
 
 ### Added
