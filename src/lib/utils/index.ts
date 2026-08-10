@@ -48,6 +48,24 @@ export function contrastFailsTargetLevel(
 }
 
 /**
+ * Whether WCAG (at the currently selected target level) and APCA (against
+ * its Bronze Simple Mode minimum, see src/lib/apcaContrast) disagree on
+ * whether this pair passes - i.e. exactly one of the two currently considers
+ * it compliant. Both IssuesNavigator (UI) and IssuesOverviewList's CSV/JSON
+ * export need this exact same comparison, so it lives here once rather than
+ * being recomputed independently in both places.
+ */
+export function contrastMethodsDisagree(
+	wcagCompliance: string | undefined,
+	targetLevel: TargetLevel,
+	apcaMeetsMinimum: boolean | undefined,
+): boolean {
+	if (wcagCompliance === undefined || apcaMeetsMinimum === undefined) return false;
+	const wcagPasses = !contrastFailsTargetLevel(wcagCompliance, targetLevel);
+	return wcagPasses !== apcaMeetsMinimum;
+}
+
+/**
  * Contrast issue description text for the given compliance tier and target
  * level - computed at render/report time rather than baked into the issue
  * at scan time, since contrast target-level filtering is instant/client-side

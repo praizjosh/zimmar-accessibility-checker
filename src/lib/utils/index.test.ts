@@ -3,6 +3,7 @@ import { RGBColor, rgb } from "wcag-contrast";
 import solidFill from "@/lib/test-utils/solidFill";
 import {
 	contrastFailsTargetLevel,
+	contrastMethodsDisagree,
 	copyToClipboard,
 	getBackgroundColorForNode,
 	getContrastCompliance,
@@ -339,6 +340,37 @@ describe("contrastFailsTargetLevel", () => {
 	it("does not flag when there is no compliance result yet", () => {
 		expect(contrastFailsTargetLevel(undefined, "AA")).toBe(false);
 		expect(contrastFailsTargetLevel(undefined, "AAA")).toBe(false);
+	});
+});
+
+describe("contrastMethodsDisagree", () => {
+	it("does not flag a disagreement when both WCAG and APCA pass", () => {
+		expect(contrastMethodsDisagree("AAA", "AA", true)).toBe(false);
+	});
+
+	it("does not flag a disagreement when both WCAG and APCA fail", () => {
+		expect(contrastMethodsDisagree("Fail", "AA", false)).toBe(false);
+	});
+
+	it("flags a disagreement when WCAG passes but APCA is below its minimum", () => {
+		expect(contrastMethodsDisagree("AA", "AA", false)).toBe(true);
+	});
+
+	it("flags a disagreement when WCAG fails but APCA meets its minimum", () => {
+		expect(contrastMethodsDisagree("Fail", "AA", true)).toBe(true);
+	});
+
+	it("respects the currently selected target level for the WCAG side", () => {
+		// "AA" passes at target AA but fails at target AAA - the disagreement
+		// verdict should flip accordingly even though APCA's side is unchanged.
+		expect(contrastMethodsDisagree("AA", "AA", true)).toBe(false);
+		expect(contrastMethodsDisagree("AA", "AAA", true)).toBe(true);
+	});
+
+	it("never reports a disagreement when either input is missing", () => {
+		expect(contrastMethodsDisagree(undefined, "AA", true)).toBe(false);
+		expect(contrastMethodsDisagree("Fail", "AA", undefined)).toBe(false);
+		expect(contrastMethodsDisagree(undefined, "AA", undefined)).toBe(false);
 	});
 });
 
