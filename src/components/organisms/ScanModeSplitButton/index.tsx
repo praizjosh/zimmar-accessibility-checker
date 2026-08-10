@@ -58,7 +58,7 @@ export default function ScanModeSplitButton({
 					title="More scan options"
 					aria-label="More scan options"
 					disabled={scanning}
-					className="relative flex h-full w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-md border-l border-white/20 bg-accent text-white transition-colors hover:bg-[#2980b9] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-dark-shade focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+					className="relative flex h-full w-9 shrink-0 items-center justify-center rounded-l-none rounded-r-md border-l border-primary-foreground/50 bg-accent text-primary-foreground transition-colors hover:bg-[#2980b9] focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-dark-shade focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
 				>
 					<ChevronDown aria-hidden="true" className="size-4" />
 					{!hasSeenFileScanOption && (

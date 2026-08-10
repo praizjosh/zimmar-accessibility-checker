@@ -16,7 +16,7 @@ export default function IssueDetailRow({ label, value, icon, tooltip }: IssueDet
 				{label}
 			</div>
 			<div className="flex items-center text-sm">
-				{typeof tooltip === "string" && <InfoPopover content={tooltip} align="center" />}
+				{typeof tooltip === "string" && <InfoPopover content={tooltip} />}
 				{value}
 			</div>
 		</div>

@@ -39,7 +39,7 @@ export default function AccessibilityValidator() {
 	};
 
 	return (
-		<div className="flex size-full flex-col space-y-5">
+		<div className="flex size-full flex-col space-y-4">
 			<div className="flex gap-2 pt-2">
 				<ScanModeSplitButton
 					scanning={scanning}
@@ -60,7 +60,7 @@ export default function AccessibilityValidator() {
 
 			<ScanSettingsReadout targetLevel={targetLevel} deviceType={deviceType} />
 
-			<div className="relative m-4">
+			<div className="relative m-4 -mt-0.5">
 				<div className="absolute inset-0 flex items-center">
 					<span className="w-full border-t border-rose-50/10" />
 				</div>
