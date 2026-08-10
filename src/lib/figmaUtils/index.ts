@@ -1,5 +1,6 @@
-import { contrastScore, DetectedIssue } from "@/lib/types";
+import { ApcaScore, contrastScore, DetectedIssue } from "@/lib/types";
 import { RGBColor } from "wcag-contrast";
+import { getApcaScore } from "../apcaContrast";
 import {
 	MESSAGE_TYPES,
 	SIZE_LIMITS,
@@ -361,6 +362,7 @@ export const createTouchTargetIssue = (
 export const createContrastIssue = (
 	node: TextNode,
 	contrastScore: contrastScore,
+	apcaScore: ApcaScore,
 	foregroundColor: RGBColor,
 	background: BackgroundColorResult | null,
 	isBold: boolean,
@@ -375,6 +377,7 @@ export const createContrastIssue = (
 	nodeData: {
 		id: node.id,
 		contrastScore,
+		apcaScore,
 		characters: node.characters,
 		fontSize: node.fontSize as number,
 		height: node.height,
@@ -428,12 +431,14 @@ export async function analyzeTextNodeForContrastIssue(node: TextNode, issues: De
 					fontSize,
 					isBold,
 				);
+				const apcaScore = getApcaScore(foregroundColor, backgroundColor, fontSize, isBold);
 
 				if (contrastScore) {
 					issues.push(
 						createContrastIssue(
 							node,
 							contrastScore,
+							apcaScore,
 							foregroundColor,
 							backgroundResult,
 							isBold,

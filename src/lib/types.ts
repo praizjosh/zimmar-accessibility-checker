@@ -25,6 +25,21 @@ export type contrastScore = {
 	ratio: number;
 };
 
+export type ApcaTier = "body" | "large";
+
+/**
+ * APCA's Lc (Lightness Contrast) score for a text/background pair, evaluated
+ * against Bronze Simple Mode's conformance range for the text's size tier -
+ * see getApcaScore (src/lib/apcaContrast) for how this is computed.
+ */
+export type ApcaScore = {
+	lc: number;
+	tier: ApcaTier;
+	requiredLc: number;
+	maxLc: number | null;
+	meetsMinimum: boolean;
+};
+
 /**
  * Which WCAG conformance level detection/remediation is being held to.
  * Global app state (see EnhancedIssuesStore.targetLevel) as well as the
@@ -50,6 +65,7 @@ export type NodeDataType = {
 	id: string;
 	characters?: string;
 	contrastScore?: contrastScore;
+	apcaScore?: ApcaScore;
 	fontSize?: number;
 	width?: number;
 	height?: number;

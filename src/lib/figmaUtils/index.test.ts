@@ -394,6 +394,14 @@ describe("createTypographyIssue", () => {
 });
 
 describe("createContrastIssue", () => {
+	const apcaScore = {
+		lc: 78.72,
+		tier: "body" as const,
+		requiredLc: 75,
+		maxLc: null,
+		meetsMinimum: true,
+	};
+
 	it("builds a CONTRAST issue with the given colours, score, and background node identity", () => {
 		const node = fakeTextNode({ id: "text-2", characters: "Hi", name: "Body" });
 		const contrastScore = { compliance: "Fail" as const, ratio: 2.1 };
@@ -404,12 +412,15 @@ describe("createContrastIssue", () => {
 			sharedWithCount: 2,
 		};
 
-		expect(createContrastIssue(node, contrastScore, [0, 0, 0], background, true)).toEqual({
+		expect(
+			createContrastIssue(node, contrastScore, apcaScore, [0, 0, 0], background, true),
+		).toEqual({
 			severity: "critical",
 			type: "CONTRAST",
 			nodeData: {
 				id: "text-2",
 				contrastScore,
+				apcaScore,
 				characters: "Hi",
 				fontSize: 10,
 				height: 12,
@@ -430,6 +441,7 @@ describe("createContrastIssue", () => {
 		const issue = createContrastIssue(
 			fakeTextNode(),
 			{ compliance: "Fail", ratio: 2.1 },
+			apcaScore,
 			[0, 0, 0],
 			null,
 			false,
@@ -442,10 +454,24 @@ describe("createContrastIssue", () => {
 		expect(issue.nodeData.isBold).toBe(false);
 	});
 
+	it("carries the given apcaScore through to nodeData unchanged", () => {
+		const issue = createContrastIssue(
+			fakeTextNode(),
+			{ compliance: "AA", ratio: 5 },
+			apcaScore,
+			[0, 0, 0],
+			null,
+			false,
+		);
+
+		expect(issue.nodeData.apcaScore).toEqual(apcaScore);
+	});
+
 	it("does not set a static description - contrastScore.compliance drives the description at render/report time instead", () => {
 		const issue = createContrastIssue(
 			fakeTextNode(),
 			{ compliance: "AA", ratio: 5 },
+			apcaScore,
 			[0, 0, 0],
 			null,
 			false,
