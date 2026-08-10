@@ -257,62 +257,89 @@ function handleCancelScan() {
 	setIsPageScanCancelled(true);
 }
 
+// Guards against two overlapping handleScanFile runs interleaving writes to
+// the shared isFileScanCancelled flag and each other's postMessage streams.
+// Not reachable through the UI today - ScanModeSplitButton already disables
+// both scan triggers while scanning === true - but that's a UI-side
+// guarantee, not one this function can rely on; a second SCAN_FILE message
+// arriving mid-scan (e.g. a future caller, or the guard above changing)
+// should be ignored rather than silently corrupt the in-flight scan.
+let isFileScanInProgress = false;
+
 // Scans every page in the file, not just the current one. documentAccess is
 // "dynamic-page" (manifest.json), so every page other than figma.currentPage
 // needs an explicit PageNode.loadAsync() before it can be traversed -
 // figma.root.children itself is available synchronously without loading
 // anything, so the page list (names/count) can be enumerated up front.
 async function handleScanFile(message: ScanSettings) {
-	const deviceType = message.deviceType ?? "touch";
-	const targetLevel = message.targetLevel ?? "AA";
-	setScanSettings({ deviceType, targetLevel });
-	setIsFileScanCancelled(false);
+	if (isFileScanInProgress) {
+		console.warn("Ignored SCAN_FILE: a file scan is already in progress.");
+		return;
+	}
+	isFileScanInProgress = true;
 
-	// Scan the page the user is currently looking at first, then the rest of
-	// the file in file order - this is what makes streaming worthwhile, since
-	// the first results to land are for the page the user is actually on.
-	const currentPage = figma.currentPage;
-	const pages = [
-		currentPage,
-		...figma.root.children.filter((page) => page.id !== currentPage.id),
-	];
+	try {
+		const deviceType = message.deviceType ?? "touch";
+		const targetLevel = message.targetLevel ?? "AA";
+		setScanSettings({ deviceType, targetLevel });
+		setIsFileScanCancelled(false);
 
-	for (let i = 0; i < pages.length; i++) {
-		if (getIsFileScanCancelled()) break;
+		// Scan the page the user is currently looking at first, then the rest
+		// of the file in file order - this is what makes streaming worthwhile,
+		// since the first results to land are for the page the user is
+		// actually on.
+		const currentPage = figma.currentPage;
+		const pages = [
+			currentPage,
+			...figma.root.children.filter((page) => page.id !== currentPage.id),
+		];
 
-		const page = pages[i];
-		await page.loadAsync();
+		for (let i = 0; i < pages.length; i++) {
+			if (getIsFileScanCancelled()) break;
 
-		const allTextNodes = page.findAll(
-			(node) => node.type === "TEXT" && isScannable(node),
-		) as TextNode[];
-		const allPageNodes = page.findAll((node) => isScannable(node)) as SceneNode[];
+			const page = pages[i];
+			await page.loadAsync();
 
-		const pageIssues = await collectIssues(allTextNodes, allPageNodes, deviceType, targetLevel);
-		const taggedPageIssues = tagIssuesWithPage(pageIssues, page.id, page.name);
+			const allTextNodes = page.findAll(
+				(node) => node.type === "TEXT" && isScannable(node),
+			) as TextNode[];
+			const allPageNodes = page.findAll((node) => isScannable(node)) as SceneNode[];
 
-		// Stream this page's results immediately instead of accumulating them
-		// in memory - each page's own array is naturally already a bounded
-		// chunk, so this is both progressive delivery and chunking at once.
-		if (taggedPageIssues.length > 0) {
-			postMessageToUI(MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES, taggedPageIssues);
+			const pageIssues = await collectIssues(
+				allTextNodes,
+				allPageNodes,
+				deviceType,
+				targetLevel,
+			);
+			const taggedPageIssues = tagIssuesWithPage(pageIssues, page.id, page.name);
+
+			// Stream this page's results immediately instead of accumulating
+			// them in memory - each page's own array is naturally already a
+			// bounded chunk, so this is both progressive delivery and chunking
+			// at once.
+			if (taggedPageIssues.length > 0) {
+				postMessageToUI(MESSAGE_TYPES.SCAN_FILE_PAGE_ISSUES, taggedPageIssues);
+			}
+
+			postMessageToUI(MESSAGE_TYPES.SCAN_FILE_PROGRESS, {
+				pageIndex: i + 1,
+				pageCount: pages.length,
+				pageName: page.name,
+			});
+
+			// Yield to the event loop so the messages above actually flush to
+			// the UI, and so a CANCEL_SCAN_FILE message sent while this page
+			// was being scanned gets processed before the next page starts.
+			await new Promise((resolve) => setTimeout(resolve, 0));
 		}
 
-		postMessageToUI(MESSAGE_TYPES.SCAN_FILE_PROGRESS, {
-			pageIndex: i + 1,
-			pageCount: pages.length,
-			pageName: page.name,
-		});
-
-		// Yield to the event loop so the messages above actually flush to the
-		// UI, and so a CANCEL_SCAN_FILE message sent while this page was being
-		// scanned gets processed before the next page starts.
-		await new Promise((resolve) => setTimeout(resolve, 0));
+		// Unconditional, same as the old final LOAD_ISSUES send - tells the UI
+		// the scan is over whether it finished naturally or was cancelled
+		// partway.
+		postMessageToUI(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: getIsFileScanCancelled() });
+	} finally {
+		isFileScanInProgress = false;
 	}
-
-	// Unconditional, same as the old final LOAD_ISSUES send - tells the UI the
-	// scan is over whether it finished naturally or was cancelled partway.
-	postMessageToUI(MESSAGE_TYPES.SCAN_FILE_COMPLETE, { cancelled: getIsFileScanCancelled() });
 }
 
 // Requests the loop above stop after its current page - a boolean gate
