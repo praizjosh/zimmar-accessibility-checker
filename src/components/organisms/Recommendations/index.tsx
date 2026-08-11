@@ -31,9 +31,10 @@ export default function Recommendations({ recommendations, citation }: Recommend
 								target="_blank"
 								rel="noopener noreferrer"
 								onClick={(event) => event.stopPropagation()}
-								className="mt-0.5 inline-block text-xs text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+								className="mt-0.5 inline-block rounded-sm text-xs text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-dark-shade focus-visible:outline-hidden"
 							>
 								{citation.citation}
+								<span className="sr-only"> (opens in a new tab)</span>
 							</a>
 						)}
 					</div>

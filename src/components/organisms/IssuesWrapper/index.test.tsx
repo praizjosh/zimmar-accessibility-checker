@@ -274,7 +274,9 @@ describe("IssuesWrapper", () => {
 		const { rerender } = render(<IssuesWrapper>child</IssuesWrapper>);
 
 		expect(
-			screen.getByRole("link", { name: "WCAG 1.4.3 Contrast (Minimum) (AA)" }),
+			screen.getByRole("link", {
+				name: /WCAG 1\.4\.3 Contrast \(Minimum\) \(AA\).*opens in a new tab/,
+			}),
 		).toHaveAttribute(
 			"href",
 			"https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
@@ -284,7 +286,9 @@ describe("IssuesWrapper", () => {
 		rerender(<IssuesWrapper>child</IssuesWrapper>);
 
 		expect(
-			screen.getByRole("link", { name: "WCAG 1.4.6 Contrast (Enhanced) (AAA)" }),
+			screen.getByRole("link", {
+				name: /WCAG 1\.4\.6 Contrast \(Enhanced\) \(AAA\).*opens in a new tab/,
+			}),
 		).toHaveAttribute(
 			"href",
 			"https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html",
