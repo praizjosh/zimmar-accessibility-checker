@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES } from "@/lib/constants";
 import ISSUE_TYPE_LABELS from "@/lib/issueTypeLabels";
 import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
-import { IssueType, DetectedIssue } from "@/lib/types";
+import { IssueType, DetectedIssue, Severity } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import {
 	cn,
@@ -21,6 +21,7 @@ import {
 	getSeverityStyles,
 	isActiveIssue,
 } from "@/lib/utils";
+import getWcagCitation from "@/lib/wcagCitations";
 import { saveAs } from "file-saver";
 import { RefreshCcw } from "lucide-react";
 
@@ -88,6 +89,10 @@ export default function IssuesOverviewList() {
 				description,
 				severity: issue.severity,
 				type: (issue.type && ISSUE_TYPE_LABELS[issue.type]) || issue.type,
+				wcagCitation: issue.type
+					? getWcagCitation(issue.type, targetLevel).citation
+					: "N/A",
+				wcagCitationUrl: issue.type ? getWcagCitation(issue.type, targetLevel).url : "N/A",
 				wcagContrastScore: issue.nodeData?.contrastScore?.compliance || "N/A",
 				contrastRatio: issue.nodeData?.contrastScore?.ratio.toFixed(2) || "N/A",
 				apcaLc: issue.nodeData?.apcaScore
@@ -115,13 +120,15 @@ export default function IssuesOverviewList() {
 	const generateCSV = () => {
 		const formattedIssues = formatIssuesForReport();
 		const csvHeader =
-			"Element Type,Element Name,Issue Type,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,APCA Lc,APCA Meets Minimum,WCAG/APCA Disagree,Font Size";
+			"Element Type,Element Name,Issue Type,WCAG SC Citation,WCAG SC URL,Description,Severity,WCAG Contrast Score, WCAG Contrast Ratio,APCA Lc,APCA Meets Minimum,WCAG/APCA Disagree,Font Size";
 
 		const csvRows = formattedIssues.map((issue) => {
 			return [
 				`"${issue.elementType || "N/A"}"`, // Element Type
 				`"${issue.elementName}"`, // Element Name
 				`"${issue.type || "N/A"}"`, // Issue Type
+				`"${issue.wcagCitation || "N/A"}"`, // WCAG SC Citation
+				`"${issue.wcagCitationUrl || "N/A"}"`, // WCAG SC URL
 				`"${issue.description || ""}"`, // Description
 				`"${issue.severity || "N/A"}"`, // Severity
 				`"${issue.wcagContrastScore || "N/A"}"`, // WCAG Score
@@ -147,6 +154,78 @@ export default function IssuesOverviewList() {
 			type: "application/json",
 		});
 		saveAs(jsonBlob, "accessibility-issues-report.json");
+	};
+
+	// Reuses formatIssuesForReport as its sole data source, same as
+	// generateCSV/generateJSON - no duplicated issue-formatting logic. Unlike
+	// those two flat table dumps, this reads as a genuine document: issues are
+	// grouped by severity (critical first) rather than issue type, since
+	// dev-handoff triage is severity-first, and the WCAG citation renders as a
+	// real clickable link rather than plain text.
+	const generateMarkdown = () => {
+		const formattedIssues = formatIssuesForReport();
+		const scope = isFileScan ? "across this file" : "on this page";
+		const generatedOn = new Date().toLocaleDateString("en-GB");
+		const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
+		const severityOrder: Severity[] = ["critical", "major", "minor"];
+		const bySeverity = severityOrder.map((severity) => ({
+			severity,
+			issues: formattedIssues.filter((issue) => issue.severity === severity),
+		}));
+
+		const lines: string[] = [
+			"# Accessibility Issues Report",
+			"",
+			`Generated ${generatedOn} - ${formattedIssues.length} issue${formattedIssues.length === 1 ? "" : "s"} detected ${scope}.`,
+			"",
+			"## Summary",
+			"",
+			"| Severity | Count |",
+			"|---|---|",
+			...bySeverity.map(
+				({ severity, issues }) => `| ${capitalize(severity)} | ${issues.length} |`,
+			),
+			"",
+		];
+
+		bySeverity.forEach(({ severity, issues }) => {
+			if (issues.length === 0) return;
+
+			lines.push(`## ${capitalize(severity)}`, "");
+
+			issues.forEach((issue, index) => {
+				lines.push(`### ${index + 1}. ${issue.type} - ${issue.elementName}`, "");
+				lines.push(`- **Element type:** ${issue.elementType}`);
+
+				const citationText =
+					issue.wcagCitationUrl !== "N/A"
+						? `[${issue.wcagCitation}](${issue.wcagCitationUrl})`
+						: issue.wcagCitation;
+				lines.push(`- **WCAG citation:** ${citationText}`);
+
+				lines.push(`- **Description:** ${issue.description}`);
+
+				if (issue.wcagContrastScore !== "N/A") {
+					lines.push(
+						`- **WCAG contrast score:** ${issue.wcagContrastScore} (ratio ${issue.contrastRatio}:1)`,
+					);
+				}
+				if (issue.apcaLc !== "N/A") {
+					lines.push(
+						`- **APCA:** Lc ${issue.apcaLc} (${issue.apcaMeetsMinimum}) - WCAG/APCA disagree: ${issue.wcagApcaDisagree}`,
+					);
+				}
+				if (issue.fontSize !== "N/A") {
+					lines.push(`- **Font size:** ${issue.fontSize}px`);
+				}
+
+				lines.push("");
+			});
+		});
+
+		const markdownBlob = new Blob([lines.join("\n")], { type: "text/markdown" });
+		saveAs(markdownBlob, "accessibility-issues-report.md");
 	};
 
 	// True once there's something worth showing - either the scan is fully
@@ -359,6 +438,13 @@ export default function IssuesOverviewList() {
 									onClick={generateJSON}
 								>
 									Download JSON
+								</Button>
+								<Button
+									title="Download Markdown Report"
+									variant="default"
+									onClick={generateMarkdown}
+								>
+									Download Markdown
 								</Button>
 							</div>
 						</TabsContent>
