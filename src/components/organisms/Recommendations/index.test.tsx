@@ -44,4 +44,59 @@ describe("Recommendations", () => {
 
 		expect(screen.getByRole("list")).toBeVisible();
 	});
+
+	describe("citation", () => {
+		const citation = {
+			exact: true,
+			citation: "WCAG 1.4.3 Contrast (Minimum) (AA)",
+			url: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
+		};
+
+		it("does not render a citation link when none is given", () => {
+			render(<Recommendations recommendations={["Improve contrast."]} />);
+
+			expect(screen.queryByRole("link")).toBeNull();
+		});
+
+		it("renders the citation as a link even while the recommendations list is collapsed", () => {
+			render(
+				<Recommendations
+					recommendations={["Improve contrast.", "Use a larger font size."]}
+					citation={citation}
+				/>,
+			);
+
+			const link = screen.getByRole("link", { name: "WCAG 1.4.3 Contrast (Minimum) (AA)" });
+			expect(link).toBeVisible();
+			expect(screen.queryByRole("list")).toBeNull();
+		});
+
+		it("points the citation link at the official source with a safe target", () => {
+			render(<Recommendations recommendations={["Improve contrast."]} citation={citation} />);
+
+			const link = screen.getByRole("link", { name: "WCAG 1.4.3 Contrast (Minimum) (AA)" });
+			expect(link).toHaveAttribute(
+				"href",
+				"https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
+			);
+			expect(link).toHaveAttribute("target", "_blank");
+			expect(link).toHaveAttribute("rel", "noopener noreferrer");
+		});
+
+		it("clicking the citation link does not also toggle the recommendations list open", async () => {
+			const user = userEvent.setup();
+			render(
+				<Recommendations
+					recommendations={["Improve contrast.", "Use a larger font size."]}
+					citation={citation}
+				/>,
+			);
+
+			await user.click(
+				screen.getByRole("link", { name: "WCAG 1.4.3 Contrast (Minimum) (AA)" }),
+			);
+
+			expect(screen.queryByRole("list")).toBeNull();
+		});
+	});
 });

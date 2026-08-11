@@ -265,6 +265,32 @@ describe("IssuesWrapper", () => {
 		expect(screen.getByText("Recommendations")).toBeVisible();
 	});
 
+	it("passes a WCAG citation matching the current target level down to Recommendations", () => {
+		useIssuesStore.setState({
+			selectedType: "CONTRAST",
+			detectedIssues: [contrastFailIssue],
+			targetLevel: "AA",
+		});
+		const { rerender } = render(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(
+			screen.getByRole("link", { name: "WCAG 1.4.3 Contrast (Minimum) (AA)" }),
+		).toHaveAttribute(
+			"href",
+			"https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
+		);
+
+		useIssuesStore.setState({ targetLevel: "AAA" });
+		rerender(<IssuesWrapper>child</IssuesWrapper>);
+
+		expect(
+			screen.getByRole("link", { name: "WCAG 1.4.6 Contrast (Enhanced) (AAA)" }),
+		).toHaveAttribute(
+			"href",
+			"https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html",
+		);
+	});
+
 	it("describes a genuine AA contrast failure as below WCAG AA standard", () => {
 		useIssuesStore.setState({
 			selectedType: "CONTRAST",
