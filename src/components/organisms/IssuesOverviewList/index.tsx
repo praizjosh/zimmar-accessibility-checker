@@ -6,6 +6,7 @@ import ScanSettingsReadout from "@/components/organisms/ScanSettingsReadout";
 import ScreenHeader from "@/components/organisms/ScreenHeader";
 import TargetLevelToggle from "@/components/organisms/TargetLevelToggle";
 import { Button } from "@/components/ui/button";
+import LoadingSpinner from "@/components/ui/loadingSpinner";
 import Separator from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ISSUES_TYPES } from "@/lib/constants";
@@ -111,7 +112,17 @@ export default function IssuesOverviewList() {
 				<div className="flex size-full flex-col">
 					{scanning && isFileScan && fileScanProgress && (
 						<div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-rose-50/10 bg-dark-shade px-3 py-2 text-xs text-grey">
-							<span>
+							<span
+								className="flex items-center gap-2"
+								role="status"
+								aria-atomic="true"
+							>
+								{fileScanCancelled && (
+									<LoadingSpinner
+										className="size-4 shrink-0"
+										testId="file-scan-progress-spinner"
+									/>
+								)}
 								{fileScanCancelled
 									? `Finishing up - page ${fileScanProgress.pageIndex} of ${fileScanProgress.pageCount}...`
 									: `Scanning page ${fileScanProgress.pageIndex} of ${fileScanProgress.pageCount}: ${fileScanProgress.pageName}. Results below update as more pages finish.`}
@@ -120,9 +131,13 @@ export default function IssuesOverviewList() {
 								<Button
 									title="Cancel scan"
 									variant="ghost"
-									className="shrink-0 border border-rose-50/10"
+									className="shrink-0 gap-1.5 border border-rose-50/10"
 									onClick={cancelFileScan}
 								>
+									<LoadingSpinner
+										className="size-4 shrink-0"
+										testId="file-scan-progress-spinner"
+									/>
 									Cancel
 								</Button>
 							)}

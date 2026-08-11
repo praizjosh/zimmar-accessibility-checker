@@ -1,9 +1,15 @@
 import { cn } from "@/lib/utils";
 
-export default function LoadingSpinner({ className }: { className?: string }) {
+export type LoadingSpinnerProps = {
+	className?: string;
+	testId?: string;
+};
+
+export default function LoadingSpinner({ className, testId }: LoadingSpinnerProps) {
 	return (
 		<svg
 			aria-hidden="true"
+			data-testid={testId}
 			className={cn("animate-spin fill-accent text-white", className)}
 			viewBox="0 0 100 101"
 			fill="none"
