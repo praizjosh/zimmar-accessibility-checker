@@ -424,7 +424,7 @@ export default function IssuesOverviewList() {
 								</div>
 							)}
 
-							<div className="space-x-3">
+							<div className="flex flex-wrap gap-3">
 								<Button
 									title="Download CSV Report"
 									variant="default"
