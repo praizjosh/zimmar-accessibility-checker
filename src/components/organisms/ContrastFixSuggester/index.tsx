@@ -62,7 +62,7 @@ export default function ContrastFixSuggester({
 										: "Lighten"}{" "}
 									text
 								</span>
-								<span className="inline-flex items-center gap-x-1 font-mono text-green-500">
+								<span className="inline-flex items-center gap-x-1 font-mono font-semibold text-green-500">
 									<Check aria-hidden="true" className="size-4" />
 									{foregroundSuggestion.ratio.toFixed(2)}:1
 								</span>
@@ -110,7 +110,7 @@ export default function ContrastFixSuggester({
 										: "Lighten"}{" "}
 									background
 								</span>
-								<span className="inline-flex items-center gap-x-1 font-mono text-green-500">
+								<span className="inline-flex items-center gap-x-1 font-mono font-semibold text-green-500">
 									<Check aria-hidden="true" className="size-4" />
 									{backgroundSuggestion.ratio.toFixed(2)}:1
 								</span>

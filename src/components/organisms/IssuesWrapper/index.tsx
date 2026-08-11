@@ -12,6 +12,7 @@ import ISSUES_DATA_SCHEMA from "@/lib/issuesData";
 import { IssueType, DetectedIssue } from "@/lib/types";
 import useIssuesStore from "@/lib/useIssuesStore";
 import { cn, getContrastIssueDescription, getRouteForIssueType, isActiveIssue } from "@/lib/utils";
+import getWcagCitation from "@/lib/wcagCitations";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -189,6 +190,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 		targetLevel,
 		activeIssue?.nodeData?.requiredSizePx,
 	);
+	const citation = selectedType ? getWcagCitation(selectedType, targetLevel) : null;
 
 	const renderWrapper = (issue: typeof singleIssue | null) => {
 		if (!issue) {
@@ -227,7 +229,7 @@ export default function IssuesWrapper({ children }: { children: React.ReactNode 
 
 				{children}
 
-				<Recommendations recommendations={suggestions || []} />
+				<Recommendations recommendations={suggestions || []} citation={citation} />
 			</>
 		);
 	};
