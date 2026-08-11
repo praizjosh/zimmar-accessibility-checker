@@ -9,7 +9,7 @@ Two version numbers appear in this project and they are **not** the same thing:
 
 Versions 2-10's descriptions are transcribed as originally published on Figma - full commit-level detail for that period isn't available since this changelog was only introduced retroactively (06/08/2026).
 
-## [1.4.0] - Figma Version 15 (provisional - Figma's version number auto-increments on publish, confirm once actually published) - 11/08/2026
+## [1.4.0] - Figma Version 15 - 11/08/2026
 
 ### Added
 
