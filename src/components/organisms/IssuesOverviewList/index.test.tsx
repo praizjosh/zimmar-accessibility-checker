@@ -58,6 +58,13 @@ const contrastFailIssueWithApca: DetectedIssue = {
 	},
 };
 
+const touchTargetSpacingIssue: DetectedIssue = {
+	type: "TOUCH_TARGET_SPACING",
+	description: "Touch target elements are too close.",
+	severity: "minor",
+	nodeData: { id: "tt1", name: "Icon Button", nodeType: "FRAME" },
+};
+
 const defaultState = {
 	detectedIssues: [] as DetectedIssue[],
 	scanning: false,
@@ -435,6 +442,163 @@ describe("IssuesOverviewList", () => {
 		expect(content[0].apcaLc).toBe("N/A");
 		expect(content[0].apcaMeetsMinimum).toBe("N/A");
 		expect(content[0].wcagApcaDisagree).toBe("N/A");
+	});
+
+	it("includes a WCAG SC citation and its source URL in the CSV export, target-level aware", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ detectedIssues: [contrastFailIssue], targetLevel: "AA" });
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download CSV" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = await blob.text();
+		const [header, firstRow] = content.split("\n");
+
+		expect(header).toContain("WCAG SC Citation,WCAG SC URL");
+		expect(firstRow).toContain("1.4.3");
+		expect(firstRow).toContain(
+			"https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
+		);
+	});
+
+	it("includes the same WCAG SC citation fields in the JSON export", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ detectedIssues: [contrastFailIssue], targetLevel: "AAA" });
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download JSON" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = JSON.parse(await blob.text());
+
+		expect(content[0].wcagCitation).toBe("WCAG 1.4.6 Contrast (Enhanced) (AAA)");
+		expect(content[0].wcagCitationUrl).toBe(
+			"https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html",
+		);
+	});
+
+	it("cites the same SC number and URL as touch-target size for a touch-target spacing issue", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ detectedIssues: [touchTargetSpacingIssue], targetLevel: "AA" });
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download JSON" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = JSON.parse(await blob.text());
+
+		expect(content[0].wcagCitation).toContain("2.5.8");
+		expect(content[0].wcagCitation).toContain("spacing exception");
+		expect(content[0].wcagCitationUrl).toBe(
+			"https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html",
+		);
+	});
+
+	it("shows an explicit 'no exact SC' citation for typography, not a bare N/A", async () => {
+		const user = userEvent.setup();
+		useIssuesStore.setState({ detectedIssues: [typographyIssue] });
+		render(<IssuesOverviewList />);
+
+		await goToReportTab(user);
+		await user.click(screen.getByRole("button", { name: "Download JSON" }));
+
+		const blob = saveAs.mock.calls[0][0] as Blob;
+		const content = JSON.parse(await blob.text());
+
+		expect(content[0].wcagCitation).not.toBe("N/A");
+		expect(content[0].wcagCitation).toContain("No exact WCAG SC");
+		expect(content[0].wcagCitationUrl).toBe(
+			"https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html",
+		);
+	});
+
+	describe("Markdown export", () => {
+		it("downloads a Markdown report when 'Download Markdown' is clicked", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({ detectedIssues: [typographyIssue] });
+			render(<IssuesOverviewList />);
+
+			await goToReportTab(user);
+			await user.click(screen.getByRole("button", { name: "Download Markdown" }));
+
+			expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), "accessibility-issues-report.md");
+		});
+
+		it("includes a top-level title and per-severity headings matching the detected issues", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({
+				detectedIssues: [typographyIssue, contrastFailIssue],
+			});
+			render(<IssuesOverviewList />);
+
+			await goToReportTab(user);
+			await user.click(screen.getByRole("button", { name: "Download Markdown" }));
+
+			const blob = saveAs.mock.calls[0][0] as Blob;
+			const content = await blob.text();
+
+			expect(content).toContain("# Accessibility Issues Report");
+			expect(content).toContain("## Critical");
+			expect(content).toContain("## Major");
+			expect(content).not.toContain("## Minor");
+		});
+
+		it("groups each issue under its own severity heading, not another one's", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({
+				detectedIssues: [typographyIssue, contrastFailIssue],
+			});
+			render(<IssuesOverviewList />);
+
+			await goToReportTab(user);
+			await user.click(screen.getByRole("button", { name: "Download Markdown" }));
+
+			const blob = saveAs.mock.calls[0][0] as Blob;
+			const content = await blob.text();
+
+			const criticalSection = content.split("## Critical")[1].split("## Major")[0];
+			const majorSection = content.split("## Major")[1];
+
+			expect(criticalSection).toContain("Text contrast is below WCAG AA standard.");
+			expect(criticalSection).not.toContain("Text size is too small for readability.");
+			expect(majorSection).toContain("Text size is too small for readability.");
+			expect(majorSection).not.toContain("Text contrast is below WCAG AA standard.");
+		});
+
+		it("renders the WCAG citation as a real Markdown link, not just plain text", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({ detectedIssues: [contrastFailIssue], targetLevel: "AA" });
+			render(<IssuesOverviewList />);
+
+			await goToReportTab(user);
+			await user.click(screen.getByRole("button", { name: "Download Markdown" }));
+
+			const blob = saveAs.mock.calls[0][0] as Blob;
+			const content = await blob.text();
+
+			expect(content).toContain(
+				"[WCAG 1.4.3 Contrast (Minimum) (AA)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)",
+			);
+		});
+
+		it("omits N/A fields from an issue's block instead of printing them", async () => {
+			const user = userEvent.setup();
+			useIssuesStore.setState({ detectedIssues: [typographyIssue] });
+			render(<IssuesOverviewList />);
+
+			await goToReportTab(user);
+			await user.click(screen.getByRole("button", { name: "Download Markdown" }));
+
+			const blob = saveAs.mock.calls[0][0] as Blob;
+			const content = await blob.text();
+
+			expect(content).not.toContain("WCAG contrast score");
+			expect(content).not.toContain("APCA");
+		});
 	});
 
 	describe("active settings readout", () => {
