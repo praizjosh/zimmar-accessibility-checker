@@ -16,6 +16,10 @@ Versions 2-10's descriptions are transcribed as originally published on Figma - 
 - Every issue now cites the specific WCAG success criterion it relates to (e.g. "WCAG 2.5.8 Target Size (Minimum) (AA)"), with a link to the official W3C page so you can verify it yourself - shown right in the app next to Recommendations, and in the CSV/JSON/Markdown exports. Where no exact criterion exists (minimum font size has none in WCAG), the citation says so explicitly rather than guessing. (#64, #66)
 - New Markdown export option alongside CSV/JSON - a readable report grouped by severity, with clickable WCAG citation links, better suited to pasting into a PR description or handoff doc than a spreadsheet dump. (#64)
 
+### Fixed
+
+- A long file scan's progress banner is now visibly and audibly live instead of looking frozen: a spinner shows in the Cancel button while scanning, and screen readers now hear each page-progress update as it happens. (#69)
+
 ## [1.3.0] - Figma Version 14 - 10/08/2026
 
 ### Added
