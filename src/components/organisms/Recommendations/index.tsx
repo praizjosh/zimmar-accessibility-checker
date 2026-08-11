@@ -7,12 +7,6 @@ import { useState } from "react";
 
 export type RecommendationsProps = {
 	recommendations: string[];
-	/**
-	 * Shown as a link under the "Recommendations" heading, in the trigger row
-	 * itself rather than inside CollapsibleContent - so it stays visible even
-	 * while collapsed, unlike the recommendation bullets it sits above. Optional
-	 * since not every caller resolves a citation (e.g. no selectedType yet).
-	 */
 	citation?: WcagCitation | null;
 };
 

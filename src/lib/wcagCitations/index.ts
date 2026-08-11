@@ -10,21 +10,7 @@ export type WcagCitation = {
 	 * silently reading like every other row.
 	 */
 	exact: boolean;
-	/**
-	 * Ready-to-print citation string - the only field CSV/JSON/Markdown need
-	 * directly. Exact example: "WCAG 1.4.3 Contrast (Minimum) (AA)". Inexact
-	 * example: "No exact WCAG SC (readability best practice) - related: WCAG
-	 * 1.4.4 Resize Text" - always spells out "No exact"/"related" so it can
-	 * never be mistaken for a real numbered citation at a glance.
-	 */
 	citation: string;
-	/**
-	 * Official W3C WAI "Understanding" page for the cited SC - lets a reader
-	 * verify the citation against the primary source instead of taking the
-	 * plugin's word for it. Always present, even for the inexact TYPOGRAPHY
-	 * case (points to 1.4.4's own page, consistent with the citation string
-	 * already disclosing it's "related", not exact).
-	 */
 	url: string;
 };
 
@@ -68,12 +54,6 @@ const LEVEL_AWARE_CITATIONS: Record<
 		},
 	},
 	TOUCH_TARGET_SPACING: {
-		// Not a separate numbered SC - WCAG 2.2's spacing exception lives
-		// inside 2.5.8/2.5.5 itself (a target below the minimum size still
-		// conforms with enough offset to its neighbours), so this cites (and
-		// links to) the same SC as TOUCH_TARGET_SIZE, with a clarifying suffix
-		// so a reader isn't confused why a "Spacing" issue cites a "Target
-		// Size" criterion.
 		AA: {
 			exact: true,
 			citation: "WCAG 2.5.8 Target Size (Minimum) (AA) - spacing exception",
@@ -87,12 +67,6 @@ const LEVEL_AWARE_CITATIONS: Record<
 	},
 };
 
-// WCAG defines no numbered SC for a hard minimum font size; 1.4.4 Resize Text
-// is the closest related one but governs zoom/reflow, not "this text is too
-// small." Level-independent (unlike the table above) since neither AA nor AAA
-// has an exact match. url still points to 1.4.4's real page - the citation
-// string's own "related:" wording already sets the right expectation, so a
-// working link here is honest, not misleading.
 const TYPOGRAPHY_CITATION: WcagCitation = {
 	exact: false,
 	citation: "No exact WCAG SC (readability best practice) - related: WCAG 1.4.4 Resize Text",
