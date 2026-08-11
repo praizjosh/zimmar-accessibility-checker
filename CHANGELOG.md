@@ -9,17 +9,20 @@ Two version numbers appear in this project and they are **not** the same thing:
 
 Versions 2-10's descriptions are transcribed as originally published on Figma - full commit-level detail for that period isn't available since this changelog was only introduced retroactively (06/08/2026).
 
-## [1.4.0] - Figma Version 14 (provisional - Figma's version number auto-increments on publish, confirm once actually published) - 11/08/2026
+## [1.4.0] - Figma Version 15 (provisional - Figma's version number auto-increments on publish, confirm once actually published) - 11/08/2026
 
-Combines what would otherwise have been two separate dev releases (1.3.0 and 1.4.0) into one Figma Community publish, since neither had been published yet - see the versioning note above.
+### Added
+
+- Every issue now cites the specific WCAG success criterion it relates to (e.g. "WCAG 2.5.8 Target Size (Minimum) (AA)"), with a link to the official W3C page so you can verify it yourself - shown right in the app next to Recommendations, and in the CSV/JSON/Markdown exports. Where no exact criterion exists (minimum font size has none in WCAG), the citation says so explicitly rather than guessing. (#64, #66)
+- New Markdown export option alongside CSV/JSON - a readable report grouped by severity, with clickable WCAG citation links, better suited to pasting into a PR description or handoff doc than a spreadsheet dump. (#64)
+
+## [1.3.0] - Figma Version 14 - 10/08/2026
 
 ### Added
 
 - Full-file (all-pages) scan: scan every page in the file, not just the current one, with progress feedback and a cancel button. Results now stream in progressively as each page finishes scanning, current page first, so you see results almost immediately instead of waiting for the whole file. (#56, #57)
 - Contrast issues are now scored against both WCAG 2.x and APCA, the perceptually-uniform contrast algorithm under evaluation for WCAG 3, with a note when the two disagree on whether a pair passes. (#61)
 - Selecting a container (frame, group, section) during quick-check now recurses into its descendants and, if more than one matching issue is found, shows all of them in a list instead of silently keeping only the first. (#51, #56)
-- Every issue now cites the specific WCAG success criterion it relates to (e.g. "WCAG 2.5.8 Target Size (Minimum) (AA)"), with a link to the official W3C page so you can verify it yourself - shown right in the app next to Recommendations, and in the CSV/JSON/Markdown exports. Where no exact criterion exists (minimum font size has none in WCAG), the citation says so explicitly rather than guessing. (#64, #66)
-- New Markdown export option alongside CSV/JSON - a readable report grouped by severity, with clickable WCAG citation links, better suited to pasting into a PR description or handoff doc than a spreadsheet dump. (#64)
 
 ### Changed
 
