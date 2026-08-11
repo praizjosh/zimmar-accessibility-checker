@@ -148,6 +148,21 @@ describe("IssuesOverviewList", () => {
 		).toBeVisible();
 		expect(screen.getByRole("tablist")).toBeVisible();
 		expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
+		expect(screen.getByTestId("file-scan-progress-spinner")).toBeVisible();
+	});
+
+	it("announces file-scan progress updates to screen readers via a polite status region", () => {
+		useIssuesStore.setState({
+			scanning: true,
+			isFileScan: true,
+			fileScanProgress: { pageIndex: 2, pageCount: 5, pageName: "About" },
+			detectedIssues: [typographyIssue],
+		});
+		render(<IssuesOverviewList />);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			/Scanning page 2 of 5: About\. Results below update/,
+		);
 	});
 
 	it("cancels the file scan when the cancel button is clicked", async () => {
@@ -178,6 +193,8 @@ describe("IssuesOverviewList", () => {
 		expect(screen.getByText("Finishing up - page 3 of 5...")).toBeVisible();
 		expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
 		expect(screen.queryByText(/Scan cancelled/)).toBeNull();
+		expect(screen.getByTestId("file-scan-progress-spinner")).toBeVisible();
+		expect(screen.getByRole("status")).toHaveTextContent("Finishing up - page 3 of 5...");
 	});
 
 	it("shows a partial-results banner after a cancelled file scan's results arrive", () => {
