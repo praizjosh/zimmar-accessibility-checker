@@ -1,15 +1,20 @@
 # Zimmar Accessibility Checker [Figma Plugin]
 
-A Figma plugin to help designers and developers ensure their designs are accessible. This plugin provides automated checks for text contrast, typography, and generates alt text for selected layers using AI.
+A Figma plugin that helps designers and developers catch accessibility problems before hand-off. It scans designs for contrast, typography and touch-target issues, cites the relevant WCAG success criterion for each one, and can generate alt text for layers using AI.
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ---
 
 ## Features
 
-- **Contrast Checking:** Automatically detects text layers with insufficient contrast according to WCAG standards.
-- **Typography Analysis:** Flags text layers that are too small for readability.
-- **AI-Powered Alt Text:** Generate descriptive alt text for images and exportable layers using AI.
-- **User-Friendly Notifications:** Informs users of issues and guides them to resolve accessibility problems.
+- **Contrast checking:** flags text with insufficient contrast, scored against both WCAG 2.x and APCA, with a global AA/AAA target-level toggle and suggested colour fixes.
+- **Typography analysis:** flags text that is too small to read comfortably.
+- **Touch-target checks:** flags interactive elements that are too small or too close together (24px AA, 44px AAA, 8px minimum spacing).
+- **Flexible scanning:** scan the current page, the entire file (with progress and cancel), or use quick check to re-scan on every selection change.
+- **WCAG citations:** each issue links to the specific W3C success criterion it relates to.
+- **Export:** download results as CSV, JSON or Markdown.
+- **AI-powered alt text:** generate descriptive alt text for images and exportable layers.
 
 ---
 
@@ -19,122 +24,101 @@ A Figma plugin to help designers and developers ensure their designs are accessi
 
 - [Node.js](https://nodejs.org/en/download/)
 - [Figma Desktop App](https://www.figma.com/downloads/)
-- [Visual Studio Code](https://code.visualstudio.com/) (recommended)
 
 ### Installation
 
-1. **Clone the Repository:**
-   ```sh
-   git clone https://github.com/praizjosh/zimmar-accessibility-checker.git
-   
-   cd zimmar-accessibility-checker
-   ```
-
-2. **Install Dependencies:**
-   ```sh
-   npm install
-   ```
-
-3. **Install Figma Plugin Typings:**
-   ```sh
-   npm install --save-dev @figma/plugin-typings
-   ```
+```sh
+git clone https://github.com/praizjosh/zimmar-accessibility-checker.git
+cd zimmar-accessibility-checker
+npm install
+```
 
 ---
 
 ## Development
 
-### Compile TypeScript
+The plugin builds two separate bundles: the sandbox code (`plugin/code.ts` to `dist/code.js`) and the React UI (`src/` to `dist/index.html`). Figma reads both straight from `dist/`, so the plain Vite dev server is not enough.
 
-To compile TypeScript to JavaScript and watch for changes:
+### Run in development
 
 ```sh
-npm run watch
+npm run dev
 ```
 
-Or use VS Code:  
-Go to `Terminal > Run Build Task...` and select `npm: watch`.
+This runs the TypeScript watcher and both build watchers concurrently. Then, in the Figma desktop app, go to `Plugins > Development > Import plugin from manifest...` and select `manifest.json` from this repo.
 
-### Build for Production
+### Build for production
 
 ```sh
 npm run build
 ```
 
-### Linting
-
-This project uses ESLint with recommended rules for React and TypeScript.  
-To lint your code:
+### Lint and test
 
 ```sh
-npm run lint
+npm run lint        # ESLint, zero warnings allowed
+npm run lint:fix    # ESLint with autofix
+npm run test        # Vitest, single run
+npm run test:watch  # Vitest, watch mode
 ```
+
+Vitest covers pure logic only. Anything that depends on the `figma` global or Figma's plugin iframe (for example clipboard access) must be verified manually in Figma dev mode.
 
 ---
 
 ## Usage
 
 1. **Open Figma and run the plugin.**
-2. **Select a layer** (frame, component, or exportable object).
-3. **Generate Alt Text:**  
-   - The plugin will check if the layer is visible, exportable, and within size limits.
-   - If valid, it will export the layer as a PNG, encode it, and send it for AI analysis.
-   - Alt text will be generated and displayed in the plugin UI.
-
-4. **Review Accessibility Issues:**  
-   - The plugin will highlight text layers with contrast or typography issues.
-   - Follow the notifications to fix any problems.
+2. **Scan:** choose "Scan entire page" (or "Scan entire file" from the split-button menu on multi-page files), or start quick check to inspect whatever you select.
+3. **Review issues:** browse by type (contrast, typography, touch target), open an issue to jump to the layer in Figma, and read the recommendation and WCAG citation.
+4. **Adjust the target level:** switch between AA and AAA to see how the results change without re-scanning.
+5. **Export:** download the results as CSV, JSON or Markdown.
+6. **Generate alt text:** select a single visible, exportable layer and use the alt text generator. The plugin exports the layer as a PNG, sends it for AI analysis and shows the result in the UI.
 
 ---
 
-## File Structure
+## Project Structure
 
 ```
+plugin/
+  code.ts                  # Figma sandbox: scan orchestration, message handling
 src/
-  lib/
-    helpers/
-      generateAltTextForLayer.ts   # Main logic for generating alt text
-    ...
   components/
-    ...
+    ui/                    # shadcn/ui primitives
+    organisms/             # Feature screens and panels
+  lib/
+    constants.ts           # Message types, size limits, thresholds
+    figmaUtils/            # Issue builders, touch-target heuristics, messaging helpers
+    utils/                 # Contrast maths, background inference, clipboard
+    apcaContrast/          # APCA scoring
+    colorFix/              # Contrast fix suggestions
+    wcagCitations/         # Issue to WCAG criterion mapping
+    helpers/               # Alt text export and user id helpers
+    useIssuesStore/        # Zustand store for UI state and routing
   App.tsx
-  main.tsx
-  ...
-foundIssues.js                     # Contains sample accessibility issues
-vite.config.ts
-...
+manifest.json              # Figma plugin manifest
 ```
 
----
-
-## Key Functions
-
-- [`generateAltTextForLayer`](src/lib/helpers/generateAltTextForLayer.ts):  
-  Handles selection validation, image export, size checks, and posts a message to the UI for AI-powered alt text generation.
+The sandbox and the UI only communicate through `postMessage`. Message types are centralised in `MESSAGE_TYPES` in [`src/lib/constants.ts`](src/lib/constants.ts). See [CLAUDE.md](CLAUDE.md) for a fuller architecture walkthrough.
 
 ---
 
 ## Troubleshooting
 
-- **"Please select a layer to generate alt text for":**  
-  Make sure you have exactly one visible, exportable layer selected.
-- **"Selected layer cannot be exported":**  
-  Only frames, components, and exportable layers are supported.
-- **"Image is too large for processing":**  
-  Try selecting a smaller layer or scaling down your selection.
+- **"Please select a layer to generate alt text for":** select exactly one visible, exportable layer.
+- **"Selected layer cannot be exported":** only frames, components and other exportable layers are supported.
+- **"Image is too large for processing":** select a smaller layer or scale down your selection.
+- **UI changes do not appear in Figma:** make sure `npm run dev` (or `npm run build`) is running, since Figma loads `dist/index.html` from disk.
+- **A new network request is blocked:** add the domain to `networkAccess` in `manifest.json`.
 
 ---
 
 ## Contributing
 
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Work happens on a dedicated branch per change, and commits follow [Conventional Commits](https://www.conventionalcommits.org/). See [AGENTS.md](AGENTS.md) for the full workflow.
 
 ---
 
 ## License
 
-[MIT](LICENSE)
-
----
-
-## Resources
+MIT, as declared in `package.json`.
